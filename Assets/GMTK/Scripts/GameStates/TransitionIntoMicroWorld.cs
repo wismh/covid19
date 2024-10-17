@@ -31,7 +31,7 @@ namespace GMTK.GameStates
             DOTween.To(
                 () => _player.transform.localScale,
                 scale => _player.localScale = scale,
-                new Vector3(0.25f, 0.25f, 1),
+                new Vector3(0.3f, 0.3f, 1),
                 k_transitionDirection
             );
 
