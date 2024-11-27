@@ -1,6 +1,5 @@
 using GMTK.Services;
 using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace GMTK
@@ -17,7 +16,7 @@ namespace GMTK
 
         private void Start()
         {
-            _medicalManager = transform.AddComponent<MedicalManager>();
+            _medicalManager = gameObject.AddComponent<MedicalManager>();
             ServiceLocator.Instance.Register(_medicalManager);
 
             StartCoroutine(SpawnMedicalInterval());

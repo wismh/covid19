@@ -41,7 +41,7 @@ namespace GMTK
             _body.Move(inputValue.y * _playerStats.SpeedScale * backMovement);
             _body.Rotate(inputValue.x);
 
-            _rd.velocity = Vector3.zero;
+            _rd.linearVelocity = Vector3.zero;
             _rd.angularVelocity = 0;
         }
     }

@@ -1,5 +1,4 @@
 using GMTK.Services;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace GMTK
@@ -24,8 +23,8 @@ namespace GMTK
 
         private void Awake()
         {
-            _cellManager = transform.AddComponent<CellManager>();
-            _virusCellManager = transform.AddComponent<VirusCellManager>();
+            _cellManager = gameObject.AddComponent<CellManager>();
+            _virusCellManager = gameObject.AddComponent<VirusCellManager>();
             ServiceLocator.Instance.Register(_cellManager);
             ServiceLocator.Instance.Register(_virusCellManager);
 

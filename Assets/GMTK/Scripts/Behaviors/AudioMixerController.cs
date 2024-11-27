@@ -38,13 +38,13 @@ namespace GMTK
             _audioSources = GetComponents<AudioSource>();
             DontDestroyOnLoad(this);
 
-            if (SceneManager.GetActiveScene().buildIndex == 1)
+            if (SceneManager.GetActiveScene().name == "SampleScene")
             {
                 _needToChange = true;
                 _audioSources[0].loop = false;
             }
 
-            if (SceneManager.GetActiveScene().buildIndex == 0)
+            if (SceneManager.GetActiveScene().name == "Menu")
             {
                 _audioSources[1].Stop();
                 _audioSources[1].Play();

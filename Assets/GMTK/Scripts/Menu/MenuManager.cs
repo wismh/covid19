@@ -49,6 +49,6 @@ public class MenuManager : MonoBehaviour
         ).OnComplete(() => LoadGameScene());
     }
 
-    public void LoadGameScene() => SceneManager.LoadScene(1);
+    public void LoadGameScene() => SceneManager.LoadScene("SampleScene");
     public void Exit() => Application.Quit(0);
 }

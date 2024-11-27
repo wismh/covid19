@@ -1,6 +1,5 @@
 using GMTK.Services;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace GMTK
@@ -23,7 +22,7 @@ namespace GMTK
         {
             ServiceLocator.Instance.Register(this);
 
-            _virusManager = transform.AddComponent<VirusManager>();
+            _virusManager = gameObject.AddComponent<VirusManager>();
             ServiceLocator.Instance.Register(_virusManager);
 
             _gameStatistics = ServiceLocator.Instance.Get<GameStatistics>();

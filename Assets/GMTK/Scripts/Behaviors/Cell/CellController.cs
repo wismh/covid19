@@ -119,6 +119,7 @@ namespace GMTK
             }
 
             _cellManager.RemoveObject(transform);
+            _virusCellManager.RemoveObject(transform);
             Destroy(gameObject, 2f);
 
             _animator.enabled = true;
@@ -146,10 +147,10 @@ namespace GMTK
             {
                 case WorldState.MACRO_WORLD:
                     _rb.isKinematic = false;
-                    _rb.velocity = new Vector3(Random.Range(-_maxVelocity.x, _maxVelocity.x), Random.Range(-_maxVelocity.y, _maxVelocity.y), 0);
+                    _rb.linearVelocity = new Vector3(Random.Range(-_maxVelocity.x, _maxVelocity.x), Random.Range(-_maxVelocity.y, _maxVelocity.y), 0);
                     break;
                 case WorldState.MICRO_WORLD:
-                    _rb.velocity = Vector3.zero;
+                    _rb.linearVelocity = Vector3.zero;
                     _rb.angularVelocity = 0;
                     _rb.isKinematic = true;
                     break;
@@ -190,7 +191,7 @@ namespace GMTK
                 entrail.localPosition = position;
                 if (entrail.TryGetComponent(out Rigidbody2D rd))
                 {
-                    rd.velocity = new Vector3(
+                    rd.linearVelocity = new Vector3(
                         Random.Range(-0.2f, 0.2f),
                         Random.Range(-0.2f, 0.2f),
                         0
