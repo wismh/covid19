@@ -1,0 +1,113 @@
+using UnityEngine;
+using UnityEngine.InputSystem;
+using Zenject;
+
+namespace _Project.Mechanics.Player
+{
+    /// <summary>
+    /// Ports GMTK.PlayerTurretController (Assets/GMTK/Scripts/Behaviors/Player/PlayerTurretController.cs):
+    /// independent turret aiming at the pointer regardless of body facing, with a reload cooldown that scales
+    /// with the AttackSpeed upgrade. No ServiceLocator, no transform.Find - direct [SerializeField] references
+    /// and Zenject method injection instead.
+    ///
+    /// Firing seam: projectile spawning goes through <see cref="IProjectileSpawner"/> rather than a new
+    /// pooling system (out of scope for this phase) - see GmtkBulletManagerProjectileSpawner for the concrete
+    /// bridge to the existing GMTK.BulletManager, and its doc comment for where damage calculation currently
+    /// still runs through old GMTK code instead of PlayerStatsService.EffectiveDamage.
+    ///
+    /// UI seam: the old controller drove a DOTween-animated Image directly (`_filledReloadImage.fillAmount`).
+    /// Mechanics shouldn't own presentation, so this exposes <see cref="ReloadProgress01"/> instead for a future
+    /// UI screen (Phase 5, BaseScreen-based per REFACTORING_PLAN.md) to bind to.
+    ///
+    /// Input bridge: see PlayerMovement's doc comment - same temporary GMTK.Actions bridge, action map
+    /// "PlayerTurret" (actions "Pointer", "Fire").
+    /// </summary>
+    public sealed class PlayerTurret : MonoBehaviour
+    {
+        [SerializeField] private Transform _turretTransform;
+        [SerializeField] private Transform _muzzlePoint;
+
+        // Typed as the concrete bridge class (not IProjectileSpawner) because Unity can't serialize
+        // interface-typed fields for Inspector assignment; it's used through the interface in code below.
+        [SerializeField] private GmtkBulletManagerProjectileSpawner _projectileSpawner;
+
+        private PlayerConfig _config;
+        private PlayerStatsService _stats;
+
+        private GMTK.Actions _inputActions;
+
+        private bool _isFiring;
+        private float _lastFireTime = float.NegativeInfinity;
+        private float _currentReloadTime;
+
+        /// <summary>0 (just fired) to 1 (ready to fire) - for a future UI screen to bind a reload indicator to.</summary>
+        public float ReloadProgress01 => _currentReloadTime <= 0f
+            ? 1f
+            : Mathf.Clamp01((Time.time - _lastFireTime) / _currentReloadTime);
+
+        [Inject]
+        public void Construct(PlayerConfig config, PlayerStatsService stats)
+        {
+            _config = config;
+            _stats = stats;
+        }
+
+        private void Awake()
+        {
+            _inputActions = new GMTK.Actions();
+        }
+
+        private void OnEnable()
+        {
+            _inputActions.PlayerTurret.Enable();
+            _inputActions.PlayerTurret.Fire.performed += OnFirePerformed;
+            _inputActions.PlayerTurret.Fire.canceled += OnFireCanceled;
+        }
+
+        private void OnDisable()
+        {
+            _inputActions.PlayerTurret.Fire.performed -= OnFirePerformed;
+            _inputActions.PlayerTurret.Fire.canceled -= OnFireCanceled;
+            _inputActions.PlayerTurret.Disable();
+        }
+
+        private void OnDestroy()
+        {
+            _inputActions?.Dispose();
+        }
+
+        private void OnFirePerformed(InputAction.CallbackContext context) => _isFiring = true;
+        private void OnFireCanceled(InputAction.CallbackContext context) => _isFiring = false;
+
+        private void Update()
+        {
+            AimAtPointer();
+
+            if (_isFiring && Time.time >= _lastFireTime + _currentReloadTime)
+                Fire();
+        }
+
+        private void AimAtPointer()
+        {
+            Vector2 screenPosition = _inputActions.PlayerTurret.Pointer.ReadValue<Vector2>();
+            Vector3 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);
+
+            Vector3 direction = (worldPosition - _turretTransform.position).normalized;
+            direction.z = 0f;
+
+            _turretTransform.right = direction;
+        }
+
+        private void Fire()
+        {
+            if (_projectileSpawner != null)
+                _projectileSpawner.SpawnProjectile(_muzzlePoint.position, _turretTransform.right);
+
+            _lastFireTime = Time.time;
+
+            // Old: PlayerTurretController.Update() ->
+            // `_reloadTime = _baseReloadTime - level * _scaleByLevelUpgrade; _reloadTime = _reloadTime <= 0 ? 0.25f : _reloadTime;`
+            _currentReloadTime = _stats.EffectiveReloadTime;
+        }
+    }
+}
