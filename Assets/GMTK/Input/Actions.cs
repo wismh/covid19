@@ -141,7 +141,7 @@ namespace GMTK
                 {
                     ""name"": ""left"",
                     ""id"": ""33b223be-5c43-4be4-82b6-30115f90c0ee"",
-                    ""path"": ""<Keyboard>/a"",
+                    ""path"": ""<Keyboard>/d"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -152,7 +152,7 @@ namespace GMTK
                 {
                     ""name"": ""right"",
                     ""id"": ""5c6c5d0f-fe1c-4eb4-ba8c-e0e54d85da19"",
-                    ""path"": ""<Keyboard>/d"",
+                    ""path"": ""<Keyboard>/a"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
