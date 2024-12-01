@@ -1,4 +1,5 @@
 using _Project.Mechanics.AppFlow;
+using _Project.Save;
 using Project.Core.ApplicationLifecycle;
 using Project.Core.AssetLoaderModule;
 using Project.Core.AudioSystem;
@@ -18,6 +19,7 @@ namespace _Project.Bootstrap
             SceneLoaderServiceModuleInstaller.Install(Container);
             AssetLoaderInstaller.Install(Container);
             AudioSystemInstaller.Install(Container);
+            GameSaveModuleInstaller.Install(Container);
 
             Container.Bind<MenuState>().AsSingle();
             Container.Bind<GameplayState>().AsSingle();
