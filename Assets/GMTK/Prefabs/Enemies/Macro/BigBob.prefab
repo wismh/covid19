@@ -121,6 +121,7 @@ GameObject:
   - component: {fileID: 26103826933667892}
   - component: {fileID: 4449880180137917866}
   - component: {fileID: 3092970820626174246}
+  - component: {fileID: 8412739502618374}
   m_Layer: 7
   m_Name: BigBob
   m_TagString: Untagged
@@ -151,11 +152,11 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4564788998329093073}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8c792a76bcaf6144b85d813ce27c981d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   _friction: 0.02
   _speed: 2
   _acceleration: 0.5
@@ -169,11 +170,11 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4564788998329093073}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 40e1111841f6bde4db3b4f86583ef695, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   _delayBeforePenetration: 10
   _damageMaterial: {fileID: 2100000, guid: ff1c34b5819982642a8c9b8f51409db0, type: 2}
   _maxHealth: 3
@@ -441,3 +442,20 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &8412739502618374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4564788998329093073}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f562a68f802c6f02479dc88409b01d6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _maxHealth: 3
+  _delayBeforePenetrationSeconds: 10
+  _collider: {fileID: 26103826933667892, guid: 00000000000000000000000000000000, type: 0}
+  _spriteRenderer: {fileID: 2544876351399848502, guid: 00000000000000000000000000000000, type: 0}
+  _damageMaterial: {fileID: 2100000, guid: ff1c34b5819982642a8c9b8f51409db0, type: 2}

@@ -5353,6 +5353,9 @@ GameObject:
   - component: {fileID: 7030177624050071867}
   - component: {fileID: 7137848206759515367}
   - component: {fileID: 4470921708859009534}
+  - component: {fileID: 7063822839208027}
+  - component: {fileID: 8087678505012858}
+  - component: {fileID: 5444760068224439}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -5386,11 +5389,11 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4626583103710619316}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f15cf000b323da9408f1d86695936be5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
 --- !u!114 &378154601459727843
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5398,11 +5401,11 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4626583103710619316}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4d05eb44657fd0f4b9256f2ca47ad050, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   _baseReloadTime: 1.75
   _scaleByLevelUpgrade: 0.25
 --- !u!114 &8636596991416723720
@@ -5426,11 +5429,11 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4626583103710619316}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8c792a76bcaf6144b85d813ce27c981d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   _friction: 0.02
   _speed: 3
   _acceleration: 1
@@ -5444,11 +5447,11 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4626583103710619316}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3844214c81f06ba4bb18ea6793445ca1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   _maxHealth: 8
   _damageMaterial: {fileID: 2100000, guid: ff1c34b5819982642a8c9b8f51409db0, type: 2}
 --- !u!61 &1879675957597179286
@@ -6003,3 +6006,45 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &7063822839208027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4626583103710619316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1922b4ebcc73458e7de317967649dcf7, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _rigidbody2D: {fileID: 7030177624050071867, guid: 00000000000000000000000000000000, type: 0}
+--- !u!114 &8087678505012858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4626583103710619316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0be9e1dfcb9c5033f5429eefa2cee428, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _turretTransform: {fileID: 5267248891490517249, guid: 00000000000000000000000000000000, type: 0}
+  _muzzlePoint: {fileID: 7599956719394627767, guid: 00000000000000000000000000000000, type: 0}
+  _projectileSpawner: {fileID: 0}
+--- !u!114 &5444760068224439
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4626583103710619316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86e29e31999d346e33dfab98dc7b367c, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _movement: {fileID: 7063822839208027, guid: 00000000000000000000000000000000, type: 0}
+  _turret: {fileID: 8087678505012858, guid: 00000000000000000000000000000000, type: 0}

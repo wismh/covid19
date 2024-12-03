@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 687242065390223095}
   - component: {fileID: 5140987582346257215}
   - component: {fileID: 7141805821779791088}
+  - component: {fileID: 5719283746102938}
   m_Layer: 8
   m_Name: Orange
   m_TagString: Untagged
@@ -190,11 +191,11 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3760876135740357169}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 438688857b34b0e46bc999a1fe754d0f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   _cucumberBulletPrefab: {fileID: 0}
   _type: 0
   _damageMaterial: {fileID: 2100000, guid: ff1c34b5819982642a8c9b8f51409db0, type: 2}
@@ -392,3 +393,23 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &5719283746102938
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3760876135740357169}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 626b4313a22e2d4a57ac2b323df8ce5a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _config: {fileID: 0}
+  _collider: {fileID: 8186064876739965874, guid: 00000000000000000000000000000000, type: 0}
+  _rigidbody2D: {fileID: 5885864881155109425, guid: 00000000000000000000000000000000, type: 0}
+  _spriteRenderer: {fileID: 3887510497326138053, guid: 00000000000000000000000000000000, type: 0}
+  _damageMaterial: {fileID: 2100000, guid: ff1c34b5819982642a8c9b8f51409db0, type: 2}
+  _bulletSpawnPoint: {fileID: 0}
+  _attackAudioSource: {fileID: 0}
+  _bulletSpawner: {fileID: 0}
