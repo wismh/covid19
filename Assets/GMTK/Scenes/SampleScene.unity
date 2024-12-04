@@ -3013,6 +3013,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 899466297}
+  - component: {fileID: 642187733}
   m_Layer: 5
   m_Name: UpgradeGroup
   m_TagString: Untagged
@@ -3961,6 +3962,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1303289963}
   - component: {fileID: 1303289964}
+  - component: {fileID: 928471605}
   m_Layer: 0
   m_Name: AdviceDialog
   m_TagString: Untagged
@@ -4081,6 +4083,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1554535045}
+  - component: {fileID: 355982164}
   m_Layer: 5
   m_Name: GameOverGroup
   m_TagString: Untagged
@@ -4524,6 +4527,7 @@ GameObject:
   - component: {fileID: 1890739286}
   - component: {fileID: 1890739285}
   - component: {fileID: 1890739288}
+  - component: {fileID: 817364529}
   m_Layer: 5
   m_Name: HUD
   m_TagString: Untagged
@@ -5726,6 +5730,67 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1bd7450eb76f597498de0411e3fb7d63, type: 3}
+--- !u!114 &817364529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1890739283}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cb1e472516ff3658e5c71490521cb9b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _healthBarFilled: {fileID: 1795476834, guid: 00000000000000000000000000000000, type: 0}
+  _armorBarFilled: {fileID: 955697284, guid: 00000000000000000000000000000000, type: 0}
+  _experienceBarFilled: {fileID: 1754054743, guid: 00000000000000000000000000000000, type: 0}
+  _levelText: {fileID: 1661960495, guid: 00000000000000000000000000000000, type: 0}
+  _timerText: {fileID: 123938979, guid: 00000000000000000000000000000000, type: 0}
+  _statisticsText: {fileID: 383426139, guid: 00000000000000000000000000000000, type: 0}
+--- !u!114 &642187733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 899466296}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 243b4da1e22983f48df79bd2ddc34585, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+--- !u!114 &355982164
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1554535044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2752df0c1d7e5fe29ce03bee4d4fb58f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _messageText: {fileID: 873521873, guid: 00000000000000000000000000000000, type: 0}
+  _playerDiedMessage: You Died
+  _allCellsDiedMessage: All Cells Have Died
+--- !u!114 &928471605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1303289962}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c2f8751ef2c7ee540a32fa06eeb53e3, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _promptCanvas: {fileID: 989848342, guid: 00000000000000000000000000000000, type: 0}
+  _player: {fileID: 0}
+  _targetCell: {fileID: 0}
+  _sqrDistanceToActivate: 4
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
