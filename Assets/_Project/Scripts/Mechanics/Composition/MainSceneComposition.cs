@@ -176,11 +176,15 @@ namespace _Project.Mechanics.Composition
             ConstructScreens();
             WireCrossSystemEvents();
 
-            // Nothing else in the codebase calls IAudioSystem.PlayMusic for the gameplay track yet (GameAudioService
-            // exposes PlayGameplayMusic/PlayMenuMusic per Phase 5, but no caller existed until this composition
-            // root). Starting it here is this stage's judgement call, not something the brief explicitly asked
-            // for - flagged so it's clear this is an addition, not a verified port of an old call site.
-            _gameAudioService.PlayGameplayMusic();
+            // NOT calling _gameAudioService.PlayGameplayMusic() here (tried it, reverted): the old
+            // GMTK.AudioMixerController/AudioManagerFactory (Assets/GMTK/Scripts/{AudioMixerController.cs,
+            // AudioManagerFactory.cs}) are still fully enabled and already drive menu/gameplay music crossfade on
+            // their own DontDestroyOnLoad singleton - nothing in this migration has disabled them yet (they're
+            // old-UI/audio-layer scripts, deliberately left running per Phase 5's "keep the old game playable"
+            // rule, same as HUD.cs/AdviceDialog.cs). Calling PlayGameplayMusic() here made both systems play music
+            // simultaneously (reported directly by the user after Stage 6 - "дві музики"). This was always a
+            // judgement-call addition, not a verified port of an old call site (see the removed comment this one
+            // replaces) - safe to drop entirely until a later phase actually retires GMTK.AudioMixerController.
 
             // HudScreen is the one screen guaranteed open for the whole gameplay session (see its own class doc
             // comment's "Auto-opening" section) - nothing else in the codebase opens it, so this composition root

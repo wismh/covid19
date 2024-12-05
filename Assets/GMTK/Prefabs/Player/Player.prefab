@@ -6018,7 +6018,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1922b4ebcc73458e7de317967649dcf7, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  _rigidbody2D: {fileID: 7030177624050071867, guid: 00000000000000000000000000000000, type: 0}
+  _rigidbody2D: {fileID: 7030177624050071867}
 --- !u!114 &8087678505012858
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6031,8 +6031,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0be9e1dfcb9c5033f5429eefa2cee428, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  _turretTransform: {fileID: 5267248891490517249, guid: 00000000000000000000000000000000, type: 0}
-  _muzzlePoint: {fileID: 7599956719394627767, guid: 00000000000000000000000000000000, type: 0}
+  _turretTransform: {fileID: 5267248891490517249}
+  _muzzlePoint: {fileID: 7599956719394627767}
   _projectileSpawner: {fileID: 0}
 --- !u!114 &5444760068224439
 MonoBehaviour:
@@ -6046,5 +6046,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86e29e31999d346e33dfab98dc7b367c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  _movement: {fileID: 7063822839208027, guid: 00000000000000000000000000000000, type: 0}
-  _turret: {fileID: 8087678505012858, guid: 00000000000000000000000000000000, type: 0}
+  _movement: {fileID: 7063822839208027}
+  _turret: {fileID: 8087678505012858}

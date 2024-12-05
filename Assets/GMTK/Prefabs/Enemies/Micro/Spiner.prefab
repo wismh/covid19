@@ -406,9 +406,9 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   _config: {fileID: 0}
-  _collider: {fileID: 8186064876739965874, guid: 00000000000000000000000000000000, type: 0}
-  _rigidbody2D: {fileID: 5885864881155109425, guid: 00000000000000000000000000000000, type: 0}
-  _spriteRenderer: {fileID: 3887510497326138053, guid: 00000000000000000000000000000000, type: 0}
+  _collider: {fileID: 8186064876739965874}
+  _rigidbody2D: {fileID: 5885864881155109425}
+  _spriteRenderer: {fileID: 3887510497326138053}
   _damageMaterial: {fileID: 2100000, guid: ff1c34b5819982642a8c9b8f51409db0, type: 2}
   _bulletSpawnPoint: {fileID: 0}
   _attackAudioSource: {fileID: 0}

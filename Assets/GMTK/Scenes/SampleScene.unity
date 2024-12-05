@@ -3875,7 +3875,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1280967601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5744,12 +5744,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cb1e472516ff3658e5c71490521cb9b, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  _healthBarFilled: {fileID: 1795476834, guid: 00000000000000000000000000000000, type: 0}
-  _armorBarFilled: {fileID: 955697284, guid: 00000000000000000000000000000000, type: 0}
-  _experienceBarFilled: {fileID: 1754054743, guid: 00000000000000000000000000000000, type: 0}
-  _levelText: {fileID: 1661960495, guid: 00000000000000000000000000000000, type: 0}
-  _timerText: {fileID: 123938979, guid: 00000000000000000000000000000000, type: 0}
-  _statisticsText: {fileID: 383426139, guid: 00000000000000000000000000000000, type: 0}
+  _healthBarFilled: {fileID: 1795476834}
+  _armorBarFilled: {fileID: 955697284}
+  _experienceBarFilled: {fileID: 1754054743}
+  _levelText: {fileID: 1661960495}
+  _timerText: {fileID: 123938979}
+  _statisticsText: {fileID: 383426139}
 --- !u!114 &642187733
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5774,7 +5774,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2752df0c1d7e5fe29ce03bee4d4fb58f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  _messageText: {fileID: 873521873, guid: 00000000000000000000000000000000, type: 0}
+  _messageText: {fileID: 873521873}
   _playerDiedMessage: You Died
   _allCellsDiedMessage: All Cells Have Died
 --- !u!114 &928471605
@@ -5789,7 +5789,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c2f8751ef2c7ee540a32fa06eeb53e3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  _promptCanvas: {fileID: 989848342, guid: 00000000000000000000000000000000, type: 0}
+  _promptCanvas: {fileID: 989848342}
   _player: {fileID: 0}
   _targetCell: {fileID: 0}
   _sqrDistanceToActivate: 4
@@ -5924,23 +5924,23 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d5c22d47487850ea2cd8936c6c3da561, type: 2}
   - {fileID: 11400000, guid: 98c921dcd1882fe38da09d3cac821772, type: 2}
   - {fileID: 11400000, guid: e1d09ba18ab9c5c8c40725cd6b177db9, type: 2}
-  _playerMovement: {fileID: 2337103139321944, guid: 00000000000000000000000000000000, type: 0}
-  _playerTurret: {fileID: 5614351604738210, guid: 00000000000000000000000000000000, type: 0}
-  _playerHealth: {fileID: 4696518097923576, guid: 00000000000000000000000000000000, type: 0}
+  _playerMovement: {fileID: 2337103139321944}
+  _playerTurret: {fileID: 5614351604738210}
+  _playerHealth: {fileID: 4696518097923576}
   _cellConfig: {fileID: 11400000, guid: 6421f115f1264b2cd9fd501ae511b7cf, type: 2}
-  _cellSpawner: {fileID: 7016120388211641, guid: 00000000000000000000000000000000, type: 0}
+  _cellSpawner: {fileID: 7016120388211641}
   _macroVirusConfig: {fileID: 11400000, guid: f59d974784a1871b8e9a7e0433a2e966, type: 2}
-  _macroVirusSpawner: {fileID: 5832045637886502, guid: 00000000000000000000000000000000, type: 0}
+  _macroVirusSpawner: {fileID: 5832045637886502}
   _waveScalingConfig: {fileID: 11400000, guid: c526b4c270a5ed59980fd1bd36c061eb, type: 2}
   _worldScaleConfig: {fileID: 11400000, guid: e73d57b41d53b054fde896015e439bb3, type: 2}
-  _worldCamera: {fileID: 519420031, guid: 00000000000000000000000000000000, type: 0}
-  _playerVisualRoot: {fileID: 4435939539474040, guid: 00000000000000000000000000000000, type: 0}
-  _playerCollider: {fileID: 6579931932917122, guid: 00000000000000000000000000000000, type: 0}
+  _worldCamera: {fileID: 519420031}
+  _playerVisualRoot: {fileID: 4435939539474040}
+  _playerCollider: {fileID: 6579931932917122}
   _gameAudioCatalog: {fileID: 11400000, guid: 6a6ed9b10a11e75477ad69ca586ecfc5, type: 2}
-  _hudScreen: {fileID: 817364529, guid: 00000000000000000000000000000000, type: 0}
-  _upgradeScreen: {fileID: 642187733, guid: 00000000000000000000000000000000, type: 0}
-  _gameOverScreen: {fileID: 355982164, guid: 00000000000000000000000000000000, type: 0}
-  _cellProximityPrompt: {fileID: 928471605, guid: 00000000000000000000000000000000, type: 0}
+  _hudScreen: {fileID: 817364529}
+  _upgradeScreen: {fileID: 642187733}
+  _gameOverScreen: {fileID: 355982164}
+  _cellProximityPrompt: {fileID: 928471605}
   _cellProximityPollIntervalSeconds: 0.2
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
