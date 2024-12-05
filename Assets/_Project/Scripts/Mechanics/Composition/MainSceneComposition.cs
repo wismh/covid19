@@ -45,9 +45,10 @@ namespace _Project.Mechanics.Composition
     ///
     /// --- Stage 6 will place this in the scene; Stage 2 only builds it (pure C#, per the phase brief) ---
     /// Every reference below is a `[SerializeField]` a human assigns once this component sits on a GameObject in
-    /// SampleScene (Stage 6) - none are assigned here, none are `[Inject]`-resolved except the four genuinely
-    /// Zenject-bound platform services (verified against ProjectContextInstaller.cs / UiInstaller.cs - see the
-    /// `Construct` method's own doc comment). No prefab/.scene file is touched by this stage.
+    /// SampleScene (Stage 6) - none are assigned here, none are `[Inject]`-resolved except the three genuinely
+    /// Zenject-bound platform services (verified against ProjectContextInstaller.cs - see the `Construct`
+    /// method's own doc comment, including its "SceneContext correction" section covering `IScreenManager`,
+    /// which is NOT one of the three). No prefab/.scene file is touched by this stage.
     ///
     /// --- Execution order: everything happens in Awake(), not Start() ---
     /// CellSpawner.Start() spawns 20 cells immediately (see its own doc comment: "Deferred to Start() ... so
@@ -98,11 +99,14 @@ namespace _Project.Mechanics.Composition
         [Header("Cell-proximity polling (see class doc comment's \"CellProximityPrompt polling\" section)")]
         [SerializeField] private float _cellProximityPollIntervalSeconds = 0.2f;
 
-        // --- Zenject-bound platform services (verified against ProjectContextInstaller.cs / UiInstaller.cs) ---
+        // --- Zenject-bound platform services (verified against ProjectContextInstaller.cs) ---
         private IAudioSystem _audioSystem;
         private IGameSaveService _gameSaveService;
-        private IScreenManager _screenManager;
         private GlobalGameStateMachine _stateMachine;
+
+        // --- NOT Zenject-bound, despite UiInstaller.cs existing to bind it - see Construct's doc comment's
+        // "SceneContext correction" section. Built by hand in Awake() instead. ---
+        private IScreenManager _screenManager;
 
         // --- Hand-composed Mechanics/* POCOs, built in Awake() ---
         private PlayerStatsService _playerStats;
@@ -121,29 +125,52 @@ namespace _Project.Mechanics.Composition
         private CancellationTokenSource _lifetimeCts;
 
         /// <summary>
-        /// The only four types actually bound in Zenject's container this class needs, confirmed by reading
-        /// ProjectContextInstaller.cs and UiInstaller.cs directly rather than assuming: `IAudioSystem`
-        /// (AudioSystemInstaller), `IGameSaveService` (GameSaveModuleInstaller -&gt; GameSaveService),
-        /// `IScreenManager` (UiInstaller -&gt; BaseScreenManager), `GlobalGameStateMachine` (bound directly in
-        /// ProjectContextInstaller, needed here only to hand to GameOverScreen.Construct - see that call below).
-        /// Every OTHER type this class touches (PlayerConfig, CellConfig, MacroVirusConfig, WorldScaleConfig,
-        /// WaveScalingConfig, GameAudioCatalog, UpgradeDefinition) is a ScriptableObject asset assigned via
-        /// `[SerializeField]` instead, per REFACTORING_PLAN.md section 4 - Mechanics/* configs are not Zenject
-        /// bindings in this project (unlike some `td-over-unity` setups that DO bind config SOs).
+        /// The three types actually bound in Zenject's container this class needs, confirmed by reading
+        /// ProjectContextInstaller.cs directly rather than assuming: `IAudioSystem` (AudioSystemInstaller),
+        /// `IGameSaveService` (GameSaveModuleInstaller -&gt; GameSaveService), `GlobalGameStateMachine` (bound
+        /// directly in ProjectContextInstaller, needed here only to hand to GameOverScreen.Construct - see that
+        /// call below). Every OTHER type this class touches (PlayerConfig, CellConfig, MacroVirusConfig,
+        /// WorldScaleConfig, WaveScalingConfig, GameAudioCatalog, UpgradeDefinition) is a ScriptableObject asset
+        /// assigned via `[SerializeField]` instead, per REFACTORING_PLAN.md section 4 - Mechanics/* configs are
+        /// not Zenject bindings in this project (unlike some `td-over-unity` setups that DO bind config SOs).
+        ///
+        /// --- SceneContext correction (found during Stage 6, applies retroactively to this Stage 2 class) ---
+        /// This method is a plain `[Inject]`-tagged method, which Zenject only calls automatically for objects
+        /// that a `SceneContext` (or another container) actually injects. Checked both local reference projects
+        /// this migration cites (`C:\Projects\Lumenwake\template` and `C:\Projects\Lumenwake\td-over-unity`) -
+        /// grepping every `.unity` scene file in both for "SceneContext" returns zero matches in either project.
+        /// Neither uses one; `td-over-unity`'s own `MainSceneView.BuildArena()` composition root documents why in
+        /// its own source comment - no SceneContext exists, so gameplay/UI wiring there is hand-composed instead
+        /// of Zenject-injected, exactly the same shape this class already takes for every Mechanics/* POCO. This
+        /// project follows the same precedent: no SceneContext is built for Phase 7, and `Awake()` below
+        /// self-injects via `ProjectContext.Instance.Container.Inject(this)` (a documented, safe-to-call-anytime
+        /// static accessor - `ProjectContext.Instance` lazily bootstraps itself on first access if not already
+        /// running, per `Assets/Plugins/Zenject/Source/Install/Contexts/ProjectContext.cs`) instead of relying on
+        /// a SceneContext to call this method automatically. `IScreenManager` was dropped from this method's
+        /// parameters entirely because nothing binds it without `UiInstaller.InstallBindings()` actually running,
+        /// and nothing runs a scene-placed `MonoInstaller` without a SceneContext either - see
+        /// `BuildScreenManager()`'s own doc comment for how `_screenManager` is built instead.
+        /// `Assets/_Project/Scripts/UI/UiInstaller.cs` (Phase 1) is consequently unused/dead code under this
+        /// architecture - left in place, not deleted, per this migration's "disable/leave, don't delete yet" rule.
         /// </summary>
         [Inject]
-        public void Construct(IAudioSystem audioSystem, IGameSaveService gameSaveService, IScreenManager screenManager, GlobalGameStateMachine stateMachine)
+        public void Construct(IAudioSystem audioSystem, IGameSaveService gameSaveService, GlobalGameStateMachine stateMachine)
         {
             _audioSystem = audioSystem;
             _gameSaveService = gameSaveService;
-            _screenManager = screenManager;
             _stateMachine = stateMachine;
         }
 
         private void Awake()
         {
+            // See Construct's doc comment "SceneContext correction" section - no SceneContext exists in this
+            // project (matching both local reference projects), so nothing calls [Inject] methods on scene
+            // objects automatically. Self-inject via the lazily-bootstrapping ProjectContext singleton instead.
+            Zenject.ProjectContext.Instance.Container.Inject(this);
+
             _lifetimeCts = new CancellationTokenSource();
 
+            BuildScreenManager();
             BuildMechanicsPocos();
             ConstructSpawners();
             ConstructScreens();
@@ -187,6 +214,28 @@ namespace _Project.Mechanics.Composition
                 _playerHealth.OnDied -= HandleGameOver;
 
             _gameAudioService?.Dispose();
+        }
+
+        // --- 0. Screen manager - hand-built, NOT resolved from Zenject ---
+        //
+        // Old (Stage 2, before the Stage 6 SceneContext correction): `[Inject]`-resolved `IScreenManager`,
+        // assuming `UiInstaller.InstallBindings()` (Assets/_Project/Scripts/UI/UiInstaller.cs, Phase 1) had run
+        // somewhere. It never does - nothing in this project loads a Zenject `SceneContext`, and a scene-placed
+        // `MonoInstaller` only runs if a `SceneContext` is configured to run it (see `Construct`'s doc comment).
+        // `BaseScreenManager`'s constructor (`Assets/_Lumenwake/Scripts/Runtime/UIModule/BaseScreenManager.cs`)
+        // is public and takes a plain `List<BaseScreen>` - exactly the shape `UiInstaller` would have passed it,
+        // so this method reproduces that same construction by hand instead, mirroring how every other
+        // Mechanics/* dependency in this class is already hand-composed rather than Zenject-resolved.
+
+        private void BuildScreenManager()
+        {
+            var screens = new List<BaseScreen>();
+
+            if (_hudScreen != null) screens.Add(_hudScreen);
+            if (_upgradeScreen != null) screens.Add(_upgradeScreen);
+            if (_gameOverScreen != null) screens.Add(_gameOverScreen);
+
+            _screenManager = new BaseScreenManager(screens);
         }
 
         // --- 1. Hand-composed Mechanics/* POCOs (REFACTORING_PLAN.md section 4's manual-composition rule) ---
