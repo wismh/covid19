@@ -170,6 +170,8 @@ namespace _Project.Mechanics.Composition
 
             _lifetimeCts = new CancellationTokenSource();
 
+            ResolvePlayerComponentReferences();
+
             BuildScreenManager();
             BuildMechanicsPocos();
             ConstructSpawners();
@@ -230,6 +232,37 @@ namespace _Project.Mechanics.Composition
         // is public and takes a plain `List<BaseScreen>` - exactly the shape `UiInstaller` would have passed it,
         // so this method reproduces that same construction by hand instead, mirroring how every other
         // Mechanics/* dependency in this class is already hand-composed rather than Zenject-resolved.
+
+        /// <summary>
+        /// Workaround for a reproducible Unity engine quirk, confirmed via Unity CLI Play Mode testing
+        /// (2026-09-11, both directly and through the real Menu -&gt; SampleScene flow): when this scene loads
+        /// through a runtime <see cref="UnityEngine.SceneManagement.SceneManager.LoadScene(string)"/> call (the
+        /// actual gameplay path - Menu's "Play" button, ported in MenuManager.LoadGameScene) rather than being
+        /// opened directly in the Editor, the direct <c>[SerializeField]</c> "stripped" PrefabInstance
+        /// placeholder references this class holds to <see cref="PlayerMovement"/>/<see cref="PlayerTurret"/>/
+        /// <see cref="PlayerHealth"/> (custom MonoBehaviour types) deserialize as null, while references to
+        /// built-in component types on the exact same Player GameObject (<see cref="_playerCollider"/>:
+        /// BoxCollider2D, <see cref="_playerVisualRoot"/>: Transform) resolve correctly every time, through
+        /// either load path. Cause not fully root-caused (looks like a Unity-internal PrefabInstance-override
+        /// resolution quirk specific to custom-script MonoBehaviour references under a runtime scene load), but
+        /// re-resolving the three custom-script references via GetComponent off the reliably-resolving
+        /// <see cref="_playerCollider"/> sidesteps it entirely - the same "sibling-component GetComponent"
+        /// idiom CellSpawner.SpawnCell already uses for freshly-instantiated cells. Only fills in whichever
+        /// fields the direct wiring left null, so a correctly-resolved direct reference (e.g. the Editor-direct-
+        /// Play path, where it already works) is left untouched.
+        /// </summary>
+        private void ResolvePlayerComponentReferences()
+        {
+            if (_playerCollider == null)
+                return;
+
+            if (_playerMovement == null)
+                _playerMovement = _playerCollider.GetComponent<PlayerMovement>();
+            if (_playerTurret == null)
+                _playerTurret = _playerCollider.GetComponent<PlayerTurret>();
+            if (_playerHealth == null)
+                _playerHealth = _playerCollider.GetComponent<PlayerHealth>();
+        }
 
         private void BuildScreenManager()
         {
