@@ -52,6 +52,17 @@ namespace _Project.Mechanics.Player
             _stats = stats;
         }
 
+        /// <summary>
+        /// Phase 7 testing fix (2026-09-11): Player.prefab never had a GmtkBulletManagerProjectileSpawner
+        /// component, so this field was always null in the scene and Fire() silently no-op'd (its own
+        /// "if (_projectileSpawner != null)" guard, meant for editor-authoring gaps, was masking a real one).
+        /// A composition root now resolves the sibling spawner component and wires it in via this setter.
+        /// </summary>
+        public void SetProjectileSpawner(GmtkBulletManagerProjectileSpawner spawner)
+        {
+            _projectileSpawner = spawner;
+        }
+
         private void Awake()
         {
             _inputActions = new GMTK.Actions();

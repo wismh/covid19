@@ -108,6 +108,11 @@ namespace _Project.Mechanics.Composition
         // "SceneContext correction" section. Built by hand in Awake() instead. ---
         private IScreenManager _screenManager;
 
+        // Resolved off _playerCollider by ResolvePlayerComponentReferences(), same as PlayerMovement/PlayerTurret/
+        // PlayerHealth - see that method's doc comment. Wired into _playerTurret and, once BulletManager is
+        // resolvable (Start(), see its own doc comment), into itself.
+        private GmtkBulletManagerProjectileSpawner _projectileSpawner;
+
         // --- Hand-composed Mechanics/* POCOs, built in Awake() ---
         private PlayerStatsService _playerStats;
         private CellRegistry _cellRegistry;
@@ -196,6 +201,52 @@ namespace _Project.Mechanics.Composition
             PollNearestCellAsync(_lifetimeCts.Token).Forget();
         }
 
+        /// <summary>
+        /// Phase 7 testing fix (2026-09-11): wires the old-GMTK-ServiceLocator dependencies this composition
+        /// root needs (<see cref="GMTK.CameraFollow"/>, <see cref="GMTK.BulletManager"/>,
+        /// <see cref="GMTK.Services.PlayerStats"/>) - all three still fully active/registering themselves in
+        /// SampleScene.unity (deliberately kept running per Phase 5's "keep the old game playable" rule), each
+        /// registering itself via GMTK.Services.ServiceLocator in its own Awake() (PlayerStats itself is
+        /// registered by the old BootstrapState, Assets/GMTK/Scripts/GameStates/BootstrapState.cs, which still
+        /// runs alongside the new _Project.Bootstrap flow). Deliberately done in Start(), not Awake(), even
+        /// though everything else in this class runs in Awake() (see this class's own doc comment, "Execution
+        /// order" section): Unity only guarantees Awake() order WITHIN a single object's Awake() call, not
+        /// BETWEEN different GameObjects' Awake() calls, so reading ServiceLocator here from this class's own
+        /// Awake() risked running before these services had registered themselves. Start() is safe because Unity
+        /// guarantees every object's Awake() completes before ANY object's Start() runs.
+        ///
+        /// Camera: old PlayerFactory.Start() (Assets/GMTK/Scripts/Behaviors/Player/PlayerFactory.cs) set
+        /// CameraFollow.Target after spawning the runtime player - PlayerFactory has been fully disabled since
+        /// Phase 7 Stage 6 (Player.prefab is now placed statically instead), so nothing has set Target since,
+        /// and the camera never moved.
+        ///
+        /// Shooting: see PlayerTurret.SetProjectileSpawner/GmtkBulletManagerProjectileSpawner.SetBulletManager's
+        /// doc comments - Player.prefab never had a GmtkBulletManagerProjectileSpawner component before this
+        /// testing round, so Fire() was a silent no-op regardless of BulletManager's own state.
+        ///
+        /// PlayerStats.Player: old PlayerFactory.CreatePlayer() also did `_playerStats.Player = instance;`
+        /// (the SAME line disabling PlayerFactory broke). Discovered indirectly, not from the user's original
+        /// report: fixing shooting let a live Fire() actually hit a GMTK.Medical pickup for the first time,
+        /// whose explosion spawns GMTK.Vitamin children that fly toward `_playerStats.Player.position` every
+        /// frame (Vitamin.Update()) - a NullReferenceException storm that was previously unreachable because
+        /// nothing could ever damage a Medical without working projectiles. GMTK.UI.AdviceDialog also reads
+        /// this same field but already null-guards it (`if (_playerStats.Player == null) return;`), so it was
+        /// never at risk - Vitamin was the one caller without a guard. Set here rather than patching Vitamin
+        /// itself, since any other not-yet-triggered old caller of PlayerStats.Player gets fixed by the same
+        /// one assignment instead of being chased down one crash report at a time.
+        /// </summary>
+        private void Start()
+        {
+            if (GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.CameraFollow cameraFollow) && _playerMovement != null)
+                cameraFollow.Target = _playerMovement.transform;
+
+            if (_projectileSpawner != null && GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.BulletManager bulletManager))
+                _projectileSpawner.SetBulletManager(bulletManager);
+
+            if (GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.Services.PlayerStats legacyPlayerStats) && _playerMovement != null)
+                legacyPlayerStats.Player = _playerMovement.transform;
+        }
+
         private void OnDestroy()
         {
             _lifetimeCts?.Cancel();
@@ -245,11 +296,15 @@ namespace _Project.Mechanics.Composition
         /// BoxCollider2D, <see cref="_playerVisualRoot"/>: Transform) resolve correctly every time, through
         /// either load path. Cause not fully root-caused (looks like a Unity-internal PrefabInstance-override
         /// resolution quirk specific to custom-script MonoBehaviour references under a runtime scene load), but
-        /// re-resolving the three custom-script references via GetComponent off the reliably-resolving
+        /// re-resolving these custom-script references via GetComponent off the reliably-resolving
         /// <see cref="_playerCollider"/> sidesteps it entirely - the same "sibling-component GetComponent"
         /// idiom CellSpawner.SpawnCell already uses for freshly-instantiated cells. Only fills in whichever
         /// fields the direct wiring left null, so a correctly-resolved direct reference (e.g. the Editor-direct-
-        /// Play path, where it already works) is left untouched.
+        /// Play path, where it already works) is left untouched. Also resolves
+        /// <see cref="_projectileSpawner"/> here (same sibling-component reasoning) even though nothing ever
+        /// wires it directly - Player.prefab only gained the GmtkBulletManagerProjectileSpawner component as
+        /// part of this same testing round (see PlayerTurret.SetProjectileSpawner's doc comment), so there was
+        /// never a "direct wiring" path for it to begin with.
         /// </summary>
         private void ResolvePlayerComponentReferences()
         {
@@ -262,6 +317,8 @@ namespace _Project.Mechanics.Composition
                 _playerTurret = _playerCollider.GetComponent<PlayerTurret>();
             if (_playerHealth == null)
                 _playerHealth = _playerCollider.GetComponent<PlayerHealth>();
+            if (_projectileSpawner == null)
+                _projectileSpawner = _playerCollider.GetComponent<GmtkBulletManagerProjectileSpawner>();
         }
 
         private void BuildScreenManager()
@@ -338,7 +395,15 @@ namespace _Project.Mechanics.Composition
                 _playerMovement.Construct(_playerConfig, _playerStats);
 
             if (_playerTurret != null)
+            {
                 _playerTurret.Construct(_playerConfig, _playerStats);
+
+                // See PlayerTurret.SetProjectileSpawner's doc comment - Player.prefab had no
+                // GmtkBulletManagerProjectileSpawner at all before this testing round, so shooting was a silent
+                // no-op. _projectileSpawner itself is resolved in ResolvePlayerComponentReferences(); its own
+                // BulletManager dependency is wired later, in Start() (see that method's doc comment).
+                _playerTurret.SetProjectileSpawner(_projectileSpawner);
+            }
 
             if (_playerHealth != null)
                 _playerHealth.Construct(_playerConfig, _playerStats);
@@ -367,6 +432,11 @@ namespace _Project.Mechanics.Composition
             {
                 _cellProximityPrompt.Construct(_worldScaleController);
                 _cellProximityPrompt.SetContext(_worldScaleTransitionContext);
+
+                // See CellProximityPrompt.SetPlayer's doc comment - nothing wired _player in SampleScene.unity,
+                // so the proximity prompt/E-key handler were silently inert.
+                if (_playerMovement != null)
+                    _cellProximityPrompt.SetPlayer(_playerMovement.transform);
             }
         }
 

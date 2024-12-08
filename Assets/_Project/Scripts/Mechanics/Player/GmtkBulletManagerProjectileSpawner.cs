@@ -24,6 +24,17 @@ namespace _Project.Mechanics.Player
     {
         [SerializeField] private GMTK.BulletManager _bulletManager;
 
+        /// <summary>
+        /// Phase 7 testing fix (2026-09-11): this component didn't exist on Player.prefab at all (shooting was a
+        /// silent no-op - see PlayerTurret.SetProjectileSpawner's doc comment). BulletManager lives in the scene,
+        /// not the prefab, so it can't be wired as a baked prefab reference; a composition root resolves it via
+        /// GMTK.Services.ServiceLocator (BulletManager.Awake() registers itself there) and wires it in here.
+        /// </summary>
+        public void SetBulletManager(GMTK.BulletManager bulletManager)
+        {
+            _bulletManager = bulletManager;
+        }
+
         public void SpawnProjectile(Vector3 position, Vector3 direction)
         {
             _bulletManager.SpawnBullet(position, direction);

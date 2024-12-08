@@ -31,12 +31,8 @@ namespace _Project.Mechanics.Viruses.Macro
     /// pooled SetActive(false) later per REFACTORING_PLAN.md section 4) are left to whatever listens to
     /// <see cref="OnKilled"/>/<see cref="OnPenetratedIntoCell"/>, not decided here.
     ///
-    /// Not ported (out of scope for pure-code Phase 3, no prefab/hierarchy exists to reference): old
-    /// VirusController.Update() reset a child sprite transform's rotation every frame
-    /// (`transform.GetChild(0).transform.rotation = Quaternion.Euler(0,0,0);`, a billboard-style
-    /// counter-rotation so the visual doesn't spin with the body) and played damage-flash/death
-    /// animations+audio via Animator/AudioSource. A future visuals component (mirroring CellVisuals) can restore
-    /// these once a macro-virus prefab exists to wire it to.
+    /// Damage-flash/death animations+audio via Animator/AudioSource are still not ported - no prefab has an
+    /// Animator wired for it yet. A future visuals component (mirroring CellVisuals) can restore that.
     /// </summary>
     public sealed class MacroVirusController : MonoBehaviour, GMTK.IDamageable, IDriftBody
     {
@@ -106,6 +102,15 @@ namespace _Project.Mechanics.Viruses.Macro
         {
             transform.position += Time.deltaTime * _velocity;
             transform.Rotate(0f, 0f, Time.deltaTime * _angularVelocity);
+
+            // Phase 7 testing fix (2026-09-11): old VirusController.Update() also did
+            // `transform.GetChild(0).transform.rotation = Quaternion.Euler(0,0,0);` every frame - a billboard-
+            // style counter-rotation so the visible sprite stays upright while the body (and its collider) still
+            // drifts/turns freely. Not ported in Phase 3 (no prefab existed yet to reference); BigBob.prefab/
+            // PinkGlist.prefab (Phase 7 Stage 3) always wire _spriteRenderer, so this restores it against that
+            // reference directly instead of a magic-index GetChild(0).
+            if (_spriteRenderer != null)
+                _spriteRenderer.transform.rotation = Quaternion.identity;
         }
 
         private void FixedUpdate()
