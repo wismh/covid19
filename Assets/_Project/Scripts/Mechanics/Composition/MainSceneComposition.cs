@@ -126,6 +126,7 @@ namespace _Project.Mechanics.Composition
         private Action<Vector3, int> _handleCellDied;
         private Action _handlePauseMacroSpawning;
         private Action _handleResumeMacroSpawning;
+        private Action<MacroVirusController> _handleVirusRegistered;
 
         private CancellationTokenSource _lifetimeCts;
 
@@ -269,6 +270,9 @@ namespace _Project.Mechanics.Composition
 
             if (_playerHealth != null)
                 _playerHealth.OnDied -= HandleGameOver;
+
+            if (_macroVirusRegistry != null)
+                _macroVirusRegistry.OnRegistered -= _handleVirusRegistered;
 
             _gameAudioService?.Dispose();
         }
@@ -463,6 +467,23 @@ namespace _Project.Mechanics.Composition
 
             if (_playerHealth != null)
                 _playerHealth.OnDied += HandleGameOver;
+
+            // Phase 7 testing fix (2026-09-11): XP-granting was never wired at all - MacroVirusController's own
+            // doc comment names this exact gap ("XP-granting is a composition-root concern for a later phase"),
+            // and this composition root never followed up on it. Old VirusController.Damage()'s death branch
+            // called `_playerStats.AddExperience()` directly; this is the equivalent for the new architecture.
+            // Subscribes to the REGISTRY's OnRegistered (not each spawner's per-instance OnKilled directly,
+            // which this class has no access to until a virus already exists) so every macro virus - spawned
+            // fresh, or as a cell-death replacement wave - gets exactly one XP-on-kill subscription. Deliberately
+            // only OnKilled, not OnPenetratedIntoCell - old code never granted XP for a virus successfully
+            // penetrating a cell, only for killing one; MacroVirusSpawner.SpawnVirus() already subscribes both
+            // events to its own HandleVirusRemoved for unregister/destroy, this is an independent, additional
+            // subscription for the XP side effect alone. No matching per-virus unsubscribe on death: the
+            // subscribed virus instance is destroyed by MacroVirusSpawner immediately after (HandleVirusRemoved),
+            // so the closure has nothing left to fire on - only the registry-level OnRegistered subscription
+            // itself needs symmetric cleanup, done in OnDestroy() below.
+            _handleVirusRegistered = virus => virus.OnKilled += () => _playerStats.AddExperience();
+            _macroVirusRegistry.OnRegistered += _handleVirusRegistered;
 
             // --- NOT wired here: CellInfectionState.OnVirusCountChanged -> InCellVirusSpawner.SetVirusesCount ---
             // Deliberately absent, not an oversight - see class doc comment's "per-cell in-cell-virus wiring"

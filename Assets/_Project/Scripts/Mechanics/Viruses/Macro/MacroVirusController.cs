@@ -31,8 +31,11 @@ namespace _Project.Mechanics.Viruses.Macro
     /// pooled SetActive(false) later per REFACTORING_PLAN.md section 4) are left to whatever listens to
     /// <see cref="OnKilled"/>/<see cref="OnPenetratedIntoCell"/>, not decided here.
     ///
-    /// Damage-flash/death animations+audio via Animator/AudioSource are still not ported - no prefab has an
-    /// Animator wired for it yet. A future visuals component (mirroring CellVisuals) can restore that.
+    /// Damage/death AUDIO is ported (see <see cref="_audioSources"/>'s doc comment, Phase 7 testing fix). The
+    /// Animator half (old: `_animator.Play("Base Layer.Died")` on death) is still NOT ported - BigBob.prefab/
+    /// PinkGlist.prefab do have an Animator Controller, but wiring it up needs the actual clip/state names
+    /// verified in the Editor first, not guessed at blind. A future visuals component (mirroring CellVisuals)
+    /// can restore that.
     /// </summary>
     public sealed class MacroVirusController : MonoBehaviour, GMTK.IDamageable, IDriftBody
     {
@@ -64,6 +67,14 @@ namespace _Project.Mechanics.Viruses.Macro
 
         private CancellationTokenSource _lifetimeCts;
 
+        // Old: VirusController._audioSources = GetComponents<AudioSource>() (root-only, matching Animator/
+        // AudioSource layout on BigBob.prefab/PinkGlist.prefab); [0].Play() on every hit (AnimationOnDamage),
+        // [1].Play() on death (AnimationOnDied). Neither prefab's AudioSource count changed since old
+        // VirusController was removed (Phase 7 testing fix, 2026-09-11 - see that removal's commit message), so
+        // the same array-index pairing still holds; resolved here rather than adding two new [SerializeField]s
+        // to avoid re-wiring both prefabs for something GetComponents already finds unambiguously.
+        private AudioSource[] _audioSources;
+
         public bool IsAlive => _isAlive;
 
         /// <summary>Raised on death by damage (old: VirusController.Damage(), the `_health &lt;= 0` branch).</summary>
@@ -82,6 +93,7 @@ namespace _Project.Mechanics.Viruses.Macro
         private void Awake()
         {
             _lifetimeCts = new CancellationTokenSource();
+            _audioSources = GetComponents<AudioSource>();
         }
 
         private void Start()
@@ -181,8 +193,20 @@ namespace _Project.Mechanics.Viruses.Macro
             Impulse(attackDirection);
             PlayDamageFlashAsync().Forget();
 
+            // Old: AnimationOnDamage() -> `_audioSources[0].Play();`, unconditional (not tied to the material-
+            // flash's own null-guards on _spriteRenderer/_damageMaterial - it's a separate concern).
+            PlayAudioIfAvailable(0);
+
             if (_health <= 0)
                 HandleDeathAsync().Forget();
+        }
+
+        /// <summary>Mirrors old VirusController's `_audioSources[index].Play()` calls (AnimationOnDamage: index
+        /// 0, AnimationOnDied: index 1) - see <see cref="_audioSources"/>'s own doc comment.</summary>
+        private void PlayAudioIfAvailable(int index)
+        {
+            if (_audioSources != null && index < _audioSources.Length && _audioSources[index] != null)
+                _audioSources[index].Play();
         }
 
         /// <summary>Old: VirusController.Damage() death branch + AnimationOnDied() coroutine (0.2s delay before
@@ -202,6 +226,13 @@ namespace _Project.Mechanics.Viruses.Macro
             {
                 return;
             }
+
+            // Old: AnimationOnDied() -> `_animator.Play("Base Layer.Died"); _audioSources[1].Play();`. Only the
+            // audio half is restored here - the Animator half stays a documented, unported gap (see this class's
+            // own doc comment) since no _Project code currently drives BigBob/PinkGlist's Animator Controller and
+            // wiring that up correctly needs verifying the actual clip/state names in the Editor, not something
+            // to guess at blind.
+            PlayAudioIfAvailable(1);
 
             OnKilled?.Invoke();
         }

@@ -40,6 +40,12 @@ namespace _Project.Mechanics.Player
         private float _lastFireTime = float.NegativeInfinity;
         private float _currentReloadTime;
 
+        // Old: PlayerTurretController.Start() -> `_audioSource = _turret.GetComponent<AudioSource>();`, played
+        // in Update() on every shot. Player.prefab's "Turret" child (= _turretTransform's GameObject) still
+        // carries that same AudioSource - resolved here instead of adding a new [SerializeField] since the
+        // reference is already reachable off an existing one.
+        private AudioSource _fireAudioSource;
+
         /// <summary>0 (just fired) to 1 (ready to fire) - for a future UI screen to bind a reload indicator to.</summary>
         public float ReloadProgress01 => _currentReloadTime <= 0f
             ? 1f
@@ -66,6 +72,9 @@ namespace _Project.Mechanics.Player
         private void Awake()
         {
             _inputActions = new GMTK.Actions();
+
+            if (_turretTransform != null)
+                _fireAudioSource = _turretTransform.GetComponent<AudioSource>();
         }
 
         private void OnEnable()
@@ -113,6 +122,10 @@ namespace _Project.Mechanics.Player
         {
             if (_projectileSpawner != null)
                 _projectileSpawner.SpawnProjectile(_muzzlePoint.position, _turretTransform.right);
+
+            // Old: PlayerTurretController.Update() -> `_audioSource.Play();`, unconditionally on every shot.
+            if (_fireAudioSource != null)
+                _fireAudioSource.Play();
 
             _lastFireTime = Time.time;
 

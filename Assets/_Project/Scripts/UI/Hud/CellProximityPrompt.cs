@@ -64,7 +64,16 @@ namespace _Project.UI.Hud
         // distance (`_cellManager.FindNearToPoint` returns sqrDistance, never sqrt'd before the `<` check) -
         // i.e. despite its name, the old field was already a squared-distance threshold, not a linear one. Named
         // accurately here instead of reproducing the misleading old name.
-        [SerializeField] private float _sqrDistanceToActivate = 4f;
+        //
+        // Value bumped 4 -> 10 (2026-09-11 testing round): the ported value (4, i.e. a 2-unit linear threshold)
+        // was copied verbatim from the old scene's AdviceDialog instance, but is unreachable with THIS project's
+        // current Player/Cell.prefab collider sizes - measured live via Unity CLI (Physics2D.Distance, walking
+        // the player's BoxCollider2D into a cell's PolygonCollider2D from 5 angles until they touch): center-to-
+        // center distance at the moment of contact ranges ~2.27-2.63 units (sqrMagnitude ~5.1-6.9), already past
+        // the old 2-unit threshold from every angle tested - the prompt could never activate no matter how close
+        // the player got. 10 (~3.16 units) clears the worst-case measured contact distance with comfortable
+        // margin so the prompt reliably shows once the player is genuinely standing next to a cell.
+        [SerializeField] private float _sqrDistanceToActivate = 10f;
 
         private WorldScaleController _worldScale;
         private WorldScaleTransitionContext _context;
