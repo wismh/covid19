@@ -4,6 +4,8 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Zenject;
 using _Project.Mechanics.Shared;
+using _Project.Mechanics.Viruses.InCell;
+using _Project.Mechanics.Waves;
 
 namespace _Project.Mechanics.Cells
 {
@@ -65,15 +67,29 @@ namespace _Project.Mechanics.Cells
 
         private CellConfig _cellConfig;
         private CellRegistry _registry;
+        private IPlayerTargetProvider _playerTargetProvider;
+        private WaveScalingConfig _waveScalingConfig;
 
         private readonly List<Vector3> _spawnedPositions = new();
         private CancellationTokenSource _lifetimeCts;
 
+        /// <summary>
+        /// Phase 7 testing fix (2026-09-11): added <paramref name="playerTargetProvider"/>/
+        /// <paramref name="waveScalingConfig"/> to wire InCellVirusSpawner - this exact spot was already named as
+        /// the intended seam by this class's own OLD doc comment (see the "per-cell in-cell-virus wiring" note
+        /// further down, now updated) and by MainSceneComposition's "documented gap" trailing comment: "the
+        /// natural place for cellInfectionState.OnVirusCountChanged += inCellVirusSpawner.SetVirusesCount is
+        /// CellSpawner.SpawnCell() itself". User-reported symptom this fixes: entering a cell showed no viruses
+        /// inside it at all - Cell.prefab never had an InCellVirusSpawner component, and even once added, nothing
+        /// constructed or wired one per spawned cell instance.
+        /// </summary>
         [Inject]
-        public void Construct(CellConfig cellConfig, CellRegistry registry)
+        public void Construct(CellConfig cellConfig, CellRegistry registry, IPlayerTargetProvider playerTargetProvider, WaveScalingConfig waveScalingConfig)
         {
             _cellConfig = cellConfig;
             _registry = registry;
+            _playerTargetProvider = playerTargetProvider;
+            _waveScalingConfig = waveScalingConfig;
         }
 
         private void Awake()
@@ -133,6 +149,15 @@ namespace _Project.Mechanics.Cells
             _registry.Register(health, infectionState);
 
             health.OnDied += _ => DestroyCellAfterDelayAsync(instance).Forget();
+
+            // Phase 7 testing fix (2026-09-11) - see Construct's doc comment. _cellInfectionState is wired as a
+            // same-prefab sibling reference directly on Cell.prefab (matching CellHealth's own sibling-reference
+            // idiom for CellInfectionState - no cross-scene dependency, safe to bake into the prefab asset).
+            if (instance.TryGetComponent(out InCellVirusSpawner inCellVirusSpawner))
+            {
+                inCellVirusSpawner.Construct(_playerTargetProvider, _waveScalingConfig);
+                infectionState.OnVirusCountChanged += inCellVirusSpawner.SetVirusesCount;
+            }
         }
 
         private async UniTaskVoid DestroyCellAfterDelayAsync(Transform instance)

@@ -84,6 +84,22 @@ namespace _Project.Mechanics.Cells
         /// `for (i = 0; i &lt; virusCount + 1; ++i) _virusSpawner.SpawnVirus(transform.position)`.</summary>
         public event Action<Vector3, int> OnCellDied;
 
+        /// <summary>
+        /// Phase 7 testing fix (2026-09-11): per-cell infection edge events, added so a composition root can
+        /// mirror them into old GMTK.VirusCellManager (an ObjectManager the old GMTK.Arrow/ArrowController "nearest
+        /// infected cell" indicator reads via FindNearToPoint) - see MainSceneComposition.Start()'s Arrow-bridging
+        /// section. HandleInfectionStarted/HandleInfectionCleared already tracked this internally for the
+        /// aggregate SickCellsCount; these just expose WHICH cell on top of that, the same way OnCellDied exposes
+        /// more than OnAllCellsDied's plain signal.
+        /// </summary>
+        public event Action<CellHealth> OnCellInfected;
+
+        /// <summary>See <see cref="OnCellInfected"/>'s doc comment. Also raised (not just the started/cleared
+        /// pair) when an infected cell dies - see HandleCellDied, which always finds a cell sick per its own
+        /// invariant note - so a mirrored old VirusCellManager entry never outlives its (about to be destroyed)
+        /// Transform.</summary>
+        public event Action<CellHealth> OnCellRecovered;
+
         /// <summary>Old: implicit pairing of CellManager.AddObject(transform) + VirusCellManager (added only once
         /// infected) - here both managers collapse into one Register call since this registry tracks both
         /// "is alive" and "is sick" state on the same entry.</summary>
@@ -94,8 +110,8 @@ namespace _Project.Mechanics.Cells
 
             var entry = new CellEntry(infectionState);
             entry.OnDied = virusCount => HandleCellDied(health, virusCount);
-            entry.OnInfectionStarted = () => HandleInfectionStarted();
-            entry.OnInfectionCleared = () => HandleInfectionCleared();
+            entry.OnInfectionStarted = () => HandleInfectionStarted(health);
+            entry.OnInfectionCleared = () => HandleInfectionCleared(health);
 
             health.OnDied += entry.OnDied;
             if (infectionState != null)
@@ -147,18 +163,20 @@ namespace _Project.Mechanics.Cells
             return nearest != null ? nearest.transform : null;
         }
 
-        private void HandleInfectionStarted()
+        private void HandleInfectionStarted(CellHealth health)
         {
             // Old: CellController.OnAddVirus() -> `if (_virusCount == 0) { _gameStatistics.CellSick(); ... }`
             _sickCellsCount += 1;
             OnStatisticsChanged?.Invoke(LivingCellsCount, _sickCellsCount, _diedCellsCount);
+            OnCellInfected?.Invoke(health);
         }
 
-        private void HandleInfectionCleared()
+        private void HandleInfectionCleared(CellHealth health)
         {
             // Old: CellController.OnDestroyVirus() -> `if (_virusCount == 0) { ...; _gameStatistics.CellRecovered(); }`
             _sickCellsCount = Mathf.Max(0, _sickCellsCount - 1);
             OnStatisticsChanged?.Invoke(LivingCellsCount, _sickCellsCount, _diedCellsCount);
+            OnCellRecovered?.Invoke(health);
         }
 
         private void HandleCellDied(CellHealth health, int virusCountAtDeath)
@@ -179,6 +197,7 @@ namespace _Project.Mechanics.Cells
             _diedCellsCount += 1;
 
             OnStatisticsChanged?.Invoke(LivingCellsCount, _sickCellsCount, _diedCellsCount);
+            OnCellRecovered?.Invoke(health);
 
             // Old: CellController.Die()'s `if (_cellManager.Pool.Count == 0) ... else ...` - see class doc
             // comment's "OnCellDied vs OnAllCellsDied" section.

@@ -27,6 +27,19 @@ namespace _Project.Mechanics.Player
         [SerializeField] private Transform _turretTransform;
         [SerializeField] private Transform _muzzlePoint;
 
+        /// <summary>
+        /// Phase 7 testing fix (2026-09-11): PlayerHealth.HandleDeathAsync's old-code port does `_turret.gameObject
+        /// .SetActive(false)` to hide the turret on death (old: `transform.Find("Turret").gameObject.SetActive
+        /// (false)`). Old code's "Turret" was a CHILD GameObject holding only the turret sub-mesh - disabling it
+        /// hid the visual while the player's own root object (movement, health, everything) stayed alive. This
+        /// PlayerTurret SCRIPT, however, lives on the PLAYER'S ROOT GameObject, not on that child - so
+        /// `_turret.gameObject` (where `_turret` is a PlayerTurret reference) resolves to the whole player, not
+        /// the turret visual. Confirmed live via Unity CLI: killing the player in a cell deactivated the entire
+        /// Player GameObject instantly. Exposes the actual turret child object so PlayerHealth can disable the
+        /// right one.
+        /// </summary>
+        public GameObject TurretVisualObject => _turretTransform != null ? _turretTransform.gameObject : null;
+
         // Typed as the concrete bridge class (not IProjectileSpawner) because Unity can't serialize
         // interface-typed fields for Inspector assignment; it's used through the interface in code below.
         [SerializeField] private GmtkBulletManagerProjectileSpawner _projectileSpawner;

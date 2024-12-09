@@ -38,6 +38,22 @@ namespace GMTK.GameStates
             }
         }
 
+        /// <summary>
+        /// Phase 7 testing fix (2026-09-11): mirrors _worldState from the new _Project.Mechanics.WorldScale.
+        /// WorldScaleController WITHOUT re-running this class's own transition logic below (TransitionIntoMicro/
+        /// MacroWorld, each a full independent DOTween-driven camera/player/cell transition - calling the real
+        /// State setter here would run both the old and the new transition on the same objects at once). Old code
+        /// the new architecture kept running (GMTK.Bullet.Update/OnEnable - scales/slows bullets to 0.3x in the
+        /// micro world) still reads the State getter below, but nothing has updated it since the new
+        /// WorldScaleController took over actually triggering transitions - user-reported symptom: oversized,
+        /// full-speed bullets while inside a cell. A composition root calls this from WorldScaleController.
+        /// OnScaleChanged to keep old readers correct without re-triggering old writers.
+        /// </summary>
+        public void SyncWorldState(WorldState state)
+        {
+            _worldState = state;
+        }
+
         private void TransitionIntoMicroWorld()
         {
             new TransitionIntoMicroWorld()

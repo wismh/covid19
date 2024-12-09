@@ -38,7 +38,12 @@ namespace GMTK.UI
 
         private void OnDestroy()
         {
-            _playerStats.OnExperienceChange -= OnExperienceChange;
+            // Phase 7 testing fix (2026-09-11): m_Enabled: 0 (this component is disabled - see SampleScene.unity's
+            // commit history) blocks Start() but not OnDestroy(), same lifecycle gotcha as Awake() elsewhere in
+            // this migration - _playerStats was always null here since Start() never ran, so this threw on every
+            // scene teardown.
+            if (_playerStats != null)
+                _playerStats.OnExperienceChange -= OnExperienceChange;
         }
 
         private void Update()

@@ -200,6 +200,18 @@ namespace _Project.UI.Hud
             if (_worldScale == null || _context == null)
                 return; // No-op until a composition root supplies both - see class doc comment.
 
+            // Phase 7 testing fix (2026-09-11): a fast/repeated E-press while a transition was still animating
+            // (~TransitionDurationSeconds, WorldScaleConfig) let a second Enter*WorldSafeAsync fire before the
+            // first one's WorldScaleController.CurrentScale flip had landed - WorldScaleController deliberately
+            // throws InvalidOperationException for exactly this overlap (see its own IsTransitioning doc comment:
+            // "a second call while _isTransitioning is true throws instead of silently starting overlapping
+            // DOTween sequences") rather than silently corrupting the transition. Confirmed live via repeated
+            // "InvalidOperationException: ... called while a transition was already in flight" console errors
+            // during manual E-mashing. This is the toggle's job to debounce, not the controller's to swallow -
+            // simplest fix: ignore extra presses entirely while one is already in flight.
+            if (_worldScale.IsTransitioning)
+                return;
+
             if (_isPromptShown)
             {
                 HidePrompt();

@@ -39,20 +39,23 @@ namespace _Project.Mechanics.Player
         /// <summary>Raised once health drops to 0 or below, after the death delay has elapsed.</summary>
         public event Action OnDied;
 
+        /// <summary>
+        /// Phase 7 testing fix (2026-09-11): HP/armor initialization and the OnUpgraded/OnBonusHealthGranted
+        /// subscriptions used to happen in Start(), which reported "HP still 0" in the HUD - MainSceneComposition
+        /// opens HudScreen (whose OnOpen() reads PlayerHealth.Health/MaxHealth for its initial bar fill) from
+        /// its OWN Awake(), and Unity does not guarantee this component's Awake()/Start() run before or after a
+        /// DIFFERENT GameObject's Awake() - only that ALL Awake()s finish before ANY Start(). So HudScreen's
+        /// first read could land before this Start() had ever run, seeing the C# default (0) for _health. Moved
+        /// into Construct() instead: MainSceneComposition.ConstructSpawners() calls this synchronously, before
+        /// ConstructScreens()/OpenScreen(HudScreen) in the same Awake() call - deterministic regardless of any
+        /// cross-GameObject ordering.
+        /// </summary>
         [Inject]
         public void Construct(PlayerConfig config, PlayerStatsService stats)
         {
             _config = config;
             _stats = stats;
-        }
 
-        private void Awake()
-        {
-            _lifetimeCts = new CancellationTokenSource();
-        }
-
-        private void Start()
-        {
             // Fixes the old hardcoded-3 bug: GMTK.PlayerDamageable.Start() did `_health = 3;`, ignoring the
             // serialized `_maxHealth` field entirely (TECHNICAL_AUDIT.md section 5). Starts at the configured
             // base max health instead.
@@ -61,6 +64,11 @@ namespace _Project.Mechanics.Player
 
             _stats.OnUpgraded += HandleUpgraded;
             _stats.OnBonusHealthGranted += HandleBonusHealthGranted;
+        }
+
+        private void Awake()
+        {
+            _lifetimeCts = new CancellationTokenSource();
         }
 
         private void OnDestroy()
@@ -120,8 +128,11 @@ namespace _Project.Mechanics.Player
             _isAlive = false;
 
             // Old: PlayerDamageable.AnimationOnDied -> `transform.Find("Turret").gameObject.SetActive(false);`
-            if (_turret != null)
-                _turret.gameObject.SetActive(false);
+            // - see PlayerTurret.TurretVisualObject's doc comment for why this can't be `_turret.gameObject`
+            // (that resolves to the whole player root, not the old code's child "Turret" object - confirmed live,
+            // dying used to deactivate the entire Player GameObject instead of just hiding the turret).
+            if (_turret != null && _turret.TurretVisualObject != null)
+                _turret.TurretVisualObject.SetActive(false);
 
             // Old code staggered this across a 0.2s death-animation delay + a further 1s before showing the
             // game-over UI, plus a separate `Destroy(gameObject, 2f)` call - all of it depended on an Animator

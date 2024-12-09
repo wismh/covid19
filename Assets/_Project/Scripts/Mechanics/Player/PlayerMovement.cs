@@ -32,6 +32,15 @@ namespace _Project.Mechanics.Player
         private Vector3 _velocity;
         private float _angularVelocity;
 
+        // Old: GMTK.Services.PlayerStats.SpeedScale (1f macro, 0.01f micro), consumed by GMTK.PlayerBodyController.
+        // FixedUpdate: `_body.Move(inputValue.y * _playerStats.SpeedScale * backMovement)` - throttles forward/
+        // backward thrust input only, never Rotate's turning input. WorldScaleController's own class doc comment
+        // (seam item 4) already flagged this exact gap: WorldScaleTransition calls
+        // `context.SetPlayerSpeedScale?.Invoke(...)` correctly end-to-end, but nothing on this side ever consumed
+        // it - Phase 7 testing fix (2026-09-11): user reported movement in the micro world was much too fast, this
+        // is why. Defaults to 1 (macro) so nothing changes until a composition root actually wires SetSpeedScale.
+        private float _speedScale = 1f;
+
         public Vector3 Velocity => _velocity;
         public float AngularVelocity => _angularVelocity;
 
@@ -40,6 +49,13 @@ namespace _Project.Mechanics.Player
         {
             _config = config;
             _stats = stats;
+        }
+
+        /// <summary>See <see cref="_speedScale"/>'s doc comment. Wired from
+        /// WorldScaleTransitionContext.SetPlayerSpeedScale by a composition root.</summary>
+        public void SetSpeedScale(float scale)
+        {
+            _speedScale = scale;
         }
 
         private void Awake()
@@ -70,7 +86,7 @@ namespace _Project.Mechanics.Player
             // Old: GMTK.PlayerBodyController.FixedUpdate -> `inputValue.y < 0 ? 0.05f : 1f`.
             float backwardThrottle = input.y < 0f ? _config.BackwardMovementMultiplier : 1f;
 
-            Move(input.y * backwardThrottle);
+            Move(input.y * backwardThrottle * _speedScale);
             Rotate(input.x);
 
             if (_rigidbody2D != null)

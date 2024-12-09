@@ -10,6 +10,7 @@ using _Project.Mechanics.AppFlow;
 using _Project.Mechanics.Audio;
 using _Project.Mechanics.Cells;
 using _Project.Mechanics.Player;
+using _Project.Mechanics.Viruses.InCell;
 using _Project.Mechanics.Viruses.Macro;
 using _Project.Mechanics.Waves;
 using _Project.Mechanics.WorldScale;
@@ -128,6 +129,20 @@ namespace _Project.Mechanics.Composition
         private Action _handleResumeMacroSpawning;
         private Action<MacroVirusController> _handleVirusRegistered;
 
+        // Phase 7 testing fix (2026-09-11) - Arrow/pickup-XP/bullet-scale bridges to old GMTK ServiceLocator
+        // systems, wired from Start() (see that method's doc comment for why Start(), not Awake()). Cached the
+        // same way as the delegates above so OnDestroy can symmetrically unsubscribe.
+        private Action<MacroVirusController> _handleVirusManagerAdd;
+        private Action<MacroVirusController> _handleVirusManagerRemove;
+        private Action<CellHealth> _handleCellInfected;
+        private Action<CellHealth> _handleCellRecovered;
+        private Action<bool> _handleLegacyExperienceChange;
+        private Action<_Project.Mechanics.WorldScale.WorldScale> _handleWorldScaleChangedForLegacyState;
+
+        private GMTK.Services.PlayerStats _legacyPlayerStats;
+        private GMTK.VirusManager _legacyVirusManager;
+        private GMTK.VirusCellManager _legacyVirusCellManager;
+
         private CancellationTokenSource _lifetimeCts;
 
         /// <summary>
@@ -235,17 +250,91 @@ namespace _Project.Mechanics.Composition
         /// never at risk - Vitamin was the one caller without a guard. Set here rather than patching Vitamin
         /// itself, since any other not-yet-triggered old caller of PlayerStats.Player gets fixed by the same
         /// one assignment instead of being chased down one crash report at a time.
+        ///
+        /// --- Second testing round (2026-09-11) additions ---
+        ///
+        /// Pickup XP bridge: GMTK.Medical.VitaminCallback() still calls the OLD PlayerStats.AddExperience()
+        /// directly (Medical.cs is untouched old code, not part of this migration's file list) - that increments
+        /// the OLD, ServiceLocator-only counter, completely disconnected from the NEW PlayerStatsService HudScreen/
+        /// UpgradeScreen actually read from, so pickups visibly granted nothing. Old PlayerStats already exposes
+        /// `OnExperienceChange` for exactly this kind of external observation - subscribing it to also call the
+        /// NEW _playerStats.AddExperience() bridges every old XP source (today: only Medical/Vitamin, since the
+        /// other two old callers - VirusController/InCellVirus - were removed outright, see that commit) without
+        /// touching Medical.cs, and without double-counting (nothing else calls the old AddExperience() anymore).
+        ///
+        /// Arrow bridge: GMTK.Arrow/ArrowController (the "nearest virus/infected cell" world-space indicator) read
+        /// old GMTK.VirusManager/VirusCellManager (plain ObjectManager list+event pools), which only the OLD,
+        /// now-disabled GMTK.VirusSpawner/CellController ever populated - so the arrow had nothing to point at and
+        /// never showed. Mirrors MacroVirusRegistry's add/remove and CellRegistry's new OnCellInfected/
+        /// OnCellRecovered events into those old pools via their own AddObject/RemoveObject (plain bookkeeping,
+        /// no transition/side-effect risk - unlike GamePlayState.State below, ObjectManager has none to avoid).
+        ///
+        /// Bullet scale in micro world: GMTK.Bullet still reads old GamePlayState.State (never MICRO_WORLD since
+        /// nothing sets it anymore) to decide whether to shrink/slow itself 0.3x - user-reported symptom:
+        /// oversized, full-speed projectiles inside a cell. Cannot just assign GamePlayState.State normally: that
+        /// property's SETTER re-runs the old, independent TransitionIntoMicro/MacroWorld DOTween sequences on the
+        /// same camera/player/cell transforms the NEW WorldScaleTransition already animates, which would double-
+        /// transition everything. GamePlayState.SyncWorldState(WorldState) (new, additive-only method - see its
+        /// own doc comment) sets just the backing field, keeping old readers correct without re-triggering old
+        /// writers. Subscribed to WorldScaleController.OnScaleChanged so it fires exactly once per real transition,
+        /// after it completes (matching this class's already-established "read the NEW controller, not old
+        /// GamePlayState, as the source of truth" stance).
+        ///
+        /// Camera target while inside a cell: WorldScaleTransitionContext.SetCameraTarget was left null (see
+        /// BuildMechanicsPocos' old comment) - old code re-pointed the camera at the CELL while inside it, the
+        /// PLAYER once back outside. Wired here now that CameraFollow is resolvable.
         /// </summary>
         private void Start()
         {
-            if (GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.CameraFollow cameraFollow) && _playerMovement != null)
+            GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.CameraFollow cameraFollow);
+            GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.Services.PlayerStats legacyPlayerStats);
+            GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.GameStates.GamePlayState legacyGamePlayState);
+            GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.VirusManager legacyVirusManager);
+            GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.VirusCellManager legacyVirusCellManager);
+
+            if (cameraFollow != null && _playerMovement != null)
                 cameraFollow.Target = _playerMovement.transform;
 
             if (_projectileSpawner != null && GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.BulletManager bulletManager))
                 _projectileSpawner.SetBulletManager(bulletManager);
 
-            if (GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.Services.PlayerStats legacyPlayerStats) && _playerMovement != null)
+            if (legacyPlayerStats != null && _playerMovement != null)
                 legacyPlayerStats.Player = _playerMovement.transform;
+
+            _legacyPlayerStats = legacyPlayerStats;
+            if (legacyPlayerStats != null)
+            {
+                _handleLegacyExperienceChange = _ => _playerStats.AddExperience();
+                legacyPlayerStats.OnExperienceChange += _handleLegacyExperienceChange;
+            }
+
+            _legacyVirusManager = legacyVirusManager;
+            _legacyVirusCellManager = legacyVirusCellManager;
+            if (legacyVirusManager != null)
+            {
+                _handleVirusManagerAdd = virus => legacyVirusManager.AddObject(virus.transform);
+                _handleVirusManagerRemove = virus => legacyVirusManager.RemoveObject(virus.transform);
+                _macroVirusRegistry.OnRegistered += _handleVirusManagerAdd;
+                _macroVirusRegistry.OnUnregistered += _handleVirusManagerRemove;
+            }
+
+            if (legacyVirusCellManager != null)
+            {
+                _handleCellInfected = cell => legacyVirusCellManager.AddObject(cell.transform);
+                _handleCellRecovered = cell => legacyVirusCellManager.RemoveObject(cell.transform);
+                _cellRegistry.OnCellInfected += _handleCellInfected;
+                _cellRegistry.OnCellRecovered += _handleCellRecovered;
+            }
+
+            if (legacyGamePlayState != null)
+            {
+                _handleWorldScaleChangedForLegacyState = scale => legacyGamePlayState.SyncWorldState(
+                    scale == _Project.Mechanics.WorldScale.WorldScale.Micro ? GMTK.GameStates.WorldState.MICRO_WORLD : GMTK.GameStates.WorldState.MACRO_WORLD);
+                _worldScaleController.OnScaleChanged += _handleWorldScaleChangedForLegacyState;
+            }
+
+            if (cameraFollow != null && _worldScaleTransitionContext != null)
+                _worldScaleTransitionContext.SetCameraTarget = t => cameraFollow.Target = t;
         }
 
         private void OnDestroy()
@@ -272,7 +361,23 @@ namespace _Project.Mechanics.Composition
                 _playerHealth.OnDied -= HandleGameOver;
 
             if (_macroVirusRegistry != null)
+            {
                 _macroVirusRegistry.OnRegistered -= _handleVirusRegistered;
+                _macroVirusRegistry.OnRegistered -= _handleVirusManagerAdd;
+                _macroVirusRegistry.OnUnregistered -= _handleVirusManagerRemove;
+            }
+
+            if (_cellRegistry != null)
+            {
+                _cellRegistry.OnCellInfected -= _handleCellInfected;
+                _cellRegistry.OnCellRecovered -= _handleCellRecovered;
+            }
+
+            if (_legacyPlayerStats != null)
+                _legacyPlayerStats.OnExperienceChange -= _handleLegacyExperienceChange;
+
+            if (_worldScaleController != null)
+                _worldScaleController.OnScaleChanged -= _handleWorldScaleChangedForLegacyState;
 
             _gameAudioService?.Dispose();
         }
@@ -363,13 +468,12 @@ namespace _Project.Mechanics.Composition
                 PlayerMovement = _playerMovement,
                 Camera = _worldCamera,
 
-                // --- Deliberately left null: SetCameraTarget / SetPlayerSpeedScale ---
-                // Old GMTK.CameraFollow has no _Project port yet (WorldScaleTransitionContext.SetCameraTarget's own
-                // doc comment) and PlayerMovement has no speed-scale multiplier hook yet (WorldScaleController's
-                // class doc comment, "seam item 4" - a genuine gap Phase 4 documented and this phase is not
-                // permitted to fix by editing PlayerMovement). Both delegates are invoked only if non-null by
-                // WorldScaleTransition, so leaving them null just means those two steps are silently skipped
-                // today, exactly as both source phases already flagged.
+                // Phase 7 testing fix (2026-09-11): PlayerMovement.SetSpeedScale now exists (see its own doc
+                // comment - user-reported symptom was movement far too fast inside a cell) and needs no
+                // ServiceLocator lookup, so it's wired here directly rather than waiting for Start(). SetCameraTarget
+                // still needs GMTK.CameraFollow resolved from ServiceLocator first - wired from Start() instead
+                // (see that method's doc comment).
+                SetPlayerSpeedScale = _playerMovement != null ? _playerMovement.SetSpeedScale : (Action<float>)null,
 
                 // --- Deliberately left null: PlayerAudioSource / PlayerEnterMacroClip / PlayerEnterMicroClip /
                 // GameplayMusicAudioSource / MacroMixerGroup / MicroMixerGroup ---
@@ -390,7 +494,15 @@ namespace _Project.Mechanics.Composition
         private void ConstructSpawners()
         {
             if (_cellSpawner != null)
-                _cellSpawner.Construct(_cellConfig, _cellRegistry);
+            {
+                // Phase 7 testing fix (2026-09-11): CellSpawner.Construct grew two params to wire InCellVirusSpawner
+                // per spawned cell - see that method's doc comment. PlayerTargetProvider is the first (and only,
+                // per its own doc comment) implementation of IPlayerTargetProvider in this codebase.
+                IPlayerTargetProvider playerTargetProvider = _playerMovement != null
+                    ? new PlayerTargetProvider(_playerMovement.transform)
+                    : null;
+                _cellSpawner.Construct(_cellConfig, _cellRegistry, playerTargetProvider, _waveScalingConfig);
+            }
 
             if (_macroVirusSpawner != null)
                 _macroVirusSpawner.Construct(_macroVirusConfig, _cellRegistry, _macroVirusRegistry, _waveScalingConfig);
@@ -592,31 +704,11 @@ namespace _Project.Mechanics.Composition
             }
         }
 
-        // --- Documented gap: per-cell in-cell-virus wiring (CellInfectionState.OnVirusCountChanged ->
-        // InCellVirusSpawner.SetVirusesCount) is NOT done by this class ---
+        // --- Per-cell in-cell-virus wiring: RESOLVED, 2026-09-11 (was a documented gap above this line) ---
         //
-        // Read CellSpawner.cs directly for this stage (not just Stage 1's summary) to answer this precisely:
-        // CellSpawner.SpawnCell() instantiates `_cellPrefab`, resolves CellHealth/CellInfectionState/CellVisuals
-        // off the SAME instance via TryGetComponent, and registers those with CellRegistry - it does not
-        // instantiate, look up, or reference any InCellVirusSpawner at all. InCellVirusSpawner's own class doc
-        // comment confirms this is intentional and not yet done: "Stage 3's prefab surgery is expected to add it
-        // alongside CellHealth/CellInfectionState/CellVisuals on Cell.prefab (or a child of it, matching the old
-        // hierarchy), not as a scene-level singleton like CellSpawner/MacroVirusSpawner." So today, no spawned
-        // cell has an InCellVirusSpawner sibling for this composition root (or CellSpawner) to reach into - there
-        // is nothing of that shape anywhere in the scene yet, pure-C#-Stage-2 or otherwise.
-        //
-        // Once Stage 3 adds InCellVirusSpawner (+ its own IPlayerTargetProvider dependency, which also has no
-        // implementation anywhere in this codebase yet - only the interface exists, see
-        // _Project.Mechanics.Viruses.InCell.IPlayerTargetProvider) to the cell prefab, the natural place for
-        // `cellInfectionState.OnVirusCountChanged += inCellVirusSpawner.SetVirusesCount;` is CellSpawner.SpawnCell()
-        // itself - it already resolves CellInfectionState off the freshly-instantiated cell instance in one place
-        // via TryGetComponent, and adding one more `instance.TryGetComponent(out InCellVirusSpawner ...)` +
-        // Construct + subscribe right there mirrors exactly how InCellVirusSpawner's own OnKilled ->
-        // CellInfectionState.RemoveVirus wiring already works (a sibling-instance concern, not a composition-root
-        // concern - see InCellVirusSpawner's "CellInfectionState wiring: sibling reference, not Construct-
-        // injection" doc comment for the identical reasoning). This composition root building an
-        // IPlayerTargetProvider adapter today, with nothing yet in the scene that would consume it, would be
-        // exactly the kind of ungrounded workaround the phase brief asks not to invent - left as this stage's
-        // honest, documented gap instead.
+        // CellInfectionState.OnVirusCountChanged -> InCellVirusSpawner.SetVirusesCount is now wired directly in
+        // CellSpawner.SpawnCell() (see that method), the exact spot this comment used to point at as the natural
+        // place for it - InCellVirusSpawner was added to Cell.prefab and PlayerTargetProvider (the interface's
+        // first implementation) supplies IPlayerTargetProvider via ConstructSpawners() above.
     }
 }
