@@ -75,13 +75,10 @@ namespace _Project.Mechanics.Cells
 
         /// <summary>
         /// Phase 7 testing fix (2026-09-11): added <paramref name="playerTargetProvider"/>/
-        /// <paramref name="waveScalingConfig"/> to wire InCellVirusSpawner - this exact spot was already named as
-        /// the intended seam by this class's own OLD doc comment (see the "per-cell in-cell-virus wiring" note
-        /// further down, now updated) and by MainSceneComposition's "documented gap" trailing comment: "the
-        /// natural place for cellInfectionState.OnVirusCountChanged += inCellVirusSpawner.SetVirusesCount is
-        /// CellSpawner.SpawnCell() itself". User-reported symptom this fixes: entering a cell showed no viruses
-        /// inside it at all - Cell.prefab never had an InCellVirusSpawner component, and even once added, nothing
-        /// constructed or wired one per spawned cell instance.
+        /// <paramref name="waveScalingConfig"/> to construct each spawned cell's InCellVirusSpawner - Cell.prefab
+        /// never had that component at all before this fix, and even once added, nothing constructed one per
+        /// spawned cell instance, so a cell's interior was permanently empty. Construct() only - see SpawnCell's
+        /// own comment for why SetVirusesCount is deliberately NOT called/wired from here.
         /// </summary>
         [Inject]
         public void Construct(CellConfig cellConfig, CellRegistry registry, IPlayerTargetProvider playerTargetProvider, WaveScalingConfig waveScalingConfig)
@@ -150,14 +147,18 @@ namespace _Project.Mechanics.Cells
 
             health.OnDied += _ => DestroyCellAfterDelayAsync(instance).Forget();
 
-            // Phase 7 testing fix (2026-09-11) - see Construct's doc comment. _cellInfectionState is wired as a
-            // same-prefab sibling reference directly on Cell.prefab (matching CellHealth's own sibling-reference
-            // idiom for CellInfectionState - no cross-scene dependency, safe to bake into the prefab asset).
+            // Phase 7 testing fix (2026-09-11) - see Construct's doc comment. _cellInfectionState/_virusContainer
+            // are wired as same-prefab sibling references directly on Cell.prefab (matching CellHealth's own
+            // sibling-reference idiom - no cross-scene dependency, safe to bake into the prefab asset). Only
+            // Construct() happens here - NOT a CellInfectionState.OnVirusCountChanged subscription (an earlier,
+            // user-rejected draft of this fix did wire that reactively; see InCellVirusSpawner's own
+            // "SetVirusesCount: LAZY, on micro-world entry only" doc comment for why that produced full-size
+            // in-cell viruses wandering the macro world). SetVirusesCount is instead called lazily, once, by
+            // WorldScaleTransition.EnterMicroWorldAsync at the moment the player actually enters this cell -
+            // MainSceneComposition's proximity-polling loop resolves this same InCellVirusSpawner instance onto
+            // WorldScaleTransitionContext the same way it already does CellVisuals/CellRigidbody2D/CellAnimator.
             if (instance.TryGetComponent(out InCellVirusSpawner inCellVirusSpawner))
-            {
                 inCellVirusSpawner.Construct(_playerTargetProvider, _waveScalingConfig);
-                infectionState.OnVirusCountChanged += inCellVirusSpawner.SetVirusesCount;
-            }
         }
 
         private async UniTaskVoid DestroyCellAfterDelayAsync(Transform instance)

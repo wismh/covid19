@@ -701,6 +701,12 @@ namespace _Project.Mechanics.Composition
                 _worldScaleTransitionContext.CellVisuals = nearestCell != null ? nearestCell.GetComponent<CellVisuals>() : null;
                 _worldScaleTransitionContext.CellRigidbody2D = nearestCell != null ? nearestCell.GetComponent<Rigidbody2D>() : null;
                 _worldScaleTransitionContext.CellAnimator = nearestCell != null ? nearestCell.GetComponent<Animator>() : null;
+
+                // Phase 7 testing fix (2026-09-11) - see WorldScaleTransitionContext.CellInCellVirusSpawner's doc
+                // comment for why these are resolved here (same per-poll pattern as CellVisuals/CellRigidbody2D/
+                // CellAnimator above) rather than reactively wired at spawn time.
+                _worldScaleTransitionContext.CellInCellVirusSpawner = nearestCell != null ? nearestCell.GetComponent<InCellVirusSpawner>() : null;
+                _worldScaleTransitionContext.CellInfectionState = nearestCell != null ? nearestCell.GetComponent<CellInfectionState>() : null;
             }
         }
 

@@ -27,10 +27,13 @@ namespace _Project.Mechanics.Player
 
         [Header("Health & armor (ported from GMTK.PlayerDamageable)")]
         // Old PlayerDamageable.Start() hardcoded `_health = 3`, ignoring the serialized `_maxHealth` field
-        // (which was only ever used as the upgrade ceiling) - a known bug, see TECHNICAL_AUDIT.md section 5.
-        // This field is that same value (read from Player.prefab: _maxHealth: 8) but is now actually used as the
-        // real starting health too (see PlayerStatsService.EffectiveMaxHealth / PlayerHealth.Start()).
-        [SerializeField] private int _baseMaxHealth = 8;
+        // (which was only ever used as the upgrade ceiling) - TECHNICAL_AUDIT.md section 5 flagged this as a bug,
+        // and an earlier phase "fixed" it by using the higher intended value (8, read from Player.prefab's
+        // ignored _maxHealth) as the real starting health. Reverted per explicit user testing feedback
+        // (2026-09-11): the ORIGINAL shipped game's players only ever actually experienced 3 starting HP (the
+        // hardcoded value, bug or not) - matching that observed behavior takes priority over the unshipped
+        // "intended" design value. Back to 3.
+        [SerializeField] private int _baseMaxHealth = 3;
 
         [SerializeField] private int _baseArmor = 0;
 

@@ -21,7 +21,13 @@ namespace GMTK
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            if (other.gameObject.TryGetComponent(out PlayerDamageable damageable))
+            // Phase 7 testing fix (2026-09-11): was PlayerDamageable specifically - that component was removed
+            // from Player.prefab (it was shadowing the new PlayerHealth via the same IDamageable lookup GMTK.
+            // Bullet.cs uses; see that removal's commit message), which silently broke Cucumber's ranged attack
+            // entirely (this bullet could never find its target anymore). IDamageable is the generic interface
+            // both PlayerHealth and this old code already agree on elsewhere (GMTK.Bullet, InCellVirusController.
+            // OnCollisionStay2D) - matches that convention instead of the now-gone concrete type.
+            if (other.gameObject.TryGetComponent(out IDamageable damageable))
             {
                 damageable.Damage(_damage, transform.right);
                 Destroy(gameObject);

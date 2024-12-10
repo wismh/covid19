@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using _Project.Mechanics.Cells;
 using _Project.Mechanics.Player;
+using _Project.Mechanics.Viruses.InCell;
 
 namespace _Project.Mechanics.WorldScale
 {
@@ -113,6 +114,19 @@ namespace _Project.Mechanics.WorldScale
         /// <summary>Old: `nearestCell.GetComponent&lt;Animator&gt;().speed = 1` (macro) / `= 0` (micro) - freezes
         /// the cell's idle animation while the player is inside it.</summary>
         public Animator CellAnimator;
+
+        /// <summary>
+        /// Phase 7 testing fix (2026-09-11): old CellController.SetMicroSprite() -> `_inCellVirusManager.
+        /// SetVirusesCount(_virusCount)`, called lazily, once, at the exact moment the player enters this cell -
+        /// see InCellVirusSpawner's own "SetVirusesCount: LAZY, on micro-world entry only" doc comment for why a
+        /// reactive alternative was tried and rejected. WorldScaleTransition.EnterMicroWorldAsync reads
+        /// <see cref="CellInfectionState"/>.VirusCount and calls this alongside CellVisuals.SetMicroSprite().
+        /// </summary>
+        public InCellVirusSpawner CellInCellVirusSpawner;
+
+        /// <summary>See <see cref="CellInCellVirusSpawner"/>'s doc comment - supplies the current virus count at
+        /// the moment of entry.</summary>
+        public CellInfectionState CellInfectionState;
 
         // --- Global audio mix (distinct from the player's own AudioSource above) ---
 

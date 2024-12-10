@@ -30,14 +30,16 @@ namespace _Project.Mechanics.Viruses.InCell
     /// exists" - this spawner does that wiring itself (see <see cref="SpawnVirus"/>), since it already owns both
     /// halves (the spawned virus's OnKilled event AND the sibling CellInfectionState reference) at spawn time.
     ///
-    /// --- SetVirusesCount: expected reactive wiring, per CellVisuals's own doc comment ---
-    /// Old CellController.SetMicroSprite() called `_inCellVirusManager.SetVirusesCount(_virusCount)` ONCE,
-    /// lazily, only at the moment the player actually entered micro-world for that cell. CellVisuals.cs's own doc
-    /// comment (Phase 3) already signals the intended new wiring is different: "left for a future composition
-    /// root to wire via CellInfectionState.OnVirusCountChanged" - i.e. reactively, on every add/remove, not just
-    /// on micro-world entry. <see cref="SetVirusesCount"/> is written to be safe either way (see its own doc
-    /// comment for why the OnKilled -&gt; RemoveVirus -&gt; OnVirusCountChanged -&gt; SetVirusesCount chain
-    /// can't loop), but which cadence to actually wire is Stage 2/3's call, not decided here.
+    /// --- SetVirusesCount: LAZY, on micro-world entry only - not reactive (corrected 2026-09-11) ---
+    /// An earlier draft of this composition wired SetVirusesCount reactively to CellInfectionState.
+    /// OnVirusCountChanged (an idea CellVisuals.cs's own doc comment had floated: "left for a future composition
+    /// root to wire ... reactively, on every add/remove"). User-tested and rejected: that spawns viruses the
+    /// moment a macro virus infects the cell, regardless of whether the player has ever been near it - combined
+    /// with spawning outside containment (see _virusContainer's doc comment), the result was full-size in-cell
+    /// viruses wandering the MACRO world. Old CellController.SetMicroSprite() only ever called
+    /// `_inCellVirusManager.SetVirusesCount(_virusCount)` ONCE, lazily, at the exact moment the player entered
+    /// micro-world for that cell - this port now matches that exactly: WorldScaleTransition.EnterMicroWorldAsync
+    /// calls this alongside context.CellVisuals?.SetMicroSprite(), the same call site old code used.
     ///
     /// --- Elapsed-time source ---
     /// Same substitution as MacroVirusSpawner (`Time.timeSinceLevelLoad` standing in for old
@@ -48,6 +50,19 @@ namespace _Project.Mechanics.Viruses.InCell
     {
         [Header("Sibling reference (this cell's own CellInfectionState - see class doc comment)")]
         [SerializeField] private CellInfectionState _cellInfectionState;
+
+        /// <summary>
+        /// Phase 7 testing fix (2026-09-11): old GMTK.CellController held its InCellViruses manager as a child
+        /// of `transform.GetChild(0)` - the SAME GameObject SetMacroSprite()/SetMicroSprite() toggle inactive/
+        /// active (CellVisuals._entrailsRoot in this port, identical role - see its own doc comment). Spawning
+        /// straight under the cell's own root transform (this component's own transform, since it lives directly
+        /// on Cell.prefab) skipped that containment entirely - user-reported symptom: in-cell viruses visible,
+        /// full-size, wandering freely in the MACRO world instead of hidden until the player is actually inside.
+        /// Wired to the same GameObject as CellVisuals._entrailsRoot so spawned viruses inherit its active state
+        /// automatically, exactly like old code's entrails/in-cell-virus pairing. Falls back to this component's
+        /// own transform if left unwired (keeps SpawnVirus() safe rather than throwing).
+        /// </summary>
+        [SerializeField] private Transform _virusContainer;
 
         [Header("Prefabs - assigned by a later stage (prefab/scene surgery), see class doc comment")]
         [SerializeField] private InCellVirusController _orangePrefab;
@@ -96,7 +111,8 @@ namespace _Project.Mechanics.Viruses.InCell
 
             InCellVirusController prefab = ChoosePrefab();
 
-            InCellVirusController virus = Instantiate(prefab, transform);
+            Transform container = _virusContainer != null ? _virusContainer : transform;
+            InCellVirusController virus = Instantiate(prefab, container);
             virus.Construct(_playerTargetProvider);
 
             // Old: InCellViruses.SpawnVirus() -> `Instantiate(prefabs[...], transform);` (no explicit position -
