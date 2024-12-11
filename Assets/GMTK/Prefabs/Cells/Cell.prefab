@@ -833,7 +833,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Project.Mechanics.Viruses.InCell.InCellVirusSpawner
   _cellInfectionState: {fileID: 2383433699385333}
-  _virusContainer: {fileID: 1491347545013115051}
+  _virusContainer: {fileID: 5278171966705873521}
   _orangePrefab: {fileID: 5719283746102938, guid: 0183e584c89852141b0e344f8190177e, type: 3}
   _cucumberPrefab: {fileID: 6183920475610283, guid: e788e810ecf524e428d803df54c730d0, type: 3}
   _spinerPrefab: {fileID: 4837261950482716, guid: b391c0c2e026c044a852aa29b551e53e, type: 3}

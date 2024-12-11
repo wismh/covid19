@@ -24,15 +24,19 @@ namespace _Project.UI.Hud
     /// Old GMTK.UI.BarsHUD.Update() (polled every frame, TECHNICAL_AUDIT.md 2.2's flagged smell):
     ///   `_healthBarFilled.fillAmount = _player.Health * 0.13f; _armorBarFilled.fillAmount = _player.Armor * 0.13f;`
     /// 0.13f is not a documented fraction of anything in the old code - it's suspiciously close to 1/8 (0.125) or
-    /// 1/7.69, and PlayerConfig.BaseMaxHealth (read from Player.prefab in Phase 2) is 8, and MaxArmor is 8 too, so
-    /// `health * 0.13` and `health / 8` produce nearly the same visual result for on-screen bars (8 * 0.13 = 1.04,
-    /// clamped) without ever having been *defined* as "health / maxHealth" - it reads as a tuned-by-eye constant
-    /// that happens to approximate that ratio for this game's specific numbers, not an intentional formula. Per
-    /// the phase brief's explicit permission to not preserve this blindly: this class models both bars as a
-    /// proper `current / max` fill fraction instead - `PlayerHealth.Health / PlayerHealth.MaxHealth` and
-    /// `PlayerHealth.Armor / PlayerConfig.MaxArmor` - which reproduces the same near-full-bar-at-max-stats visual
-    /// behavior while actually being correct if BaseMaxHealth/MaxArmor are ever retuned in PlayerConfig (the old
-    /// 0.13f constant would silently stop matching the real max the moment either config number changed).
+    /// 1/7.69. Originally read as "health / maxHealth" in disguise, since PlayerConfig.BaseMaxHealth (read from
+    /// Player.prefab in Phase 2) and MaxArmor were both 8 at the time - so this class modeled both bars as a
+    /// proper `current / max` fill fraction: `PlayerHealth.Health / PlayerHealth.MaxHealth` and `PlayerHealth.
+    /// Armor / PlayerConfig.MaxArmor`.
+    ///
+    /// That reading turned out to be wrong for health specifically (testing fix, 2026-09-11, same day):
+    /// BaseMaxHealth got reverted to 3 (the ORIGINAL shipped game's actual starting HP - see that commit),
+    /// exposing that 0.13f was never "health / maxHealth" at all - it's the bar ART's fixed ~8-unit visual
+    /// capacity, independent of whatever the gameplay max happens to be. `Health / MaxHealth` at 3/3 is always
+    /// 1.0 (bar always reads "full"), which is what the user reported. See _healthBarVisualCapacity's own doc
+    /// comment for the fix - health now divides by that fixed capacity instead. Armor's reasoning still holds:
+    /// PlayerConfig.MaxArmor is the real gameplay cap AND stayed the value the armor bar art was tuned for, so
+    /// `Armor / MaxArmor` is correct as originally written.
     ///
     /// --- Polling -> events ---
     /// BarsHUD polled Health/Armor from Update() because PlayerDamageable had no health-changed event to
@@ -88,6 +92,20 @@ namespace _Project.UI.Hud
         [SerializeField] private Image _armorBarFilled;
         [SerializeField] private Image _experienceBarFilled;
         [SerializeField] private TMP_Text _levelText;
+
+        /// <summary>
+        /// Phase 7 testing fix (2026-09-11): the health bar's ART was always designed for the old ~8-unit visual
+        /// capacity this class's own doc comment already derives from old code's `0.13f` fill constant (below) -
+        /// a UI/presentation concern, independent of PlayerConfig.BaseMaxHealth (the GAMEPLAY health cap, which
+        /// the same day's earlier fix correctly reverted to 3 to match the original's actual starting HP - see
+        /// that commit). Dividing by PlayerHealth.MaxHealth directly (as this class originally did) silently
+        /// assumed those two numbers stayed equal - true only by coincidence while BaseMaxHealth was still 8.
+        /// Once it became 3, `Health / MaxHealth` is always 1.0 at full health regardless of the actual value,
+        /// so the bar visually reads "full" (all ~8 segments lit) even at the correct 3 HP - exactly the user-
+        /// reported symptom. Kept as its own field, not derived from PlayerConfig, since it describes the
+        /// artwork's fixed segment count, not anything about the player's stats.
+        /// </summary>
+        [SerializeField] private float _healthBarVisualCapacity = 8f;
 
         [Header("Timer (old GMTK.UI.HUD._timeTextMesh)")]
         [SerializeField] private TMP_Text _timerText;
@@ -206,9 +224,11 @@ namespace _Project.UI.Hud
 
         private void RefreshHealthAndArmorBars()
         {
+            // See _healthBarVisualCapacity's doc comment - divides by the bar art's fixed segment count, not
+            // PlayerHealth.MaxHealth (the actual, now much smaller, gameplay cap).
             if (_healthBarFilled != null)
-                _healthBarFilled.fillAmount = _playerHealth.MaxHealth > 0
-                    ? (float)_playerHealth.Health / _playerHealth.MaxHealth
+                _healthBarFilled.fillAmount = _healthBarVisualCapacity > 0f
+                    ? Mathf.Clamp01(_playerHealth.Health / _healthBarVisualCapacity)
                     : 0f;
 
             if (_armorBarFilled != null)

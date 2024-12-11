@@ -57,10 +57,23 @@ namespace _Project.Mechanics.Viruses.InCell
         /// active (CellVisuals._entrailsRoot in this port, identical role - see its own doc comment). Spawning
         /// straight under the cell's own root transform (this component's own transform, since it lives directly
         /// on Cell.prefab) skipped that containment entirely - user-reported symptom: in-cell viruses visible,
-        /// full-size, wandering freely in the MACRO world instead of hidden until the player is actually inside.
-        /// Wired to the same GameObject as CellVisuals._entrailsRoot so spawned viruses inherit its active state
-        /// automatically, exactly like old code's entrails/in-cell-virus pairing. Falls back to this component's
-        /// own transform if left unwired (keeps SpawnVirus() safe rather than throwing).
+        /// wandering freely in the MACRO world instead of hidden until the player is actually inside.
+        ///
+        /// --- Scale correction (second user report, same day) ---
+        /// Wiring straight to _entrailsRoot ("InsideWorld" in Cell.prefab) fixed visibility/timing but not size:
+        /// Cell.prefab's ROOT transform is scaled 3x (cells render larger than the player/viruses), and
+        /// InsideWorld doesn't compensate (localScale 1,1,1) - anything parented there inherits that 3x directly,
+        /// which is exactly the "still huge" the user reported next. Old code already solved this: Cell.prefab
+        /// still has the OLD (disabled but never removed) GMTK.MicroViruses.InCellViruses manager, on a
+        /// GameObject literally named "Viruses" - a CHILD of InsideWorld with localScale (0.15, 0.15, 1)
+        /// specifically to counteract the 3x parent (net 0.45x world scale), and _orangePrefab/_cucumberPrefab/
+        /// _spinerPrefab/_bounds fields already matching this class's own values almost exactly. Re-wired to that
+        /// exact GameObject instead of InsideWorld directly - reusing old code's own compensating scale rather
+        /// than guessing a new one. The old InCellViruses component itself stays harmlessly inert alongside it
+        /// (Awake() only registers a ServiceLocator entry + adds a bookkeeping-only ObjectManager component;
+        /// SetVirusesCount() is never called since nothing runs old CellController.SetMicroSprite() anymore).
+        /// Falls back to this component's own transform if left unwired (keeps SpawnVirus() safe rather than
+        /// throwing).
         /// </summary>
         [SerializeField] private Transform _virusContainer;
 
