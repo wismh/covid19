@@ -90,7 +90,7 @@ namespace _Project.Mechanics.Viruses.InCell
                 Vector3 direction = (_target.position - _transform.position).normalized;
                 Vector3 spawnPosition = _bulletSpawnPoint != null ? _bulletSpawnPoint.position : _transform.position;
 
-                _bulletSpawner?.SpawnBullet(spawnPosition, direction);
+                _bulletSpawner?.SpawnBullet(spawnPosition, direction, _bulletSpawnPoint);
                 _attackAudioSource?.Play();
             }
         }

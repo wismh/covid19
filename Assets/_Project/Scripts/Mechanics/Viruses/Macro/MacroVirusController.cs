@@ -31,11 +31,27 @@ namespace _Project.Mechanics.Viruses.Macro
     /// pooled SetActive(false) later per REFACTORING_PLAN.md section 4) are left to whatever listens to
     /// <see cref="OnKilled"/>/<see cref="OnPenetratedIntoCell"/>, not decided here.
     ///
-    /// Damage/death AUDIO is ported (see <see cref="_audioSources"/>'s doc comment, Phase 7 testing fix). The
-    /// Animator half (old: `_animator.Play("Base Layer.Died")` on death) is still NOT ported - BigBob.prefab/
-    /// PinkGlist.prefab do have an Animator Controller, but wiring it up needs the actual clip/state names
-    /// verified in the Editor first, not guessed at blind. A future visuals component (mirroring CellVisuals)
-    /// can restore that.
+    /// Damage/death AUDIO is ported (see <see cref="_audioSources"/>'s doc comment, Phase 7 testing fix).
+    ///
+    /// --- Death animation (Phase 8 testing fix, 2026-09-11) ---
+    /// The Animator half (old: `_animator.Play("Base Layer.Died")` on death) was left unported by the previous
+    /// round pending verification of BigBob.prefab/PinkGlist.prefab's actual clip/state names - confirmed live
+    /// via the Editor: both controllers (BigBob.controller/PinkGlist.controller) have a "Died" state under "Base
+    /// Layer", exactly matching the old hardcoded string, so it's safe to restore verbatim. Wired via
+    /// <see cref="_animator"/> (the child "Sprite" GameObject's Animator, same object <see cref="_spriteRenderer"/>
+    /// already points to - old code fetched it via `GetComponentInChildren&lt;Animator&gt;()`, this uses an
+    /// explicit reference instead, matching every other typed-lookup convention this migration established).
+    ///
+    /// --- Why HandleDeathAsync waits again after playing the animation ---
+    /// MacroVirusSpawner.HandleVirusRemoved (subscribed to <see cref="OnKilled"/>) destroys the GameObject
+    /// synchronously the instant OnKilled fires - so any animation/audio triggered in the same breath as
+    /// OnKilled.Invoke() would never actually be seen or heard, cut off mid-frame. Old code decoupled this
+    /// entirely: `Destroy(gameObject, 1f)` was scheduled once, immediately, at the moment health hit 0, running
+    /// in parallel with (not gated behind) the death animation/audio - giving the "Died" clip ~0.8s of visible
+    /// screen time (1f total minus the 0.2f AnimationOnDied delay) before the object actually disappeared. This
+    /// class reproduces that same ~0.8s visible window the only way an event-driven single lifecycle owner can:
+    /// waiting for it before raising the event that triggers destruction, rather than destroying and animating
+    /// as two independent timers like old code did.
     /// </summary>
     public sealed class MacroVirusController : MonoBehaviour, GMTK.IDamageable, IDriftBody
     {
@@ -54,6 +70,9 @@ namespace _Project.Mechanics.Viruses.Macro
         [SerializeField] private Collider2D _collider;
         [SerializeField] private SpriteRenderer _spriteRenderer;
         [SerializeField] private Material _damageMaterial;
+
+        /// <summary>See class doc comment's "Death animation" section. Child "Sprite" GameObject's Animator.</summary>
+        [SerializeField] private Animator _animator;
 
         private MacroVirusConfig _config;
         private ICellTargetProvider _cellTargetProvider;
@@ -227,12 +246,20 @@ namespace _Project.Mechanics.Viruses.Macro
                 return;
             }
 
-            // Old: AnimationOnDied() -> `_animator.Play("Base Layer.Died"); _audioSources[1].Play();`. Only the
-            // audio half is restored here - the Animator half stays a documented, unported gap (see this class's
-            // own doc comment) since no _Project code currently drives BigBob/PinkGlist's Animator Controller and
-            // wiring that up correctly needs verifying the actual clip/state names in the Editor, not something
-            // to guess at blind.
+            // Old: AnimationOnDied() -> `_animator.Play("Base Layer.Died"); _audioSources[1].Play();`.
+            _animator?.Play("Base Layer.Died");
             PlayAudioIfAvailable(1);
+
+            // See class doc comment's "Why HandleDeathAsync waits again" section - gives the death animation/
+            // audio time to actually be seen/heard before OnKilled triggers GameObject destruction.
+            try
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(0.8f), cancellationToken: _lifetimeCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
 
             OnKilled?.Invoke();
         }

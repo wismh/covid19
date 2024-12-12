@@ -127,6 +127,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1254110539}
     m_Modifications:
+    - target: {fileID: 2883857207146057560, guid: 1bd7450eb76f597498de0411e3fb7d63, type: 3}
+      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      value: 1801810542
+      objectReference: {fileID: 0}
     - target: {fileID: 3596877509855920544, guid: 1bd7450eb76f597498de0411e3fb7d63, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2262,6 +2266,7 @@ MonoBehaviour:
   _armorBarFilled: {fileID: 955697284}
   _experienceBarFilled: {fileID: 1754054743}
   _levelText: {fileID: 1661960495}
+  _healthBarVisualCapacity: 8
   _timerText: {fileID: 123938979}
   _statisticsText: {fileID: 383426139}
 --- !u!1 &821766882
@@ -4054,7 +4059,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1303289963}
-  - component: {fileID: 1303289964}
   - component: {fileID: 928471605}
   m_Layer: 0
   m_Name: AdviceDialog
@@ -4079,19 +4083,6 @@ Transform:
   - {fileID: 989848346}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1303289964
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1303289962}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8602e915d255d1e479b77d2e0c1bee0c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _distanceToActivate: 15
 --- !u!1 &1494376655
 GameObject:
   m_ObjectHideFlags: 0
@@ -5471,6 +5462,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1254110539}
     m_Modifications:
+    - target: {fileID: 2883857207146057560, guid: 1bd7450eb76f597498de0411e3fb7d63, type: 3}
+      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      value: 1801810542
+      objectReference: {fileID: 0}
     - target: {fileID: 3596877509855920544, guid: 1bd7450eb76f597498de0411e3fb7d63, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5916,6 +5911,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1254110539}
     m_Modifications:
+    - target: {fileID: 2883857207146057560, guid: 1bd7450eb76f597498de0411e3fb7d63, type: 3}
+      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      value: 1801810542
+      objectReference: {fileID: 0}
     - target: {fileID: 3596877509855920544, guid: 1bd7450eb76f597498de0411e3fb7d63, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

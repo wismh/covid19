@@ -454,3 +454,4 @@ MonoBehaviour:
   _collider: {fileID: 26103826933667892}
   _spriteRenderer: {fileID: 2544876351399848502}
   _damageMaterial: {fileID: 2100000, guid: ff1c34b5819982642a8c9b8f51409db0, type: 2}
+  _animator: {fileID: 1754253263504572329}

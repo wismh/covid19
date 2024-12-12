@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -74,6 +75,15 @@ namespace _Project.Mechanics.Cells
         private CancellationTokenSource _lifetimeCts;
 
         /// <summary>
+        /// Phase 8 testing fix (2026-09-11): lets MainSceneComposition reach each cell's own InCellVirusSpawner
+        /// the moment it's constructed, without this class needing to know why (today: granting XP on in-cell
+        /// virus kills - see InCellVirusSpawner.OnVirusKilled's doc comment. Mirrors MacroVirusRegistry.
+        /// OnRegistered's role for macro viruses, adapted for the fact that in-cell viruses have no shared
+        /// registry to subscribe to - CellSpawner is the one place that constructs every cell's spawner.
+        /// </summary>
+        public event Action<InCellVirusSpawner> OnInCellVirusSpawnerCreated;
+
+        /// <summary>
         /// Phase 7 testing fix (2026-09-11): added <paramref name="playerTargetProvider"/>/
         /// <paramref name="waveScalingConfig"/> to construct each spawned cell's InCellVirusSpawner - Cell.prefab
         /// never had that component at all before this fix, and even once added, nothing constructed one per
@@ -128,7 +138,7 @@ namespace _Project.Mechanics.Cells
             _spawnedPositions.Add(position);
 
             Transform instance = Instantiate(_cellPrefab, transform);
-            instance.SetPositionAndRotation(position, Quaternion.Euler(0f, 0f, Random.Range(0, 360)));
+            instance.SetPositionAndRotation(position, Quaternion.Euler(0f, 0f, UnityEngine.Random.Range(0, 360)));
 
             if (!instance.TryGetComponent(out CellHealth health) || !instance.TryGetComponent(out CellInfectionState infectionState))
             {
@@ -158,7 +168,10 @@ namespace _Project.Mechanics.Cells
             // MainSceneComposition's proximity-polling loop resolves this same InCellVirusSpawner instance onto
             // WorldScaleTransitionContext the same way it already does CellVisuals/CellRigidbody2D/CellAnimator.
             if (instance.TryGetComponent(out InCellVirusSpawner inCellVirusSpawner))
+            {
                 inCellVirusSpawner.Construct(_playerTargetProvider, _waveScalingConfig);
+                OnInCellVirusSpawnerCreated?.Invoke(inCellVirusSpawner);
+            }
         }
 
         private async UniTaskVoid DestroyCellAfterDelayAsync(Transform instance)

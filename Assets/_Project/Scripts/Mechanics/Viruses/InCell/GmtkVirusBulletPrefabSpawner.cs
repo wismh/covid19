@@ -14,11 +14,18 @@ namespace _Project.Mechanics.Viruses.InCell
     {
         [SerializeField] private Transform _bulletPrefab;
 
-        public void SpawnBullet(Vector3 position, Vector3 direction)
+        public void SpawnBullet(Vector3 position, Vector3 direction, Transform scaleReference)
         {
-            // Old: CucumberVirus.FixedUpdate() ->
-            // `var bullet = Object.Instantiate(_bulletPrefab, _bulletSpawnPoint); bullet.transform.position = ...; bullet.transform.right = direction;`
-            Transform bullet = Instantiate(_bulletPrefab, position, Quaternion.identity);
+            // Old: CucumberVirus.FixedUpdate() -> `var bullet = Object.Instantiate(_bulletPrefab,
+            // _bulletSpawnPoint); bullet.transform.position = ...; bullet.transform.right = direction;` - the
+            // 2-arg Instantiate overload parents the bullet under _bulletSpawnPoint, which is what actually gave
+            // it the correct small in-cell-world scale (see IVirusBulletSpawner.SpawnBullet's doc comment) - not
+            // ported until now, which is why bullets rendered at their raw macro-sized prefab scale instead.
+            Transform bullet = scaleReference != null
+                ? Instantiate(_bulletPrefab, scaleReference)
+                : Instantiate(_bulletPrefab);
+
+            bullet.position = position;
             bullet.right = direction;
         }
     }

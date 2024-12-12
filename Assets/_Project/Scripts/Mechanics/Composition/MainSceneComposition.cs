@@ -128,6 +128,7 @@ namespace _Project.Mechanics.Composition
         private Action _handlePauseMacroSpawning;
         private Action _handleResumeMacroSpawning;
         private Action<MacroVirusController> _handleVirusRegistered;
+        private Action<InCellVirusSpawner> _handleInCellVirusSpawnerCreated;
 
         // Phase 7 testing fix (2026-09-11) - Arrow/pickup-XP/bullet-scale bridges to old GMTK ServiceLocator
         // systems, wired from Start() (see that method's doc comment for why Start(), not Awake()). Cached the
@@ -367,6 +368,9 @@ namespace _Project.Mechanics.Composition
                 _macroVirusRegistry.OnUnregistered -= _handleVirusManagerRemove;
             }
 
+            if (_cellSpawner != null)
+                _cellSpawner.OnInCellVirusSpawnerCreated -= _handleInCellVirusSpawnerCreated;
+
             if (_cellRegistry != null)
             {
                 _cellRegistry.OnCellInfected -= _handleCellInfected;
@@ -597,11 +601,18 @@ namespace _Project.Mechanics.Composition
             _handleVirusRegistered = virus => virus.OnKilled += () => _playerStats.AddExperience();
             _macroVirusRegistry.OnRegistered += _handleVirusRegistered;
 
-            // --- NOT wired here: CellInfectionState.OnVirusCountChanged -> InCellVirusSpawner.SetVirusesCount ---
-            // Deliberately absent, not an oversight - see class doc comment's "per-cell in-cell-virus wiring"
-            // section below for the full reasoning (CellSpawner, read directly for this stage, does not spawn or
-            // attach an InCellVirusSpawner to any cell it creates - there is nothing of that shape in the scene
-            // yet for this composition root to reach into).
+            // Phase 8 testing fix (2026-09-11): the macro-virus XP wiring above has no in-cell equivalent -
+            // in-cell viruses were killable, granted no XP at all. Old InCellVirus.Damage()'s death branch called
+            // `_playerStats.AddExperience()` directly, same as old macro-virus code. Mirrors the shape above
+            // exactly, adapted for the fact that in-cell viruses have no shared registry to subscribe to (each
+            // cell owns a private InCellVirusRegistry) - CellSpawner.OnInCellVirusSpawnerCreated fires once per
+            // cell, the moment that cell's own InCellVirusSpawner is constructed, so this subscribes the XP grant
+            // to every cell's spawner exactly once. See InCellVirusSpawner.OnVirusKilled's doc comment.
+            if (_cellSpawner != null)
+            {
+                _handleInCellVirusSpawnerCreated = spawner => spawner.OnVirusKilled += () => _playerStats.AddExperience();
+                _cellSpawner.OnInCellVirusSpawnerCreated += _handleInCellVirusSpawnerCreated;
+            }
         }
 
         /// <summary>

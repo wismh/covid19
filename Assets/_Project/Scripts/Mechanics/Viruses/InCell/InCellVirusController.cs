@@ -33,6 +33,22 @@ namespace _Project.Mechanics.Viruses.InCell
     /// depending on how the composition root wires it) - so construction AND Init() are both deferred to
     /// Start() together instead of splitting them across Awake/Start like old code. OnEnable() calls
     /// `_behavior?.OnEnable()` defensively to stay safe if it fires before Start() on first activation.
+    ///
+    /// --- Damage/death audio + death animation (Phase 8 testing fix, 2026-09-11) ---
+    /// Old InCellVirus.AnimationOnDamage()/AnimationOnDied() played `_audioSources[0]`/`[1]` (hit/death, via
+    /// `GetComponents&lt;AudioSource&gt;()` on Awake) and `_animator.Play("Base Layer.Died")` on death - none of
+    /// that survived the initial port, so kills were silent and animation-less. Restored the same way
+    /// MacroVirusController already restored ITS audio half: <see cref="_audioSources"/>/<see cref="_animator"/>
+    /// resolved via GetComponent(s) in Awake() rather than new [SerializeField]s, since Orange/Cucumber/Spiner.
+    /// prefab already carry a root-level Animator + exactly two AudioSources (index 0 "EnemyHit", index 1 the
+    /// variant's own "...Die" clip) in that same order - confirmed live via the Editor, not guessed. "Died" is
+    /// each variant's actual Animator state name too (Orange/Cucmber/Spiner.controller all have a "Died" state
+    /// under "Base Layer"), matching the old hardcoded string exactly.
+    ///
+    /// See MacroVirusController's own "Why HandleDeathAsync waits again" doc comment for why
+    /// <see cref="HandleDeathAsync"/> waits an extra beat after triggering the animation/audio before raising
+    /// <see cref="OnKilled"/> - identical reasoning, InCellVirusSpawner.HandleVirusKilled destroys the
+    /// GameObject synchronously the instant OnKilled fires, same as MacroVirusSpawner.HandleVirusRemoved.
     /// </summary>
     public sealed class InCellVirusController : MonoBehaviour, GMTK.IDamageable
     {
@@ -54,6 +70,10 @@ namespace _Project.Mechanics.Viruses.InCell
         private IPlayerTargetProvider _playerTargetProvider;
         private IInCellVirusBehavior _behavior;
         private Transform _playerTransform;
+
+        // See class doc comment's "Damage/death audio + death animation" section.
+        private AudioSource[] _audioSources;
+        private Animator _animator;
 
         private int _health;
         private bool _isAlive = true;
@@ -78,6 +98,10 @@ namespace _Project.Mechanics.Viruses.InCell
 
             // Old: InCellVirus.Awake() -> `_health = _maxHealth;`
             _health = _config.MaxHealth;
+
+            // See class doc comment's "Damage/death audio + death animation" section.
+            _audioSources = GetComponents<AudioSource>();
+            _animator = GetComponent<Animator>();
         }
 
         private void OnEnable()
@@ -165,8 +189,18 @@ namespace _Project.Mechanics.Viruses.InCell
 
             PlayDamageFlashAsync().Forget();
 
+            // Old: AnimationOnDamage() -> `_audioSources[0].Play();`, unconditional - see class doc comment.
+            PlayAudioIfAvailable(0);
+
             if (_health <= 0)
                 HandleDeathAsync().Forget();
+        }
+
+        /// <summary>Mirrors MacroVirusController's own helper of the same name/shape.</summary>
+        private void PlayAudioIfAvailable(int index)
+        {
+            if (_audioSources != null && index < _audioSources.Length && _audioSources[index] != null)
+                _audioSources[index].Play();
         }
 
         /// <summary>Old: InCellVirus.Damage() death branch + AnimationOnDied() coroutine (0.2s delay before the
@@ -181,6 +215,22 @@ namespace _Project.Mechanics.Viruses.InCell
             try
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(0.2f), cancellationToken: _lifetimeCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            // Old: AnimationOnDied() -> `_animator.Play("Base Layer.Died"); _audioSources[1].Play();`.
+            _animator?.Play("Base Layer.Died");
+            PlayAudioIfAvailable(1);
+
+            // See class doc comment's "Damage/death audio + death animation" section - gives the death
+            // animation/audio time to actually be seen/heard before OnKilled triggers GameObject destruction
+            // (InCellVirusSpawner.HandleVirusKilled destroys synchronously the instant OnKilled fires).
+            try
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(0.8f), cancellationToken: _lifetimeCts.Token);
             }
             catch (OperationCanceledException)
             {

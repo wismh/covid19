@@ -5703,6 +5703,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _movement: {fileID: 7063822839208027}
   _turret: {fileID: 8087678505012858}
+  _audioList: {fileID: 4470921708859009534}
+  _animator: {fileID: 5762737321540400294}
+  _spriteRenderer: {fileID: 5153227940720375673}
+  _damageMaterial: {fileID: 2100000, guid: ff1c34b5819982642a8c9b8f51409db0, type: 2}
 --- !u!114 &-132038011715332256
 MonoBehaviour:
   m_ObjectHideFlags: 0

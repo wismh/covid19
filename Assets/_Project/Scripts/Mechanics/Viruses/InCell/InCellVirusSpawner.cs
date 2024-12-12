@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Zenject;
 using _Project.Mechanics.Cells;
@@ -91,6 +92,21 @@ namespace _Project.Mechanics.Viruses.InCell
         private IPlayerTargetProvider _playerTargetProvider;
         private WaveScalingConfig _waveScalingConfig;
 
+        /// <summary>
+        /// Phase 8 testing fix (2026-09-11): old InCellVirus.Damage()'s death branch called
+        /// `_playerStats.AddExperience()` directly, same as old VirusController.Damage() did for macro viruses.
+        /// MainSceneComposition already restored that for macro kills (see its "XP-granting was never wired at
+        /// all" doc comment) by subscribing to MacroVirusRegistry.OnRegistered - but in-cell viruses have no
+        /// equivalent global registry (each cell owns a private InCellVirusRegistry, see this class's own doc
+        /// comment's "SetVirusesCount" section), so that same subscription shape doesn't reach them. Raised here
+        /// instead, once per killed virus, alongside <see cref="HandleVirusKilled"/>'s existing bookkeeping -
+        /// CellSpawner.SpawnCell() forwards this spawner instance out via CellSpawner.OnInCellVirusSpawnerCreated
+        /// the moment it's constructed, so MainSceneComposition can subscribe an XP grant to every cell's spawner
+        /// without this class needing to know about PlayerStatsService itself (same decoupling MacroVirusController.
+        /// OnKilled already uses).
+        /// </summary>
+        public event Action OnVirusKilled;
+
         /// <summary>See MacroVirusSpawner's doc comment's "Elapsed-time source" section - identical reasoning.</summary>
         private float ElapsedSeconds => Time.timeSinceLevelLoad;
 
@@ -150,7 +166,7 @@ namespace _Project.Mechanics.Viruses.InCell
             if (spinerUnlocked)
                 available++;
 
-            int choice = Random.Range(0, available);
+            int choice = UnityEngine.Random.Range(0, available);
             if (choice == 0)
                 return _orangePrefab;
             if (choice == 1)
@@ -179,6 +195,8 @@ namespace _Project.Mechanics.Viruses.InCell
             // holds the sibling CellInfectionState reference - see class doc comment.
             if (_cellInfectionState != null)
                 _cellInfectionState.RemoveVirus();
+
+            OnVirusKilled?.Invoke();
 
             if (virus != null)
                 Destroy(virus.gameObject);
