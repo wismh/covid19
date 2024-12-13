@@ -63,14 +63,28 @@ namespace _Project.UI.Hud
     /// its own small shared service; duplicating it into two owners would be worse than this screen owning the
     /// display-only copy until that's decided.
     ///
-    /// --- Statistics text: documented gap ---
+    /// --- Statistics text: documented gap, now RESOLVED (CellRegistry.OnStatisticsChanged wired in Phase 7) ---
     /// Old: GMTK.UI.HUD.Awake() captured the TextMeshProUGUI's own initial text as a `{lc}`/`{sc}`/`{cd}` template
     /// and re-rendered it on GMTK.Services.GameStatistics.OnStatisticsChange (living/sick/died cell counts).
-    /// REFACTORING_PLAN.md's own Phase 3 notes confirm no `_Project` equivalent of GameStatistics/CellManager
-    /// exists yet ("Немає реєстру клітин/вірусів... усе це свідомо відкладено" - Phase 3 section). Per the phase
-    /// brief, this is a real, documented gap, not something to fake with an invented registry: <see
-    /// cref="SetStatistics"/> is exposed as the hook a future cell-registry composition root calls, exactly the
-    /// same shape as the old event handler's body, once that registry exists.
+    /// <see cref="SetStatistics"/> is that same hook, wired to CellRegistry.OnStatisticsChanged by
+    /// MainSceneComposition.WireCrossSystemEvents() once that registry existed - see CellRegistry's own doc
+    /// comment for the exact wiring.
+    ///
+    /// --- Phase 8 testing fix (2026-09-11): the shared "Statistics" TMP_Text was corrupted before this class
+    /// ever saw it ---
+    /// User-reported symptom: living/sick/died cell counts on the HUD never updated, always showing "00". Root
+    /// cause: GMTK.UI.HUD - the OLD monolith this class's own class doc comment already said it replaces - was
+    /// still enabled on the SAME "HUD" GameObject, doing `transform.Find("Statistics")` to reach the exact same
+    /// TMP_Text this class's <see cref="_statisticsText"/> is wired to. Old HUD.Awake() captures ITS OWN pattern
+    /// then immediately renders once against its own (never-updated-again, always-zero) GMTK.Services.
+    /// GameStatistics snapshot - permanently baking "00"/"00"/"00" over the `{lc}`/`{sc}`/`{cd}` placeholders in
+    /// the shared TMP_Text's runtime text, BEFORE this class's own OnOpen() ever runs (confirmed live: Debug.Log
+    /// tracing showed OnOpen's own pattern capture already read back "00...00", not the authored template -
+    /// old HUD.Awake() runs earlier in the Awake ordering). Once the `{lc}` placeholders were gone, every
+    /// subsequent SetStatistics() call's .Replace() calls were permanent no-ops - the exact same class of bug as
+    /// the health bar fix two rounds ago, just via GameObject-sharing instead of a stale formula. Removed the
+    /// GMTK.UI.HUD component from the scene (its job is now fully covered by this class), the same fix already
+    /// applied to GMTK.UI.AdviceDialog for the same reason (see REFACTORING_PLAN.md's ninth-round entry).
     ///
     /// --- Auto-opening UpgradeScreen/GameOverScreen: a judgement call ---
     /// The phase brief asks UpgradeScreen to "open automatically when PlayerStatsService.OnLevelUp fires (wire
@@ -113,10 +127,25 @@ namespace _Project.UI.Hud
         [Header("Statistics (documented gap - see class doc comment)")]
         [SerializeField] private TMP_Text _statisticsText;
 
+        /// <summary>
+        /// Phase 8 testing fix (2026-09-11): PlayerTurret.ReloadProgress01 already existed, built specifically
+        /// for "a future UI screen to bind a reload indicator to" (see that property's own doc comment) - nothing
+        /// ever did. Old PlayerTurretController drove Player.prefab's "ReloadIndicatorFull" Image directly
+        /// (`_filledReloadImage.fillAmount`, DOTween'd 0→1 over the reload duration on every shot); that old
+        /// component is now disabled (superseded by this class + PlayerTurret), so the indicator was never
+        /// touched again and stayed frozen at its Editor-authored default fillAmount (1 - always "full",
+        /// regardless of actual reload state) - exactly the user-reported symptom. Polled every frame in Update()
+        /// rather than event-driven like the other bars: ReloadProgress01 is a continuous Time.time-based value
+        /// with no natural "changed" event to hook, same reasoning old BarsHUD.Update() had for polling Health/
+        /// Armor before PlayerHealth grew real events.
+        /// </summary>
+        [SerializeField] private Image _reloadIndicatorFilled;
+
         private PlayerConfig _config;
         private PlayerHealth _playerHealth;
         private PlayerStatsService _playerStats;
         private IScreenManager _screenManager;
+        private PlayerTurret _playerTurret;
 
         private CancellationTokenSource _timerCts;
         private int _elapsedSeconds;
@@ -134,12 +163,13 @@ namespace _Project.UI.Hud
         /// CellVisuals. IScreenManager IS a real Zenject binding (UiInstaller -&gt; BaseScreenManager) and resolves today.
         /// </summary>
         [Inject]
-        public void Construct(PlayerConfig config, PlayerHealth playerHealth, PlayerStatsService playerStats, IScreenManager screenManager)
+        public void Construct(PlayerConfig config, PlayerHealth playerHealth, PlayerStatsService playerStats, IScreenManager screenManager, PlayerTurret playerTurret)
         {
             _config = config;
             _playerHealth = playerHealth;
             _playerStats = playerStats;
             _screenManager = screenManager;
+            _playerTurret = playerTurret;
         }
 
         public override void OnOpen()
@@ -163,6 +193,13 @@ namespace _Project.UI.Hud
             UpdateTimerText();
             _timerCts = new CancellationTokenSource();
             RunTimerAsync(_timerCts.Token).Forget();
+        }
+
+        private void Update()
+        {
+            // See _reloadIndicatorFilled's doc comment - continuous value, no change event to hook.
+            if (_reloadIndicatorFilled != null && _playerTurret != null)
+                _reloadIndicatorFilled.fillAmount = _playerTurret.ReloadProgress01;
         }
 
         public override UniTask OnClose()

@@ -188,11 +188,26 @@ namespace _Project.Mechanics.Viruses.Macro
                 SpawnVirus(position);
         }
 
-        /// <summary>See class doc comment's "Cross-system wiring left to Stage 2" section - old:
-        /// `_virusManager.gameObject.SetActive(false/true)`.</summary>
+        /// <summary>
+        /// See class doc comment's "Cross-system wiring left to Stage 2" section - old:
+        /// `_virusManager.gameObject.SetActive(false/true)`.
+        ///
+        /// Phase 8 testing fix (2026-09-11): this only ever set <see cref="_isPaused"/>, gating this spawner's
+        /// OWN Update() (new-wave spawning/re-triggering) - it never reproduced the GameObject.SetActive() half
+        /// of the old call, which is what actually stopped EVERY already-spawned macro virus's Update()/
+        /// FixedUpdate() (movement toward cells, attacking, penetrating). User-reported symptom: macro viruses
+        /// kept flying around and infecting cells while the player was inside one, exactly as if nothing had
+        /// changed. Fixed by also toggling this spawner's own GameObject active state - every spawned
+        /// MacroVirusController is a child of this transform (see SpawnVirus()'s `Instantiate(prefab, transform)`
+        /// calls), so deactivating the parent deactivates all of them at once, the same blunt-but-correct
+        /// approach old code used. A virus mid-SpawnReplacementVirusesAsync delay when this fires still
+        /// instantiates on schedule (that UniTaskVoid isn't tied to this GameObject's active state) but lands as
+        /// an inactive-in-hierarchy child until reactivated - consistent with "everything pauses in here."
+        /// </summary>
         public void SetPaused(bool isPaused)
         {
             _isPaused = isPaused;
+            gameObject.SetActive(!isPaused);
         }
     }
 }

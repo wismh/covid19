@@ -2269,6 +2269,7 @@ MonoBehaviour:
   _healthBarVisualCapacity: 8
   _timerText: {fileID: 123938979}
   _statisticsText: {fileID: 383426139}
+  _reloadIndicatorFilled: {fileID: 7027037699782356}
 --- !u!1 &821766882
 GameObject:
   m_ObjectHideFlags: 0
@@ -4613,7 +4614,6 @@ GameObject:
   - component: {fileID: 1890739287}
   - component: {fileID: 1890739286}
   - component: {fileID: 1890739285}
-  - component: {fileID: 1890739288}
   - component: {fileID: 817364529}
   m_Layer: 5
   m_Name: HUD
@@ -4711,18 +4711,6 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 10000
   m_TargetDisplay: 0
---- !u!114 &1890739288
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1890739283}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4b7dba24caac1084093748745ceea549, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1918897584
 GameObject:
   m_ObjectHideFlags: 0
@@ -5903,6 +5891,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3d3ccb67c50d3fc4fa8f4f8bb7988f83, type: 3}
+--- !u!114 &7027037699782356 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4260291213031602155, guid: 3d3ccb67c50d3fc4fa8f4f8bb7988f83, type: 3}
+  m_PrefabInstance: {fileID: 7027037699782355}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &5251175143198074731
 PrefabInstance:
   m_ObjectHideFlags: 0

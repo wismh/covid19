@@ -82,6 +82,28 @@ namespace _Project.Mechanics.WorldScale
         public event Action OnExitedMicroWorld;
 
         /// <summary>
+        /// Phase 8 testing fix (2026-09-11): raised at the very START of EnterMicroWorldAsync, before the
+        /// transition's tween sequence even begins - NOT after it completes, unlike OnEnteredMicroWorld above.
+        /// User-reported symptom: the enter/exit "whoosh" cue (GameAudioService.HandleEnteredMicroWorld/
+        /// HandleExitedMicroWorld, subscribed to OnEnteredMicroWorld/OnExitedMicroWorld) played roughly a full
+        /// second LATE - only once the player had already finished shrinking into the cell, instead of
+        /// accompanying the shrink as it happened. Root cause: old TransitionIntoMicroWorld/MacroWorld.Start()
+        /// played their whoosh (`AudioList.Play(0/1)`) as literally the FIRST thing they did, before kicking off
+        /// a single DOTween tween - this class's own "WHEN does CurrentScale change" doc comment above explains
+        /// why OnEnteredMicroWorld/OnExitedMicroWorld were deliberately moved to fire only after the transition
+        /// fully finishes (so other systems see a fully-switched world, not a mid-transition one) - a correct,
+        /// intentional change for THOSE listeners, but it silently dragged GameAudioService's whoosh timing along
+        /// with it as an unintended side effect, since it was the only hook available. These new events exist
+        /// specifically so audio (and anything else that wants old code's "at the very start" timing) doesn't
+        /// have to choose between correct CurrentScale timing and correct audio timing.
+        /// </summary>
+        public event Action OnEnteringMicroWorld;
+
+        /// <summary>See <see cref="OnEnteringMicroWorld"/>'s doc comment - same reasoning, opposite direction.
+        /// Raised at the very start of EnterMacroWorldAsync.</summary>
+        public event Action OnEnteringMacroWorld;
+
+        /// <summary>
         /// Raised alongside whichever of the two events above fires, carrying the new scale explicitly. Kept
         /// alongside the two specific events rather than instead of them - the same "named edge events PLUS one
         /// generic value event" shape Phase 3's CellInfectionState already established
@@ -110,6 +132,7 @@ namespace _Project.Mechanics.WorldScale
                     $"{nameof(WorldScaleController)}.{nameof(EnterMicroWorldAsync)} called while a transition was already in flight.");
 
             _isTransitioning = true;
+            OnEnteringMicroWorld?.Invoke();
             try
             {
                 await _transition.EnterMicroWorldAsync(context, cancellationToken);
@@ -133,6 +156,7 @@ namespace _Project.Mechanics.WorldScale
                     $"{nameof(WorldScaleController)}.{nameof(EnterMacroWorldAsync)} called while a transition was already in flight.");
 
             _isTransitioning = true;
+            OnEnteringMacroWorld?.Invoke();
             try
             {
                 await _transition.EnterMacroWorldAsync(context, cancellationToken);

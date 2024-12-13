@@ -26,12 +26,13 @@ namespace _Project.Mechanics.Cells
     /// Scope note: old CellController.Die() additionally forced the player out of macro world if they were
     /// inside the dying cell, removed the cell from GMTK.CellManager/VirusCellManager, played a death
     /// animation/audio, and either triggered game-over (no cells left) or spawned `virusCount + 1` replacement
-    /// macro viruses after a 1s delay. None of that is reproduced here - it all depends on systems that don't
-    /// exist yet in the new architecture (a cell registry, the Macro/Micro world-scale controller from Phase 4,
-    /// HUD game-over screen from Phase 5, a virus spawner). CellHealth only raises <see cref="OnDied"/> with the
-    /// virus count at time of death, exactly like MacroVirusController.OnKilled/InCellVirusController.OnKilled
-    /// defer XP-granting to a future composition root instead of reaching into old ServiceLocator-resolved
-    /// managers directly - whoever wires up cell death behavior later has everything they need from that event.
+    /// macro viruses after a 1s delay. All of that is now reproduced elsewhere, once the systems it depends on
+    /// existed: MainSceneComposition.WireCrossSystemEvents (force-macro-exit, game-over, replacement viruses -
+    /// Phase 8 testing fix, 2026-09-11) and CellVisuals.HandleDied (death animation/audio, same round). CellHealth
+    /// itself still only raises <see cref="OnDied"/> with the virus count at time of death, exactly like
+    /// MacroVirusController.OnKilled/InCellVirusController.OnKilled defer XP-granting to a future composition
+    /// root instead of reaching into old ServiceLocator-resolved managers directly - it stays the single source
+    /// of truth every listener above hangs off of.
     /// </summary>
     public sealed class CellHealth : MonoBehaviour
     {

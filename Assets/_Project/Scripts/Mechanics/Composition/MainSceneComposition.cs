@@ -125,6 +125,7 @@ namespace _Project.Mechanics.Composition
         // Cached delegates so lambda subscriptions can be symmetrically unsubscribed in OnDestroy (matching this
         // codebase's PlayerHealth/CellHealth/CellVisuals +=/-= discipline instead of relying on GC to clean up).
         private Action<Vector3, int> _handleCellDied;
+        private Action<Vector3, int> _handleCellDiedForceMacroExit;
         private Action _handlePauseMacroSpawning;
         private Action _handleResumeMacroSpawning;
         private Action<MacroVirusController> _handleVirusRegistered;
@@ -350,6 +351,7 @@ namespace _Project.Mechanics.Composition
 
                 _cellRegistry.OnAllCellsDied -= HandleAllCellsDied;
                 _cellRegistry.OnCellDied -= _handleCellDied;
+                _cellRegistry.OnCellDied -= _handleCellDiedForceMacroExit;
             }
 
             if (_worldScaleController != null)
@@ -540,7 +542,7 @@ namespace _Project.Mechanics.Composition
         private void ConstructScreens()
         {
             if (_hudScreen != null)
-                _hudScreen.Construct(_playerConfig, _playerHealth, _playerStats, _screenManager);
+                _hudScreen.Construct(_playerConfig, _playerHealth, _playerStats, _screenManager, _playerTurret);
 
             if (_upgradeScreen != null)
                 _upgradeScreen.Construct(_playerStats, _screenManager);
@@ -568,6 +570,28 @@ namespace _Project.Mechanics.Composition
                 _cellRegistry.OnStatisticsChanged += _hudScreen.SetStatistics;
 
             _cellRegistry.OnAllCellsDied += HandleAllCellsDied;
+
+            // Phase 8 testing fix (2026-09-11): old CellController.Die() forced the player back to macro world
+            // BEFORE checking Pool.Count == 0 (`if (nearestCell == transform) GamePlayState.State =
+            // WorldState.MACRO_WORLD;` runs unconditionally, ahead of the OnCellDied/OnAllCellsDied-equivalent
+            // branch below it) - CellHealth.OnDied's own doc comment explicitly scoped this out as a gap ("old
+            // CellController.Die() additionally forced the player out of macro world if they were inside the
+            // dying cell... None of that is reproduced here"). User-reported symptom: the player stayed shrunk
+            // to micro scale forever if their cell died while they were inside it. Position-matched against
+            // WorldScaleTransitionContext.Cell (the cell the player actually entered - see MainSceneComposition's
+            // proximity-polling loop) rather than trusting OnCellDied's deathPosition alone, since an unrelated,
+            // far-away cell dying should never eject the player from the one they're actually standing in.
+            _handleCellDiedForceMacroExit = (position, _) =>
+            {
+                if (_worldScaleController.CurrentScale != _Project.Mechanics.WorldScale.WorldScale.Micro)
+                    return;
+
+                if (_worldScaleTransitionContext.Cell == null || _worldScaleTransitionContext.Cell.position != position)
+                    return;
+
+                EnterMacroWorldSafeAsync().Forget();
+            };
+            _cellRegistry.OnCellDied += _handleCellDiedForceMacroExit;
 
             if (_macroVirusSpawner != null)
             {
@@ -621,10 +645,32 @@ namespace _Project.Mechanics.Composition
         /// </summary>
         private void HandleAllCellsDied()
         {
+            // See _handleCellDiedForceMacroExit's doc comment - old code's force-macro-exit check ran
+            // unconditionally before its Pool.Count == 0 branch, so the last cell dying with the player inside
+            // it needs the same treatment (OnAllCellsDied fires INSTEAD OF OnCellDied for that death - see
+            // CellRegistry's own "OnCellDied vs OnAllCellsDied" doc comment - so _handleCellDiedForceMacroExit
+            // above never sees it). No position check needed: CurrentScale can only be Micro here if the player
+            // was inside the one cell that just brought the count to zero.
+            if (_worldScaleController.CurrentScale == _Project.Mechanics.WorldScale.WorldScale.Micro)
+                EnterMacroWorldSafeAsync().Forget();
+
             if (_gameOverScreen != null)
                 _gameOverScreen.SetAllCellsDied(true);
 
             _screenManager.OpenScreen<GameOverScreen>().Forget();
+        }
+
+        /// <summary>See _handleCellDiedForceMacroExit's/HandleAllCellsDied's doc comments. Mirrors
+        /// CellProximityPrompt.EnterMacroWorldSafeAsync's own try/catch shape.</summary>
+        private async UniTaskVoid EnterMacroWorldSafeAsync()
+        {
+            try
+            {
+                await _worldScaleController.EnterMacroWorldAsync(_worldScaleTransitionContext, _lifetimeCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+            }
         }
 
         /// <summary>

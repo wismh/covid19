@@ -84,8 +84,11 @@ namespace _Project.Mechanics.Audio
 
             if (_worldScaleController != null)
             {
-                _worldScaleController.OnEnteredMicroWorld += HandleEnteredMicroWorld;
-                _worldScaleController.OnExitedMicroWorld += HandleExitedMicroWorld;
+                // Phase 8 testing fix (2026-09-11): subscribed to OnEntering*/OnExiting*-timed events instead of
+                // OnEntered*/OnExited* - see WorldScaleController.OnEnteringMicroWorld's doc comment for why the
+                // whoosh needs to play at the START of the transition, not after it finishes.
+                _worldScaleController.OnEnteringMicroWorld += HandleEnteredMicroWorld;
+                _worldScaleController.OnEnteringMacroWorld += HandleExitedMicroWorld;
             }
         }
 
@@ -98,8 +101,8 @@ namespace _Project.Mechanics.Audio
             if (_worldScaleController == null)
                 return;
 
-            _worldScaleController.OnEnteredMicroWorld -= HandleEnteredMicroWorld;
-            _worldScaleController.OnExitedMicroWorld -= HandleExitedMicroWorld;
+            _worldScaleController.OnEnteringMicroWorld -= HandleEnteredMicroWorld;
+            _worldScaleController.OnEnteringMacroWorld -= HandleExitedMicroWorld;
         }
 
         /// <summary>Plays a one-shot SFX by named cue. Old: whichever `AudioList.Play(int)` or
