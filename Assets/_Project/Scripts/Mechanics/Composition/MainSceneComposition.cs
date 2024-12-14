@@ -445,6 +445,28 @@ namespace _Project.Mechanics.Composition
             if (_gameOverScreen != null) screens.Add(_gameOverScreen);
 
             _screenManager = new BaseScreenManager(screens);
+
+            // Phase 8 testing fix (2026-09-11): UpgradeScreen/GameOverScreen live on the same "HUD/UpgradeGroup"/
+            // "HUD/GameOverGroup" GameObjects the old GMTK.UI.HUD reused from - and it turns out the SCENE FILE
+            // itself has both marked active (an Editor-authoring artifact, not something either BaseScreenManager
+            // or BaseScreen ever accounted for). Old GMTK.UI.HUD.Awake() silently papered over this every time -
+            // `_gameOverGroup.gameObject.SetActive(false); _upgradeGroup.gameObject.SetActive(false);` ran
+            // unconditionally at startup, before this migration's own code ever got a chance to matter. Removing
+            // that component (this same round's HUD-statistics fix) removed the only thing hiding them, so both
+            // panels - plus their Upgrade-choice/"You Died" overlays underneath - were suddenly visible from the
+            // very first frame, regardless of PlayerHealth.IsAlive/PlayerStatsService.Level (both start in a
+            // perfectly normal state - confirmed live, this is not a false level-up/death, just two screens never
+            // told to start closed). BaseScreenManager has no general "every registered screen starts hidden
+            // unless opened" invariant of its own (see its constructor - it only populates the type→screen
+            // dictionary), so this is the composition root's job, done explicitly here instead of guessing at a
+            // scene-wide fix. HudScreen is deliberately NOT included - see the "HudScreen is the one screen
+            // guaranteed open for the whole gameplay session" note above, and OpenScreen<HudScreen>() right below
+            // sets it active anyway.
+            if (_upgradeScreen != null)
+                _upgradeScreen.gameObject.SetActive(false);
+
+            if (_gameOverScreen != null)
+                _gameOverScreen.gameObject.SetActive(false);
         }
 
         // --- 1. Hand-composed Mechanics/* POCOs (REFACTORING_PLAN.md section 4's manual-composition rule) ---
