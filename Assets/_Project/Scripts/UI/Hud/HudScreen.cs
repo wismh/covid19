@@ -198,7 +198,22 @@ namespace _Project.UI.Hud
         private void Update()
         {
             // See _reloadIndicatorFilled's doc comment - continuous value, no change event to hook.
-            if (_reloadIndicatorFilled != null && _playerTurret != null)
+            //
+            // Phase 9 testing fix (2026-09-12): user-reported symptom - the reload ring stayed visible (and kept
+            // animating, since nothing ever stopped polling it) after the player died. Old PlayerTurretController
+            // simply stopped running once its GameObject/component was disabled on death, freezing the old
+            // DOTween-driven fill in place; this polls unconditionally every frame with no equivalent gate, so it
+            // kept ticking through to fully-reloaded on the game-over screen. Gated on PlayerHealth.IsAlive - the
+            // indicator hides itself and stops updating the instant the player dies, matching what a player
+            // expects to see once the fight is over, rather than leaking gameplay HUD into the death screen.
+            if (_reloadIndicatorFilled == null || _playerTurret == null || _playerHealth == null)
+                return;
+
+            bool isAlive = _playerHealth.IsAlive;
+            if (_reloadIndicatorFilled.gameObject.activeSelf != isAlive)
+                _reloadIndicatorFilled.gameObject.SetActive(isAlive);
+
+            if (isAlive)
                 _reloadIndicatorFilled.fillAmount = _playerTurret.ReloadProgress01;
         }
 

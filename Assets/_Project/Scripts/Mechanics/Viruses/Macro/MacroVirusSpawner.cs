@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using UnityEngine;
 using Zenject;
 using _Project.Mechanics.Cells;
@@ -203,11 +204,38 @@ namespace _Project.Mechanics.Viruses.Macro
         /// approach old code used. A virus mid-SpawnReplacementVirusesAsync delay when this fires still
         /// instantiates on schedule (that UniTaskVoid isn't tied to this GameObject's active state) but lands as
         /// an inactive-in-hierarchy child until reactivated - consistent with "everything pauses in here."
+        ///
+        /// Phase 9 testing fix (2026-09-12): the GameObject.SetActive() toggle above only stops components whose
+        /// Update()/FixedUpdate() drive them - it does nothing for a virus already mid-PenetrationIntoCellBehavior,
+        /// since that behavior (a) reparents the virus under the TARGET CELL the instant penetration starts
+        /// (`transform.SetParent(_target)` - see that class's Init()), taking it out of this spawner's hierarchy
+        /// entirely, and (b) drives the shrink-into-cell animation via a DOTween sequence, which - unlike this
+        /// spawner's own Update()-driven re-trigger logic - keeps ticking regardless of any GameObject's active
+        /// state; DOTween has its own persistent update loop that doesn't check activeInHierarchy. User-reported
+        /// symptom: viruses already mid-penetration kept visibly "climbing into" a cell even while the player was
+        /// standing inside it. Fixed by explicitly pausing/resuming every registered virus's DOTween tweens by
+        /// target (`DOTween.Pause(virus.transform)`) alongside the GameObject toggle - a no-op for viruses NOT
+        /// currently penetrating (they have no live tween on their transform to find), and freezes the shrink
+        /// animation exactly in place for ones that are, resuming from the same point on exit.
         /// </summary>
         public void SetPaused(bool isPaused)
         {
             _isPaused = isPaused;
             gameObject.SetActive(!isPaused);
+
+            if (_registry == null)
+                return;
+
+            foreach (MacroVirusController virus in _registry.Viruses)
+            {
+                if (virus == null)
+                    continue;
+
+                if (isPaused)
+                    DOTween.Pause(virus.transform);
+                else
+                    DOTween.Play(virus.transform);
+            }
         }
     }
 }

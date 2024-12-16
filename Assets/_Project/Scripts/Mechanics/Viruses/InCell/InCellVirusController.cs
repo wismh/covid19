@@ -127,11 +127,31 @@ namespace _Project.Mechanics.Viruses.InCell
 
         private void Update()
         {
+            // See FixedUpdate's doc comment - same reasoning applies here too.
+            if (!_isAlive)
+                return;
+
             _behavior?.Update();
         }
 
+        /// <summary>
+        /// Phase 9 testing fix (2026-09-12): neither this nor Update() above used to check <see cref="_isAlive"/>
+        /// - the behavior kept running for the full ~1s HandleDeathAsync delay between death being detected and
+        /// OnKilled actually destroying the GameObject (see that method's own doc comment for why that delay
+        /// exists - giving the death animation/audio time to play). For CucumberVirusBehavior specifically, its
+        /// own attack-cooldown logic doesn't know or care that the virus is already dead, so it kept firing
+        /// `_animator.Play("Base Layer.Attack")` (and even spawning bullets) during that window - user-reported
+        /// symptom: a dying Cucumber's death animation would play, then visibly flip back to the attack
+        /// animation (or freeze on whatever frame that left it on) for the remainder of the death delay before
+        /// finally disappearing. Guarding both loops on IsAlive stops the behavior dead in its tracks the instant
+        /// Damage() detects lethal damage, leaving the "Died" animation HandleDeathAsync plays 0.2s later
+        /// undisturbed for the rest of the delay.
+        /// </summary>
         private void FixedUpdate()
         {
+            if (!_isAlive)
+                return;
+
             _behavior?.FixedUpdate();
         }
 

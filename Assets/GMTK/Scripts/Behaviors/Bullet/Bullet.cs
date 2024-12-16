@@ -17,6 +17,22 @@ namespace GMTK
 
         private void Update()
         {
+            // Phase 9 testing fix (2026-09-12): scale used to be set only once, in OnEnable() below, from
+            // whatever GamePlayState.State read at that instant. User-reported symptom: the first shot fired in
+            // the same frame the player finishes entering a cell still flies at full macro size despite already
+            // being inside - a one-frame race between this bullet's OnEnable() (pooled bullets re-enable via
+            // BulletManager.SpawnBullet -> ObjectPool.Get(), which can run from PlayerTurret.Update()) and
+            // WorldScaleController's transition completion callback (which drives GamePlayState.SyncWorldState()
+            // via MainSceneComposition - see that class's "Legacy state bridge" wiring) - Unity doesn't guarantee
+            // which of two different MonoBehaviours' per-frame callbacks runs first, and a DOTween OnComplete
+            // firing after this Update() in the same frame left the just-spawned bullet's scale stuck at
+            // whatever OnEnable() guessed. Re-checking (and self-correcting) scale every frame here means a
+            // bullet can be wrong for at most the one frame it was actually racing on, instead of for its whole
+            // flight.
+            Vector3 targetScale = _gamePlayState.State == WorldState.MICRO_WORLD ? new Vector3(0.3f, 0.3f, 1f) : Vector3.one;
+            if (transform.localScale != targetScale)
+                transform.localScale = targetScale;
+
             var velocity = Time.deltaTime * _speed * transform.right;
             if (_gamePlayState.State == WorldState.MICRO_WORLD)
                 velocity *= 0.3f;
