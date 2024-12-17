@@ -34,8 +34,25 @@ namespace _Project.Mechanics.Player
     public sealed class PlayerHealth : MonoBehaviour, GMTK.IDamageable
     {
         // Direct references instead of the old `transform.Find("Turret")` / GetComponentInChildren lookups.
-        [SerializeField] private PlayerMovement _movement; // on-hit knockback impulse
+        [SerializeField] private PlayerMovement _movement; // on-hit knockback impulse, disabled on death
         [SerializeField] private PlayerTurret _turret; // disabled on death
+
+        /// <summary>
+        /// Phase 9 testing fix (2026-09-12): user-reported symptom - after dying, the player's Body sprite went
+        /// invisible (the "Died" animation clip hides it) but the player could still move, aim, and fire, and
+        /// the nearest-infected-cell arrow (old GMTK.ArrowController, still active on Player.prefab's "Arrow"
+        /// child) kept pointing and showing. HandleDeathAsync only ever hid the turret's own visual and played
+        /// the death animation - it never stopped PlayerMovement/PlayerTurret from still processing input
+        /// (neither old PlayerDamageable nor this port's initial version disabled them), and ArrowController's
+        /// own StartCoroutine(StartFindTargets(...)) keeps running regardless of the component's enabled state
+        /// (a well-known Unity gotcha - disabling a MonoBehaviour does not stop coroutines it already started;
+        /// only deactivating its GameObject, or explicitly stopping the coroutine, does). Disabling
+        /// PlayerMovement/PlayerTurret (their OnDisable() unsubscribes input, matching how OnEnable() wired it -
+        /// see those classes' own lifecycle methods) stops movement/aiming/firing outright; deactivating the
+        /// whole "Arrow" GameObject is the only way to actually stop its coroutine too, not just hide it for one
+        /// frame until the next FindTarget() tick turns it back on.
+        /// </summary>
+        [SerializeField] private GameObject _arrowRoot;
 
         // See class doc comment's "Damage/death audio + material flash + death animation" section.
         [SerializeField] private GMTK.AudioList _audioList;
@@ -177,6 +194,17 @@ namespace _Project.Mechanics.Player
         private async UniTaskVoid HandleDeathAsync()
         {
             _isAlive = false;
+
+            // See _arrowRoot's doc comment - stop movement/aiming/firing and the target arrow the instant death
+            // is detected, not after the animation delay below, so the player can't keep playing during it.
+            if (_movement != null)
+                _movement.enabled = false;
+
+            if (_turret != null)
+                _turret.enabled = false;
+
+            if (_arrowRoot != null)
+                _arrowRoot.SetActive(false);
 
             // Old: PlayerDamageable.AnimationOnDied -> `transform.Find("Turret").gameObject.SetActive(false);`
             // - see PlayerTurret.TurretVisualObject's doc comment for why this can't be `_turret.gameObject`
