@@ -1,31 +1,28 @@
 # SDD — COVID-19: The Beginning (технічний дизайн-документ)
 
-> Знімок стану на 2026-09-19, після завершення фаз 0–7 рефакторингу
-> (`Docs/REFACTORING_PLAN.md`) і 13 раундів живого тестування через Unity CLI. Описує систему
-> такою, якою вона фактично зібрана й працює зараз — включно з місцями, де нова архітектура ще не
-> витіснила стару. Це технічний документ для розробників; ігровий дизайн і точні баланс-числа —
-> у [GDD.md](GDD.md). Історія причин кожного архітектурного рішення — у
-> [REFACTORING_PLAN.md](REFACTORING_PLAN.md); оцінка якості коду ДО рефакторингу — у
-> [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) (застаріла щодо поточного стану, залишена як історичний
-> референс).
+> Знімок стану на 2026-09-19. Стару кодову базу (`Assets/GMTK/Scripts/**`) остаточно видалено з
+> репозиторію — кожна система, що раніше залежала від неї напряму чи через тимчасовий міст
+> (стрільба, камера, стрілка-локатор, пігулки, фон, головне меню, музика), тепер має власну
+> нативну реалізацію в `Assets/_Project/**`. Цей документ описує єдину кодову базу, що лишилась.
+> Технічний документ для розробників; ігровий дизайн і точні баланс-числа — у [GDD.md](GDD.md).
+> Історія рішень і повний журнал міграції — у [REFACTORING_PLAN.md](REFACTORING_PLAN.md); оцінка
+> якості коду ДО рефакторингу — у [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) (описує вже неіснуючу
+> кодову базу, залишена як історичний референс).
 
 ## 1. Область застосування
 
-Проєкт одночасно містить **дві архітектури в одному Play Mode**:
+Проєкт складається з двох частин:
 
-- **`Assets/GMTK/Scripts/**`**, простір імен `GMTK.*` — оригінальний джем-код (Unity 2022.3,
-  Built-in RP, `ServiceLocator`, корутини). Частина цих класів досі `m_Enabled: 1` в сцені й
-  фактично керує реальною поведінкою гри там, де новий код ще не отримав відповідної фічі.
-- **`Assets/_Project/Scripts/**`**, простір імен `_Project.*` — цільова архітектура (Unity
-  6000.3.10f1, URP 2D, Zenject, UniTask). Це код, який слід читати й розширювати для будь-якої
-  нової роботи.
+- **`Assets/_Project/Scripts/**`**, простір імен `_Project.*` — уся гра (Unity 6000.3.10f1,
+  URP 2D, Zenject, UniTask). Єдина кодова база, яку слід читати й розширювати.
 - **`Assets/_Lumenwake/Scripts/Runtime/**`** — код-агностичний до гри вендорений шаблон
   (`AssetLoaderModule`, `AudioSystem`, `SaveServiceModule`, `SceneLoaderServiceModule`,
   `StateMachineModule`, `UIModule`, `ComponentRegistry`, `ParticleFxModule`, `SteamModule`,
   `ApplicationLifecycleModule`) — скопійований з `C:\Projects\Lumenwake\template` без змін.
   Не редагувати заради цього проєкту; будь-яка потрібна зміна тут — сигнал оновити сам шаблон.
 
-Розділ 7 нижче зводить точний перелік того, де саме стара система досі є джерелом правди.
+Розділ 7 нижче — короткий історичний запис про те, чим була заміна `Assets/GMTK` і коли вона
+завершилась; корисно для розуміння, чому частина doc-коментарів у коді досі згадує старі типи.
 
 ## 2. Технологічний стек
 
@@ -60,7 +57,12 @@ Assets/
         │   ├── Viruses/InCell/   — InCellVirusConfig/Controller/Spawner/Registry, 3 IInCellVirusBehavior
         │   ├── Waves/            — WaveScalingConfig (єдиний спільний конфіг ескалації складності)
         │   ├── WorldScale/       — WorldScaleController/Transition/Config/TransitionContext
-        │   ├── Audio/            — GameAudioService/Catalog, GameSfxCue enum
+        │   ├── Combat/           — Bullet, BulletManager, IDamageable, VirusBullet/VirusBulletSpawner
+        │   ├── Camera/           — CameraFollow, CameraExtensions
+        │   ├── Navigation/       — Arrow, ArrowController (стрілка-локатор)
+        │   ├── Pickups/          — MedicalPickup, VitaminPickup, MedicalSpawner
+        │   ├── Environment/      — BackgroundBacteria/Manager, BackgroundParallax (декор)
+        │   ├── Audio/            — GameAudioService/Catalog, GameSfxCue enum, AudioList
         │   ├── Shared/           — EntityRegistry<T>, SpawnPlacementUtility
         │   └── Composition/      — MainSceneComposition (композиційний корінь геймплею)
         ├── UI/              — Hud/, Upgrades/, GameOver/, MainMenu/ — по одній папці на екран
@@ -129,10 +131,11 @@ MenuState.Enter()      → ISceneLoaderService.LoadSceneAsync(SceneInBuild.Menu,
 GameplayState.Enter()  → ISceneLoaderService.LoadSceneAsync(SceneInBuild.SampleScene, unloadRedundant: true)
 ```
 
-`Bootstrap.cs` сам ще не переведений на стейт-машину (лишається прямим `SceneManager.LoadScene` —
-свідомо, оскільки старий `MenuManager`/`HUD`-код, який стейт-машина мала б замінити, ще активний).
-`MainMenuScreen.Play()`/`GameOverScreen.Restart()` вже викликають `GlobalGameStateMachine.Enter<T>()`
-коректно, але жодна кнопка в сцені `Menu.unity` на них не вказує (розділ 7).
+`Bootstrap.cs` сам ще не переведений на стейт-машину (лишається прямим `SceneManager.LoadScene`).
+`MainMenuScreen.Play()` і `GameOverScreen.Restart()` викликають `GlobalGameStateMachine.Enter<T>()`
+коректно; кнопки в сцені `Menu.unity` тепер справді викликають `MainMenuScreen.Play()`/`Exit()`
+(перевірено — `m_MethodName: Play`/`Exit` у `Menu.unity`), а от `GameOverScreen.Restart()` у
+`SampleScene.unity` досі ніким не викликається (розділ 8.2).
 
 ### 4.3 `MainSceneComposition` — композиційний корінь геймплею
 
@@ -142,18 +145,24 @@ GameplayState.Enter()  → ISceneLoaderService.LoadSceneAsync(SceneInBuild.Sampl
 сцені відпрацюють раніше за будь-який `Start()`, а кілька спавнерів залежать від цього):
 
 1. `Zenject.ProjectContext.Instance.Container.Inject(this)` — самоін'єкція (розділ 4).
-2. `ResolvePlayerComponentReferences()` — обхід відомого Unity-бага (розділ 8.3).
+2. `ResolvePlayerComponentReferences()` — обхід відомого Unity-бага (розділ 8.2), тепер також резолвить `BulletManager`/`PlayerParticlesController`/`ArrowController`.
 3. `BuildScreenManager()` — вручну збирає `BaseScreenManager` зі списку `[HudScreen, UpgradeScreen, GameOverScreen]`, примусово ховає Upgrade/GameOver-групи (сирий стан сцени лишає обидві активними).
 4. `BuildMechanicsPocos()` — `new PlayerStatsService(...)`, `new CellRegistry()`, `new MacroVirusRegistry()`, `new WorldScaleController(new WorldScaleTransition(...))`, `new GameAudioService(...)`.
-5. `ConstructSpawners()` — `CellSpawner.Construct(...)`, `MacroVirusSpawner.Construct(...)`, `PlayerMovement/Turret/Health.Construct(...)`.
+5. `ConstructSpawners()` — `CellSpawner`/`MacroVirusSpawner`/`MedicalSpawner.Construct(...)`, `PlayerMovement/Turret/Health.Construct(...)`, `BulletManager.Construct(_playerStats, _worldScaleController)`, `ArrowController.Construct(_macroVirusRegistry, _cellRegistry, _worldScaleController, _playerHealth, _worldCamera)`, `PlayerParticlesController.Construct(_worldScaleController, _playerMovement)`.
 6. `ConstructScreens()` — ручний виклик `Construct(...)` на кожному `BaseScreen` (не покладаючись на Zenject `FromInstance`-повторну ін'єкцію — прибирає невизначеність порядку).
 7. `WireCrossSystemEvents()` — фактична "склейка": `CellRegistry.OnStatisticsChanged → HudScreen.SetStatistics`, `OnAllCellsDied → GameOverScreen`, `OnCellDied → MacroVirusSpawner.SpawnReplacementVirusesAsync`, `WorldScaleController.OnEntered/ExitedMicroWorld → MacroVirusSpawner.SetPaused`, `PlayerHealth.OnDied → HandleGameOver`, XP-підписки на `OnKilled` кожного вбитого вірусу.
-8. `_screenManager.OpenScreen<HudScreen>()` — єдиний екран, що відкривається автоматично на старті.
+8. `_gameAudioService.PlayGameplayMusic()` і `_screenManager.OpenScreen<HudScreen>()` — музика й HUD стартують одразу, без жодної узгодженості зі старою системою (її більше не існує).
 9. `PollNearestCellAsync` — UniTask-цикл кожні 0.2с, що оновлює "найближчу клітину" для `CellProximityPrompt` і полів `WorldScaleTransitionContext`.
 
-`Start()` (окремо від `Awake()`, оскільки читає `GMTK.Services.ServiceLocator` — реєстрація
-старих сервісів гарантована лише між усіма `Awake()` і будь-яким `Start()`, не всередині одного
-`Awake()`) — місток до старого коду, розділ 7.
+`Start()` тепер лише встановлює ціль камери (`CameraFollow.SetTarget`) — до фінального видалення
+старого коду тут же жив цілий блок мостів до `GMTK.Services.ServiceLocator` (камера, кулі,
+пігулки, стрілка, синхронізація масштабу світу зі старим `GamePlayState`); увесь цей блок прибрано
+разом з видаленням `Assets/GMTK` (розділ 7). **Застереження щодо doc-коментарів**: великий
+блок XML-doc-коментарів усередині цього файлу (над `Construct`, `Start`, `WireCrossSystemEvents`)
+досі детально описує ці вже видалені мости слово в слово — вони не оновлені після фінального
+рефакторингу й описують код, якого більше немає в цьому ж файлі. Читати як історичний запис
+причин, не як опис поточної поведінки; сама логіка методів (яку варто читати) — коротка й
+нативна.
 
 ## 5. Ключові патерни проєкту
 
@@ -200,12 +209,13 @@ GameplayState.Enter()  → ISceneLoaderService.LoadSceneAsync(SceneInBuild.Sampl
 | `UpgradeDefinition` | ScriptableObject × 6 | `UpgradeStat` (enum) → `EffectPerLevel`, `DisplayName` |
 | `PlayerMovement` | MonoBehaviour, `[Inject] Construct` | інерційний рух/поворот, `SetSpeedScale(float)` для мікро-світу |
 | `PlayerTurret` | MonoBehaviour | наведення на курсор, `Fire()`/перезарядка, `SetProjectileSpawner(IProjectileSpawner)` |
-| `PlayerHealth` | MonoBehaviour, реалізує `GMTK.IDamageable` | HP/броня, `Damage()`, послідовність смерті, підписка на `PlayerStatsService.OnUpgraded`/`OnBonusHealthGranted` |
-| `IProjectileSpawner` / `GmtkBulletManagerProjectileSpawner` | інтерфейс + міст | **навмисний, поки не постійний місток до старого `GMTK.BulletManager`/`GMTK.Bullet`** — див. розділ 7 |
+| `PlayerHealth` | MonoBehaviour, реалізує `Combat.IDamageable` | HP/броня, `Damage()`, послідовність смерті, підписка на `PlayerStatsService.OnUpgraded`/`OnBonusHealthGranted` |
+| `IProjectileSpawner` | інтерфейс | реалізується `Combat.BulletManager` (розділ 6.9) |
 
-`PlayerHealth` реалізує старий `GMTK.IDamageable` без форку інтерфейсу — свідоме рішення
-(`REFACTORING_PLAN.md` розділ 5), щоб старий `GMTK.Bullet.OnTriggerEnter2D`'s
-`TryGetComponent<IDamageable>()` міг знайти новий компонент напряму.
+`PlayerHealth`, `MacroVirusController`, `InCellVirusController`, `MedicalPickup` — усі
+реалізують один спільний `_Project.Mechanics.Combat.IDamageable` (розділ 6.9), а не свій власний
+інтерфейс кожен — єдина точка входу для будь-якого джерела урону (`Bullet`, `VirusBullet`,
+ближній бій вірусів).
 
 ### 6.2 Cells (`Mechanics/Cells/`)
 
@@ -298,48 +308,104 @@ int   BestPlayerLevel = 1;
 `GameAudioCatalog` (ScriptableObject) — `GameSfxCue` (enum, 15 значень) → `AudioClip`/гучність/
 діапазон висоти, плюс два `SoundData` для меню- й геймплейної музики. `GameAudioService` (POCO,
 не Zenject) — обгортка над `IAudioSystem`, підписується на `WorldScaleController.OnEntering*`
-для свисту переходу. **Не відтворює** заміну аудіо-мікшер-групи (стара `InCellMixer` vs
-`DefaultMixer`) — задокументований, свідомо відкладений розрив (розділ 8.2).
+для свисту переходу, і викликається з `MainSceneComposition.Awake()` для старту геймплейної
+музики (`PlayGameplayMusic()`); `MainMenuScreen` окремо викликає `IAudioSystem.PlayMusic` напряму
+для меню-музики — обидва шляхи в підсумку йдуть через `_Lumenwake.AudioSystem`'s вбудований
+кросфейд між двома внутрішніми `AudioSource`, тож перехід меню→гра не накладає два треки одне на
+одне. `AudioList` (перенесений, не `GameAudioCatalog`-based) — по-індексний плеєр кліпів,
+залишений для `PlayerHealth`, яка звертається до нього за старою звичкою "індекс = ефект" (2 =
+удар, 3 = смерть) замість переходу на іменований `GameSfxCue`. **Не відтворює** заміну
+аудіо-мікшер-групи (окрема "приглушена" група для мікро-світу) — задокументований, свідомо
+відкладений розрив (розділ 8.2).
 
-## 7. Місток до старого коду (`GMTK.*`) — де стара система досі є джерелом правди
+### 6.9 Combat (`Mechanics/Combat/`)
 
-Це не список багів — це поточна, свідома конфігурація системи. Кожен рядок нижче — місце, де
-`_Project`-код або взагалі не існує, або існує, але не є тим, що реально виконується в грі просто
-зараз.
+Уся бойова система, включно з єдиним спільним інтерфейсом урону:
 
-| Функція | Хто фактично керує | Деталі |
-|---|---|---|
-| Урон кулі гравця | **`GMTK.Bullet`** | `PlayerTurret.Fire()` → `GmtkBulletManagerProjectileSpawner` → `GMTK.BulletManager` → `GMTK.Bullet` рахує урон зі старого `GMTK.Services.PlayerStats.GetLevelUpgrade(PLAYER_DAMAGE)`, а не з `PlayerStatsService.EffectiveDamage` |
-| Масштаб/швидкість кулі в мікро-світі | **`GMTK.Bullet.Update()`** | читає `GamePlayState.State`, синхронізоване новим `GamePlayState.SyncWorldState(...)` (адитивний метод, викликається з `WorldScaleController.OnScaleChanged`) |
-| Музика (меню + геймплей, кросфейд) | **`GMTK.AudioMixerController`/`AudioManagerFactory`** | `DontDestroyOnLoad`-синглтон; `GameAudioService.PlayGameplayMusic()` існує, але виклик прибрано з композиції — одночасний запуск обох спричиняв накладання двох треків |
-| Головне меню (кнопки Play/Exit, вступна катсцена) | **`GMTK.MenuManager`** | `MainMenuScreen` існує поруч на тому ж GameObject, але жодна кнопка на неї не вказує |
-| Стрілка-локатор | **`GMTK.Arrow`/`ArrowController`** | читає старі `VirusManager`/`VirusCellManager` (`ObjectManager`-пули); `MainSceneComposition.Start()` дзеркалить нові `MacroVirusRegistry`/`CellRegistry`-події в ці старі пули, щоб стрілка мала на що вказувати |
-| Пігулки-Medical / вітаміни | **`GMTK.Medical`/`Vitamin`/`MedicalSpawner`** | взагалі не портовані; `MainSceneComposition.Start()` підписує старий `PlayerStats.OnExperienceChange` на виклик нового `_playerStats.AddExperience()` |
-| Камера, що слідкує за гравцем | **`GMTK.CameraFollow`** | `MainSceneComposition.Start()` встановлює `cameraFollow.Target` (стара `PlayerFactory`, яка раніше це робила, вимкнена) |
-| "Заглушений" мікшер усередині клітини | **ніхто** | стара `TransitionIntoMicroWorld.SetIncell()`/`TransitionIntoMacroWorld.SetMaster()` існують, але викликаються лише зі старого `GamePlayState.State`-СЕТЕРА, який новий код більше не викликає (лише синхронізує через адитивний `SyncWorldState`) — фіча зникла для обох систем одночасно |
+| Клас | Відповідальність |
+|---|---|
+| `IDamageable` | `void Damage(int damage, Vector3 attackDirection)` — реалізують `PlayerHealth`, `MacroVirusController`, `InCellVirusController`, `MedicalPickup` |
+| `Bullet` | політ снаряда гравця, масштаб/швидкість 0.3× у мікро-світі (запитує стан через `Func<bool> isMicroWorld`, не читає жоден стан напряму), `OnTriggerEnter2D` шукає `IDamageable` |
+| `BulletManager` | `MonoBehaviour, IProjectileSpawner`; `UnityEngine.Pool.ObjectPool<Bullet>` (ємність 50, максимум 100); `Construct(PlayerStatsService, WorldScaleController)` — урон кожного пострілу читається напряму з `PlayerStatsService.EffectiveDamage` |
+| `VirusBullet` / `VirusBulletSpawner` | дальня атака Cucumber (розділ 6.4) |
 
-Патерн для будь-якої майбутньої роботи над цими рядками: спочатку прочитати відповідний старий
-`GMTK.*`-клас, перенести код у `_Project`, і лише тоді видаляти (не вимикати) старий компонент —
-метод, що послідовно застосовувався в усіх 13 раундах тестування.
+`BulletManager.Fire()` — єдине місце, де `PlayerStatsService.EffectiveDamage` реально впливає на
+щось, окрім власного значення в UI; до фінального перенесення коду снаряд рахував урон з окремого,
+вже нікому не підключеного лічильника (розділ 8.2 містить деталі цього вже закритого розриву).
+
+### 6.10 Camera (`Mechanics/Camera/`)
+
+`CameraFollow` — конфігурований `MonoBehaviour` (3 режими згладжування: `MoveTowards`/`Lerp`/
+`SmoothDamp`, опційні межі руху). `MainSceneComposition.Start()` викликає `SetTarget(...)` на
+гравця одразу, і повторно на клітину/гравця через `WorldScaleTransitionContext.SetCameraTarget`
+при вході/виході з клітини.
+
+### 6.11 Navigation (`Mechanics/Navigation/`)
+
+`ArrowController` (`[Inject] Construct(MacroVirusRegistry, CellRegistry, WorldScaleController,
+PlayerHealth, Camera)`) — щ 0.1с шукає найближчу ціль напряму через
+`MacroVirusRegistry.FindNearestVirusTransform`/`CellRegistry.FindNearestInfectedCellTransform`
+(макро-вірус має пріоритет при рівній відстані), ховає `Arrow`, коли ціль у кадрі камери, коли
+гравець мертвий, або коли `WorldScaleController.CurrentScale == Micro`.
+
+### 6.12 Pickups (`Mechanics/Pickups/`)
+
+`MedicalPickup` (`IDamageable`) — руйнується від будь-якого урону (`_health` за замовчуванням 1,
+тобто гине з одного влучання), вивільняє дочірні `VitaminPickup` через `_breakDelay` (1с).
+`VitaminPickup` — імпульс-розліт + магнітний політ до гравця (`_targetProvider`/`_playerTransform`),
+і **кожен екземпляр самостійно викликає `PlayerStatsService.AddExperience()`** при прильоті —
+див. розділ 8.2 щодо наслідків цього для балансу. `MedicalSpawner` — таймер-спавнер
+(`Construct(PlayerStatsService, IPlayerTargetProvider)`, конкретні числа — в `GDD.md` розділ 7).
+
+### 6.13 Environment (`Mechanics/Environment/`)
+
+`BackgroundBacteria`/`BackgroundBacteriaManager`/`BackgroundParallax` — чисто декоративні,
+жодної логічної залежності від інших систем; перенесені без змін поведінки.
+
+## 7. Історія: заміна `Assets/GMTK`
+
+До 2026-09-19 частина систем свідомо працювала через тимчасові мости до старого коду
+(`Assets/GMTK/Scripts/**`) — стрільба йшла через `GmtkBulletManagerProjectileSpawner` у старий
+`GMTK.BulletManager`/`GMTK.Bullet`, музику й головне меню тримали `GMTK.AudioMixerController`/
+`GMTK.MenuManager`, стрілку-локатор і пігулки не переносили взагалі, а `MainSceneComposition`
+вручну дзеркалив нові події в старі `ObjectManager`-пули, щоб ці мости не ламались. Це було
+задокументовано в попередній версії цього документа (див. git-історію файлу) як явна, тимчасова
+конфігурація — не борг, а свідомий проміжний стан.
+
+2026-09-19 усі ці системи отримали власну нативну реалізацію (розділи 6.9–6.13), `Assets/GMTK`
+видалено з репозиторію повністю (жоден `.cs`-файл, жоден асет), і Unity Editor підтвердив 0 помилок
+компіляції після видалення. Єдиний слід, що лишився: XML-doc-коментарі всередині кількох файлів
+(найбільше — `MainSceneComposition.cs`, розділ 4.3) досі детально описують ці вже неіснуючі мости
+як поточну поведінку — вартий уваги пункт гігієни коду, не функціональна проблема.
 
 ## 8. Технічний борг і відомі інженерні пастки
 
-### 8.1 Успадковано з оригінального коду (`TECHNICAL_AUDIT.md`, ще актуально)
+### 8.1 Успадковано з оригінального коду, досі актуально після перенесення
 
-- `AudioList.Play(0..3)` (в старих класах, що ще активні) — числові індекси кліпів без
-  named-констант; замінено на `GameSfxCue` лише в новому коді.
-- `ResourceManager.cs` — вестигіальна обгортка над `Resources.Load<T>`, жодного виклику в
-  геймплейному коді.
-- Індекс сцени в білді логічно значущий для старого `AudioMixerController`
-  (`buildIndex == 0/1`) — перестановка сцен у Build Settings мовчки зламає стару аудіологіку.
+- `AudioList.Play(0..3)` — числові індекси кліпів без named-констант, перенесені 1:1 разом з
+  класом і досі використовуються `PlayerHealth` (`Play(2)`=удар, `Play(3)`=смерть) — увесь решта
+  нового коду вже перейшов на іменований `GameSfxCue` (розділ 6.8), цей один клас — ні.
+- `ResourceManager.cs` (якщо ще існує в проєкті після реорганізації активів) — вестигіальна
+  обгортка над `Resources.Load<T>`, жодного виклику в геймплейному коді; вартий перевірки на
+  видалення разом із рештою гігієни активів.
 
 ### 8.2 Виявлено під час рефакторингу/тестування — специфічно для цього проєкту
 
+- **Пігулка тепер дає в 4 рази більше досвіду, ніж в оригінальній грі (ймовірний недогляд, не
+  свідоме рішення).** Стара `Medical.VitaminCallback()` рахувала прильоти всіх дочірніх вітамінів
+  і викликала `AddExperience()` рівно ОДИН раз, коли долітав останній (`_score == transform.
+  childCount`). Новий `VitaminPickup.Collect()` (розділ 6.12) викликає
+  `PlayerStatsService.AddExperience()` сам, незалежно, кожного разу коли ДОЛІТАЄ ВІН, без жодної
+  координації з рештою вітамінів тієї ж пігулки. `Medical.prefab` (тепер `Assets/_Project/Prefabs/
+  Pickups/Medical.prefab`) має 4 дочірні `VitaminPickup` — тобто одна пігулка зараз дає **+4**
+  замість оригінальних **+1**. Ніде в журналі рефакторингу це не згадано як навмисна зміна
+  балансу — варто підняти з командою перед релізом.
 - **`m_Enabled: 0` не зупиняє `Awake()`, `OnDestroy()`, вже запущені корутини чи DOTween-колбеки.**
-  Найчастіше джерело регресій за всі 13 раундів (два гравці, дублікати клітин, `IDamageable`,
-  що резолвиться в мертвий старий компонент — розділ 7 таблиця вище пояснює наслідок). Практичний
-  висновок: коли старий компонент реально конфліктує з новим (не просто дублює вже неробочу
-  роботу), **видаляти, а не вимикати**.
+  Найчастіше джерело регресій за час активної фази міграції зі старим кодом (два гравці, дублікати
+  клітин, `IDamageable`, що резолвиться в мертвий старий компонент замість нового). Практичний
+  висновок, застосовний до будь-якого майбутнього видалення компонента: коли старий компонент
+  реально конфліктує з новим (не просто дублює вже неробочу роботу), **видаляти, а не вимикати**
+  — саме так зрештою й вирішили все, що описував розділ 7.
 - **`TryGetComponent<IDamageable>()` повертає ПЕРШИЙ компонент за порядком у списку** — старий,
   вимкнений, але не видалений компонент, доданий РАНІШЕ нового, і далі резолвиться першим. Три
   такі конфлікти (`GMTK.PlayerDamageable`, `GMTK.VirusController` на обох макро-префабах,
@@ -393,8 +459,12 @@ Play Mode активним і між викликами). Повний пере�
 
 ## 10. Джерела
 
-- Пряме читання `Assets/_Project/Scripts/**` і тих файлів `Assets/GMTK/Scripts/**`, які досі
-  фактично виконуються (розділ 7).
-- `Docs/REFACTORING_PLAN.md` — повна історія рішень і журнал 13 раундів живого тестування.
-- `Docs/TECHNICAL_AUDIT.md` — стан коду до рефакторингу (історичний референс для розділу 8.1).
+- Пряме читання `Assets/_Project/Scripts/**` (єдина кодова база), конфігів/префабів/сцен під
+  `Assets/_Project/**`, і `git log`/`git diff` для реконструкції того, що саме змінилось при
+  фінальному видаленні `Assets/GMTK` 2026-09-19 (сама стара кодова база звірялась через
+  `git show` попереднього коміту, оскільки на диску вже видалена).
+- `Docs/REFACTORING_PLAN.md` — повна історія рішень, журнал 13 раундів живого тестування та
+  фінальний запис про повне перенесення й видалення `Assets/GMTK`.
+- `Docs/TECHNICAL_AUDIT.md` — стан коду до рефакторингу (історичний референс для розділу 8.1,
+  описує вже неіснуючу кодову базу).
 - `Docs/GDD.md` — ігровий дизайн і точні баланс-числа (не дублюються тут навмисно).
