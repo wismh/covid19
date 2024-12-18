@@ -31,4 +31,6 @@ obj/
 /[Cc]odeCoverage/
 Keystore/
 
+Docs/*.pdf
+
 Assets/GooglePlayGames/com.google.play.games/Editor/

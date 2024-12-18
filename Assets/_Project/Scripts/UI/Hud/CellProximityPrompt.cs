@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Zenject;
+using _Project.Input;
 using _Project.Mechanics.WorldScale;
 
 namespace _Project.UI.Hud
@@ -78,7 +79,7 @@ namespace _Project.UI.Hud
         private WorldScaleController _worldScale;
         private WorldScaleTransitionContext _context;
 
-        private GMTK.Actions _inputActions;
+        private Actions _inputActions;
         private CancellationTokenSource _lifetimeCts;
 
         private bool _isPromptShown;
@@ -117,7 +118,7 @@ namespace _Project.UI.Hud
 
         private void Awake()
         {
-            _inputActions = new GMTK.Actions();
+            _inputActions = new Actions();
             _lifetimeCts = new CancellationTokenSource();
 
             if (_promptCanvas != null)

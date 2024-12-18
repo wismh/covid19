@@ -9,6 +9,8 @@ using Zenject;
 using _Project.Mechanics.AppFlow;
 using _Project.Mechanics.Audio;
 using _Project.Mechanics.Cells;
+using _Project.Mechanics.Navigation;
+using _Project.Mechanics.Pickups;
 using _Project.Mechanics.Player;
 using _Project.Mechanics.Viruses.InCell;
 using _Project.Mechanics.Viruses.Macro;
@@ -18,6 +20,7 @@ using _Project.Save;
 using _Project.UI.GameOver;
 using _Project.UI.Hud;
 using _Project.UI.Upgrades;
+using CameraFollow = _Project.Mechanics.Camera.CameraFollow;
 
 namespace _Project.Mechanics.Composition
 {
@@ -69,6 +72,9 @@ namespace _Project.Mechanics.Composition
         [SerializeField] private PlayerMovement _playerMovement;
         [SerializeField] private PlayerTurret _playerTurret;
         [SerializeField] private PlayerHealth _playerHealth;
+        [SerializeField] private PlayerParticlesController _playerParticlesController;
+        [SerializeField] private ArrowController _arrowController;
+        [SerializeField] private _Project.Mechanics.Combat.BulletManager _bulletManager;
 
         [Header("Cells (Phase 3 components + Phase 7 Stage 1 registry/spawner)")]
         [SerializeField] private CellConfig _cellConfig;
@@ -78,13 +84,17 @@ namespace _Project.Mechanics.Composition
         [SerializeField] private MacroVirusConfig _macroVirusConfig;
         [SerializeField] private MacroVirusSpawner _macroVirusSpawner;
 
+        [Header("Medicals / Pickups (Stage 4)")]
+        [SerializeField] private MedicalSpawner _medicalSpawner;
+
         [Header("Waves (Phase 3) - shared by MacroVirusSpawner today; InCellVirusSpawner will need it too once " +
                 "Stage 3 attaches one per cell, see class doc comment's per-cell virus seam")]
         [SerializeField] private WaveScalingConfig _waveScalingConfig;
 
         [Header("World scale (Phase 4)")]
         [SerializeField] private WorldScaleConfig _worldScaleConfig;
-        [SerializeField] private Camera _worldCamera;
+        [SerializeField] private UnityEngine.Camera _worldCamera;
+        [SerializeField] private _Project.Mechanics.Camera.CameraFollow _cameraFollow;
         [SerializeField] private Transform _playerVisualRoot;
         [SerializeField] private BoxCollider2D _playerCollider;
 
@@ -109,10 +119,6 @@ namespace _Project.Mechanics.Composition
         // "SceneContext correction" section. Built by hand in Awake() instead. ---
         private IScreenManager _screenManager;
 
-        // Resolved off _playerCollider by ResolvePlayerComponentReferences(), same as PlayerMovement/PlayerTurret/
-        // PlayerHealth - see that method's doc comment. Wired into _playerTurret and, once BulletManager is
-        // resolvable (Start(), see its own doc comment), into itself.
-        private GmtkBulletManagerProjectileSpawner _projectileSpawner;
 
         // --- Hand-composed Mechanics/* POCOs, built in Awake() ---
         private PlayerStatsService _playerStats;
@@ -130,20 +136,6 @@ namespace _Project.Mechanics.Composition
         private Action _handleResumeMacroSpawning;
         private Action<MacroVirusController> _handleVirusRegistered;
         private Action<InCellVirusSpawner> _handleInCellVirusSpawnerCreated;
-
-        // Phase 7 testing fix (2026-09-11) - Arrow/pickup-XP/bullet-scale bridges to old GMTK ServiceLocator
-        // systems, wired from Start() (see that method's doc comment for why Start(), not Awake()). Cached the
-        // same way as the delegates above so OnDestroy can symmetrically unsubscribe.
-        private Action<MacroVirusController> _handleVirusManagerAdd;
-        private Action<MacroVirusController> _handleVirusManagerRemove;
-        private Action<CellHealth> _handleCellInfected;
-        private Action<CellHealth> _handleCellRecovered;
-        private Action<bool> _handleLegacyExperienceChange;
-        private Action<_Project.Mechanics.WorldScale.WorldScale> _handleWorldScaleChangedForLegacyState;
-
-        private GMTK.Services.PlayerStats _legacyPlayerStats;
-        private GMTK.VirusManager _legacyVirusManager;
-        private GMTK.VirusCellManager _legacyVirusCellManager;
 
         private CancellationTokenSource _lifetimeCts;
 
@@ -201,15 +193,7 @@ namespace _Project.Mechanics.Composition
             ConstructScreens();
             WireCrossSystemEvents();
 
-            // NOT calling _gameAudioService.PlayGameplayMusic() here (tried it, reverted): the old
-            // GMTK.AudioMixerController/AudioManagerFactory (Assets/GMTK/Scripts/{AudioMixerController.cs,
-            // AudioManagerFactory.cs}) are still fully enabled and already drive menu/gameplay music crossfade on
-            // their own DontDestroyOnLoad singleton - nothing in this migration has disabled them yet (they're
-            // old-UI/audio-layer scripts, deliberately left running per Phase 5's "keep the old game playable"
-            // rule, same as HUD.cs/AdviceDialog.cs). Calling PlayGameplayMusic() here made both systems play music
-            // simultaneously (reported directly by the user after Stage 6 - "дві музики"). This was always a
-            // judgement-call addition, not a verified port of an old call site (see the removed comment this one
-            // replaces) - safe to drop entirely until a later phase actually retires GMTK.AudioMixerController.
+            _gameAudioService.PlayGameplayMusic();
 
             // HudScreen is the one screen guaranteed open for the whole gameplay session (see its own class doc
             // comment's "Auto-opening" section) - nothing else in the codebase opens it, so this composition root
@@ -288,55 +272,11 @@ namespace _Project.Mechanics.Composition
         /// </summary>
         private void Start()
         {
-            GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.CameraFollow cameraFollow);
-            GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.Services.PlayerStats legacyPlayerStats);
-            GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.GameStates.GamePlayState legacyGamePlayState);
-            GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.VirusManager legacyVirusManager);
-            GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.VirusCellManager legacyVirusCellManager);
+            if (_cameraFollow != null && _playerMovement != null)
+                _cameraFollow.SetTarget(_playerMovement.transform);
 
-            if (cameraFollow != null && _playerMovement != null)
-                cameraFollow.Target = _playerMovement.transform;
-
-            if (_projectileSpawner != null && GMTK.Services.ServiceLocator.Instance.TryGet(out GMTK.BulletManager bulletManager))
-                _projectileSpawner.SetBulletManager(bulletManager);
-
-            if (legacyPlayerStats != null && _playerMovement != null)
-                legacyPlayerStats.Player = _playerMovement.transform;
-
-            _legacyPlayerStats = legacyPlayerStats;
-            if (legacyPlayerStats != null)
-            {
-                _handleLegacyExperienceChange = _ => _playerStats.AddExperience();
-                legacyPlayerStats.OnExperienceChange += _handleLegacyExperienceChange;
-            }
-
-            _legacyVirusManager = legacyVirusManager;
-            _legacyVirusCellManager = legacyVirusCellManager;
-            if (legacyVirusManager != null)
-            {
-                _handleVirusManagerAdd = virus => legacyVirusManager.AddObject(virus.transform);
-                _handleVirusManagerRemove = virus => legacyVirusManager.RemoveObject(virus.transform);
-                _macroVirusRegistry.OnRegistered += _handleVirusManagerAdd;
-                _macroVirusRegistry.OnUnregistered += _handleVirusManagerRemove;
-            }
-
-            if (legacyVirusCellManager != null)
-            {
-                _handleCellInfected = cell => legacyVirusCellManager.AddObject(cell.transform);
-                _handleCellRecovered = cell => legacyVirusCellManager.RemoveObject(cell.transform);
-                _cellRegistry.OnCellInfected += _handleCellInfected;
-                _cellRegistry.OnCellRecovered += _handleCellRecovered;
-            }
-
-            if (legacyGamePlayState != null)
-            {
-                _handleWorldScaleChangedForLegacyState = scale => legacyGamePlayState.SyncWorldState(
-                    scale == _Project.Mechanics.WorldScale.WorldScale.Micro ? GMTK.GameStates.WorldState.MICRO_WORLD : GMTK.GameStates.WorldState.MACRO_WORLD);
-                _worldScaleController.OnScaleChanged += _handleWorldScaleChangedForLegacyState;
-            }
-
-            if (cameraFollow != null && _worldScaleTransitionContext != null)
-                _worldScaleTransitionContext.SetCameraTarget = t => cameraFollow.Target = t;
+            if (_cameraFollow != null && _worldScaleTransitionContext != null)
+                _worldScaleTransitionContext.SetCameraTarget = t => _cameraFollow.SetTarget(t);
         }
 
         private void OnDestroy()
@@ -364,26 +304,10 @@ namespace _Project.Mechanics.Composition
                 _playerHealth.OnDied -= HandleGameOver;
 
             if (_macroVirusRegistry != null)
-            {
                 _macroVirusRegistry.OnRegistered -= _handleVirusRegistered;
-                _macroVirusRegistry.OnRegistered -= _handleVirusManagerAdd;
-                _macroVirusRegistry.OnUnregistered -= _handleVirusManagerRemove;
-            }
 
             if (_cellSpawner != null)
                 _cellSpawner.OnInCellVirusSpawnerCreated -= _handleInCellVirusSpawnerCreated;
-
-            if (_cellRegistry != null)
-            {
-                _cellRegistry.OnCellInfected -= _handleCellInfected;
-                _cellRegistry.OnCellRecovered -= _handleCellRecovered;
-            }
-
-            if (_legacyPlayerStats != null)
-                _legacyPlayerStats.OnExperienceChange -= _handleLegacyExperienceChange;
-
-            if (_worldScaleController != null)
-                _worldScaleController.OnScaleChanged -= _handleWorldScaleChangedForLegacyState;
 
             _gameAudioService?.Dispose();
         }
@@ -432,8 +356,12 @@ namespace _Project.Mechanics.Composition
                 _playerTurret = _playerCollider.GetComponent<PlayerTurret>();
             if (_playerHealth == null)
                 _playerHealth = _playerCollider.GetComponent<PlayerHealth>();
-            if (_projectileSpawner == null)
-                _projectileSpawner = _playerCollider.GetComponent<GmtkBulletManagerProjectileSpawner>();
+            if (_bulletManager == null)
+                _bulletManager = FindFirstObjectByType<_Project.Mechanics.Combat.BulletManager>();
+            if (_playerParticlesController == null)
+                _playerParticlesController = _playerCollider.GetComponent<PlayerParticlesController>();
+            if (_arrowController == null)
+                _arrowController = _playerCollider.GetComponentInChildren<ArrowController>();
         }
 
         private void BuildScreenManager()
@@ -495,12 +423,15 @@ namespace _Project.Mechanics.Composition
                 PlayerCollider = _playerCollider,
                 PlayerMovement = _playerMovement,
                 Camera = _worldCamera,
+                SetCameraTarget = t =>
+                {
+                    if (_cameraFollow != null)
+                        _cameraFollow.SetTarget(t);
+                },
 
                 // Phase 7 testing fix (2026-09-11): PlayerMovement.SetSpeedScale now exists (see its own doc
                 // comment - user-reported symptom was movement far too fast inside a cell) and needs no
-                // ServiceLocator lookup, so it's wired here directly rather than waiting for Start(). SetCameraTarget
-                // still needs GMTK.CameraFollow resolved from ServiceLocator first - wired from Start() instead
-                // (see that method's doc comment).
+                // ServiceLocator lookup, so it's wired here directly rather than waiting for Start().
                 SetPlayerSpeedScale = _playerMovement != null ? _playerMovement.SetSpeedScale : (Action<float>)null,
 
                 // --- Deliberately left null: PlayerAudioSource / PlayerEnterMacroClip / PlayerEnterMicroClip /
@@ -521,36 +452,39 @@ namespace _Project.Mechanics.Composition
 
         private void ConstructSpawners()
         {
+            IPlayerTargetProvider playerTargetProvider = _playerMovement != null
+                ? new PlayerTargetProvider(_playerMovement.transform)
+                : null;
+
             if (_cellSpawner != null)
-            {
-                // Phase 7 testing fix (2026-09-11): CellSpawner.Construct grew two params to wire InCellVirusSpawner
-                // per spawned cell - see that method's doc comment. PlayerTargetProvider is the first (and only,
-                // per its own doc comment) implementation of IPlayerTargetProvider in this codebase.
-                IPlayerTargetProvider playerTargetProvider = _playerMovement != null
-                    ? new PlayerTargetProvider(_playerMovement.transform)
-                    : null;
                 _cellSpawner.Construct(_cellConfig, _cellRegistry, playerTargetProvider, _waveScalingConfig);
-            }
 
             if (_macroVirusSpawner != null)
                 _macroVirusSpawner.Construct(_macroVirusConfig, _cellRegistry, _macroVirusRegistry, _waveScalingConfig);
 
+            if (_medicalSpawner != null)
+                _medicalSpawner.Construct(_playerStats, playerTargetProvider);
+
             if (_playerMovement != null)
                 _playerMovement.Construct(_playerConfig, _playerStats);
+
+            if (_bulletManager != null)
+                _bulletManager.Construct(_playerStats, _worldScaleController);
 
             if (_playerTurret != null)
             {
                 _playerTurret.Construct(_playerConfig, _playerStats);
-
-                // See PlayerTurret.SetProjectileSpawner's doc comment - Player.prefab had no
-                // GmtkBulletManagerProjectileSpawner at all before this testing round, so shooting was a silent
-                // no-op. _projectileSpawner itself is resolved in ResolvePlayerComponentReferences(); its own
-                // BulletManager dependency is wired later, in Start() (see that method's doc comment).
-                _playerTurret.SetProjectileSpawner(_projectileSpawner);
+                _playerTurret.SetProjectileSpawner(_bulletManager);
             }
 
             if (_playerHealth != null)
                 _playerHealth.Construct(_playerConfig, _playerStats);
+
+            if (_playerParticlesController != null)
+                _playerParticlesController.Construct(_worldScaleController, _playerMovement);
+
+            if (_arrowController != null)
+                _arrowController.Construct(_macroVirusRegistry, _cellRegistry, _worldScaleController, _playerHealth, _worldCamera);
         }
 
         // --- 3. UI screens ---

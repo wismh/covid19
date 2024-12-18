@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using _Project.Mechanics.Shared;
 
 namespace _Project.Mechanics.Viruses.Macro
@@ -45,5 +46,13 @@ namespace _Project.Mechanics.Viruses.Macro
 
         public void Register(MacroVirusController virus) => _viruses.Register(virus);
         public void Unregister(MacroVirusController virus) => _viruses.Unregister(virus);
+
+        public MacroVirusController FindNearestVirus(Vector3 point) => _viruses.FindNearest(point);
+        public MacroVirusController FindNearestVirus(Vector3 point, out float sqrDistance) => _viruses.FindNearest(point, out sqrDistance);
+        public UnityEngine.Transform FindNearestVirusTransform(Vector3 point, out float sqrDistance)
+        {
+            var virus = _viruses.FindNearest(point, out sqrDistance);
+            return virus != null ? virus.transform : null;
+        }
     }
 }

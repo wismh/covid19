@@ -61,6 +61,7 @@ namespace _Project.Mechanics.Cells
     public sealed class CellRegistry : ICellTargetProvider
     {
         private readonly EntityRegistry<CellHealth> _cells = new();
+        private readonly EntityRegistry<CellHealth> _infectedCells = new();
         private readonly Dictionary<CellHealth, CellEntry> _entries = new();
 
         private int _sickCellsCount;
@@ -69,6 +70,8 @@ namespace _Project.Mechanics.Cells
         public int LivingCellsCount => _cells.Count;
         public int SickCellsCount => _sickCellsCount;
         public int DiedCellsCount => _diedCellsCount;
+        public int InfectedCellsCount => _infectedCells.Count;
+        public IReadOnlyList<CellHealth> InfectedCells => _infectedCells.Entities;
 
         /// <summary>Old: GMTK.Services.GameStatistics.OnStatisticsChange - see class doc comment for the exact
         /// HudScreen.SetStatistics wiring this enables with no adapter.</summary>
@@ -123,6 +126,9 @@ namespace _Project.Mechanics.Cells
             _entries[health] = entry;
             _cells.Register(health);
 
+            if (infectionState != null && infectionState.IsInfected)
+                _infectedCells.Register(health);
+
             OnStatisticsChanged?.Invoke(LivingCellsCount, _sickCellsCount, _diedCellsCount);
         }
 
@@ -138,6 +144,7 @@ namespace _Project.Mechanics.Cells
             Unsubscribe(health, entry);
             _entries.Remove(health);
             _cells.Unregister(health);
+            _infectedCells.Unregister(health);
 
             OnStatisticsChanged?.Invoke(LivingCellsCount, _sickCellsCount, _diedCellsCount);
         }
@@ -163,10 +170,30 @@ namespace _Project.Mechanics.Cells
             return nearest != null ? nearest.transform : null;
         }
 
+        /// <summary>Finds the nearest currently infected cell to the given point.</summary>
+        public CellHealth FindNearestInfectedCell(Vector3 point)
+        {
+            return _infectedCells.FindNearest(point);
+        }
+
+        /// <summary>Finds the nearest currently infected cell to the given point with squared distance.</summary>
+        public CellHealth FindNearestInfectedCell(Vector3 point, out float sqrDistance)
+        {
+            return _infectedCells.FindNearest(point, out sqrDistance);
+        }
+
+        /// <summary>Finds the Transform of the nearest currently infected cell to the given point with squared distance.</summary>
+        public Transform FindNearestInfectedCellTransform(Vector3 point, out float sqrDistance)
+        {
+            CellHealth nearest = _infectedCells.FindNearest(point, out sqrDistance);
+            return nearest != null ? nearest.transform : null;
+        }
+
         private void HandleInfectionStarted(CellHealth health)
         {
             // Old: CellController.OnAddVirus() -> `if (_virusCount == 0) { _gameStatistics.CellSick(); ... }`
             _sickCellsCount += 1;
+            _infectedCells.Register(health);
             OnStatisticsChanged?.Invoke(LivingCellsCount, _sickCellsCount, _diedCellsCount);
             OnCellInfected?.Invoke(health);
         }
@@ -175,6 +202,7 @@ namespace _Project.Mechanics.Cells
         {
             // Old: CellController.OnDestroyVirus() -> `if (_virusCount == 0) { ...; _gameStatistics.CellRecovered(); }`
             _sickCellsCount = Mathf.Max(0, _sickCellsCount - 1);
+            _infectedCells.Unregister(health);
             OnStatisticsChanged?.Invoke(LivingCellsCount, _sickCellsCount, _diedCellsCount);
             OnCellRecovered?.Invoke(health);
         }
@@ -189,6 +217,7 @@ namespace _Project.Mechanics.Cells
             Unsubscribe(health, entry);
             _entries.Remove(health);
             _cells.Unregister(health);
+            _infectedCells.Unregister(health);
 
             // Old: GameStatistics.CellDied() -> `_livingCells -= 1; _sickCells -= 1; _cellsDied += 1;`. A cell can
             // only reach 0 health while infected (CellHealth.PoisonTickLoopAsync only subtracts when

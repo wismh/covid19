@@ -3,15 +3,14 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Zenject;
+using _Project.Mechanics.Audio;
+using _Project.Mechanics.Combat;
 
 namespace _Project.Mechanics.Player
 {
     /// <summary>
     /// Ports GMTK.PlayerDamageable (Assets/GMTK/Scripts/Behaviors/Player/PlayerDamageable.cs). Implements the
-    /// existing GMTK.IDamageable interface unchanged for interop with old-code collision handlers (e.g.
-    /// GMTK.Bullet.OnTriggerEnter2D does `TryGetComponent(out IDamageable damageable)`) rather than forking a
-    /// duplicate interface - REFACTORING_PLAN.md section 5 explicitly keeps IDamageable as-is ("добрий патерн -
-    /// залишити майже без змін, DI-конструктор замість ServiceLocator.Get&lt;T&gt;() всередині").
+    /// IDamageable interface.
     ///
     /// --- Damage/death audio + material flash + death animation (Phase 8 testing fix, 2026-09-11) ---
     /// None of old PlayerDamageable's presentation side effects survived the initial port - HandleDeathAsync's
@@ -22,7 +21,7 @@ namespace _Project.Mechanics.Player
     /// rather than delegating it to a listener, now that this class also needs the same
     /// per-instance timing control (see <see cref="HandleDeathAsync"/>).
     ///
-    /// Old code's audio went through `GetComponent&lt;AudioList&gt;().Play(i)` (a single shared AudioSource with
+    /// Old code's audio went through `GetComponent<AudioList>().Play(i)` (a single shared AudioSource with
     /// a swappable clip list - index 2 "PlayerHit", index 3 "Explosion", confirmed live against Player.prefab's
     /// still-present AudioList component/clips) rather than per-effect AudioSources like the virus classes use -
     /// reused via <see cref="_audioList"/> instead of re-wiring two new AudioSources with duplicate clips.
@@ -31,7 +30,7 @@ namespace _Project.Mechanics.Player
     /// shared asset BigBob/PinkGlist/Orange/Cucumber/Spiner already flash) - confirmed "Body"'s Animator
     /// controller (Died.controller) has a "Base Layer.Died" state, matching the old hardcoded string.
     /// </summary>
-    public sealed class PlayerHealth : MonoBehaviour, GMTK.IDamageable
+    public sealed class PlayerHealth : MonoBehaviour, IDamageable
     {
         // Direct references instead of the old `transform.Find("Turret")` / GetComponentInChildren lookups.
         [SerializeField] private PlayerMovement _movement; // on-hit knockback impulse, disabled on death
@@ -55,7 +54,7 @@ namespace _Project.Mechanics.Player
         [SerializeField] private GameObject _arrowRoot;
 
         // See class doc comment's "Damage/death audio + material flash + death animation" section.
-        [SerializeField] private GMTK.AudioList _audioList;
+        [SerializeField] private _Project.Mechanics.Audio.AudioList _audioList;
         [SerializeField] private Animator _animator;
         [SerializeField] private SpriteRenderer _spriteRenderer;
         [SerializeField] private Material _damageMaterial;

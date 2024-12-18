@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Zenject;
+using _Project.Input;
 
 namespace _Project.Mechanics.Player
 {
@@ -18,9 +19,6 @@ namespace _Project.Mechanics.Player
     /// UI seam: the old controller drove a DOTween-animated Image directly (`_filledReloadImage.fillAmount`).
     /// Mechanics shouldn't own presentation, so this exposes <see cref="ReloadProgress01"/> instead for a future
     /// UI screen (Phase 5, BaseScreen-based per REFACTORING_PLAN.md) to bind to.
-    ///
-    /// Input bridge: see PlayerMovement's doc comment - same temporary GMTK.Actions bridge, action map
-    /// "PlayerTurret" (actions "Pointer", "Fire").
     /// </summary>
     public sealed class PlayerTurret : MonoBehaviour
     {
@@ -40,14 +38,12 @@ namespace _Project.Mechanics.Player
         /// </summary>
         public GameObject TurretVisualObject => _turretTransform != null ? _turretTransform.gameObject : null;
 
-        // Typed as the concrete bridge class (not IProjectileSpawner) because Unity can't serialize
-        // interface-typed fields for Inspector assignment; it's used through the interface in code below.
-        [SerializeField] private GmtkBulletManagerProjectileSpawner _projectileSpawner;
+        private IProjectileSpawner _projectileSpawner;
 
         private PlayerConfig _config;
         private PlayerStatsService _stats;
 
-        private GMTK.Actions _inputActions;
+        private Actions _inputActions;
 
         private bool _isFiring;
         private float _lastFireTime = float.NegativeInfinity;
@@ -71,20 +67,20 @@ namespace _Project.Mechanics.Player
             _stats = stats;
         }
 
-        /// <summary>
-        /// Phase 7 testing fix (2026-09-11): Player.prefab never had a GmtkBulletManagerProjectileSpawner
-        /// component, so this field was always null in the scene and Fire() silently no-op'd (its own
-        /// "if (_projectileSpawner != null)" guard, meant for editor-authoring gaps, was masking a real one).
-        /// A composition root now resolves the sibling spawner component and wires it in via this setter.
-        /// </summary>
-        public void SetProjectileSpawner(GmtkBulletManagerProjectileSpawner spawner)
+        public void SetProjectileSpawner(IProjectileSpawner spawner)
         {
             _projectileSpawner = spawner;
         }
 
+        private void Start()
+        {
+            if (_projectileSpawner == null)
+                _projectileSpawner = FindFirstObjectByType<_Project.Mechanics.Combat.BulletManager>();
+        }
+
         private void Awake()
         {
-            _inputActions = new GMTK.Actions();
+            _inputActions = new Actions();
 
             if (_turretTransform != null)
                 _fireAudioSource = _turretTransform.GetComponent<AudioSource>();
@@ -123,7 +119,7 @@ namespace _Project.Mechanics.Player
         private void AimAtPointer()
         {
             Vector2 screenPosition = _inputActions.PlayerTurret.Pointer.ReadValue<Vector2>();
-            Vector3 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);
+            Vector3 worldPosition = UnityEngine.Camera.main != null ? UnityEngine.Camera.main.ScreenToWorldPoint(screenPosition) : Vector3.zero;
 
             Vector3 direction = (worldPosition - _turretTransform.position).normalized;
             direction.z = 0f;

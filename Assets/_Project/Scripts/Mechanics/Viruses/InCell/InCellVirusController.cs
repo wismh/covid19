@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Zenject;
+using _Project.Mechanics.Combat;
 
 namespace _Project.Mechanics.Viruses.InCell
 {
@@ -12,8 +13,7 @@ namespace _Project.Mechanics.Viruses.InCell
     /// damage against the player. No ServiceLocator, no transform.Find/GetChild - direct [SerializeField]
     /// references and Zenject method injection instead.
     ///
-    /// Implements GMTK.IDamageable unchanged for interop, same reasoning as PlayerHealth (Phase 2) and
-    /// MacroVirusController above.
+    /// Implements IDamageable.
     ///
     /// XP seam: old InCellVirus.Damage() called `_playerStats.AddExperience()` directly on death. This class
     /// raises <see cref="OnKilled"/> instead - XP-granting deferred to a composition root, matching
@@ -50,7 +50,7 @@ namespace _Project.Mechanics.Viruses.InCell
     /// <see cref="OnKilled"/> - identical reasoning, InCellVirusSpawner.HandleVirusKilled destroys the
     /// GameObject synchronously the instant OnKilled fires, same as MacroVirusSpawner.HandleVirusRemoved.
     /// </summary>
-    public sealed class InCellVirusController : MonoBehaviour, GMTK.IDamageable
+    public sealed class InCellVirusController : MonoBehaviour, IDamageable
     {
         [SerializeField] private InCellVirusConfig _config;
         [SerializeField] private Collider2D _collider;
@@ -63,9 +63,7 @@ namespace _Project.Mechanics.Viruses.InCell
         [SerializeField] private Transform _bulletSpawnPoint;
         [SerializeField] private AudioSource _attackAudioSource;
 
-        // Typed as the concrete bridge class (Unity can't serialize interface-typed fields), used through
-        // IVirusBulletSpawner in code - same pattern as PlayerTurret's _projectileSpawner field.
-        [SerializeField] private GmtkVirusBulletPrefabSpawner _bulletSpawner;
+        [SerializeField] private _Project.Mechanics.Combat.VirusBulletSpawner _bulletSpawner;
 
         private IPlayerTargetProvider _playerTargetProvider;
         private IInCellVirusBehavior _behavior;
@@ -188,14 +186,14 @@ namespace _Project.Mechanics.Viruses.InCell
             if (Time.time < _lastCollisionDamageTime + _config.CollisionDamageCooldownSeconds)
                 return;
 
-            if (other.gameObject.TryGetComponent(out GMTK.IDamageable damageable))
+            if (other.gameObject.TryGetComponent(out IDamageable damageable))
             {
                 _lastCollisionDamageTime = Time.time;
                 damageable.Damage(_config.MeleeDamage, (other.transform.position - transform.position).normalized);
             }
         }
 
-        void GMTK.IDamageable.Damage(int damage, Vector3 attackDirection)
+        void IDamageable.Damage(int damage, Vector3 attackDirection)
         {
             if (!_isAlive)
                 return;

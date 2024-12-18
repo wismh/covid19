@@ -60,7 +60,7 @@ namespace _Project.Mechanics.WorldScale
         // --- Camera ---
 
         /// <summary>Old: `Camera.main` - orthographic size is DOTween'd on this.</summary>
-        public Camera Camera;
+        public UnityEngine.Camera Camera;
 
         /// <summary>
         /// Old: `ServiceLocator.Instance.Get&lt;CameraFollow&gt;()` - used for two things: (1) `_camera.transform`,

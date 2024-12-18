@@ -82,6 +82,9 @@ namespace _Project.Mechanics.Shared
 
             for (int i = 0; i < _entities.Count; i++)
             {
+                if (_entities[i] == null)
+                    continue;
+
                 float candidateSqrDistance = (_entities[i].transform.position - point).sqrMagnitude;
                 if (candidateSqrDistance < minSqrDistance)
                 {

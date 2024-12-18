@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using Lumenwake.UIModule;
 using TMPro;
 using UnityEngine;
@@ -141,6 +142,9 @@ namespace _Project.UI.Hud
         /// </summary>
         [SerializeField] private Image _reloadIndicatorFilled;
 
+        [Header("Fade (old FadeManager)")]
+        [SerializeField] private Image _fadePanel;
+
         private PlayerConfig _config;
         private PlayerHealth _playerHealth;
         private PlayerStatsService _playerStats;
@@ -193,6 +197,24 @@ namespace _Project.UI.Hud
             UpdateTimerText();
             _timerCts = new CancellationTokenSource();
             RunTimerAsync(_timerCts.Token).Forget();
+
+            if (_fadePanel == null)
+            {
+                var fadeChild = transform.Find("FadePanelSprite");
+                if (fadeChild != null)
+                    _fadePanel = fadeChild.GetComponent<Image>();
+            }
+
+            if (_fadePanel != null)
+            {
+                _fadePanel.gameObject.SetActive(true);
+                _fadePanel.color = new Color(_fadePanel.color.r, _fadePanel.color.g, _fadePanel.color.b, 1f);
+                _fadePanel.DOFade(0f, 0.4f).SetUpdate(true).OnComplete(() =>
+                {
+                    if (_fadePanel != null)
+                        _fadePanel.gameObject.SetActive(false);
+                });
+            }
         }
 
         private void Update()
@@ -321,6 +343,12 @@ namespace _Project.UI.Hud
             // See class doc comment's "Auto-opening" section. GameOverScreen defaults to the "you died" message;
             // the "all cells died" variant is a separate, explicitly-triggered path - see GameOverScreen.SetAllCellsDied.
             _screenManager.OpenScreen<GameOverScreen>().Forget();
+        }
+
+        private void OnDestroy()
+        {
+            if (_fadePanel != null)
+                DOTween.Kill(_fadePanel);
         }
     }
 }

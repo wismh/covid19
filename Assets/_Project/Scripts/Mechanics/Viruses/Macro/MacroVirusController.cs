@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Zenject;
 using _Project.Mechanics.Cells;
+using _Project.Mechanics.Combat;
 
 namespace _Project.Mechanics.Viruses.Macro
 {
@@ -13,7 +14,7 @@ namespace _Project.Mechanics.Viruses.Macro
     /// ServiceLocator, no transform.Find; behavior dependencies arrive via constructor injection at the call
     /// site (see IMacroVirusBehavior/ICellTargetProvider/IDriftBody doc comments).
     ///
-    /// Implements GMTK.IDamageable unchanged for interop with old-code collision handlers (old GMTK.Bullet.
+    /// Implements IDamageable unchanged for interop with old-code collision handlers (old GMTK.Bullet.
     /// OnTriggerEnter2D does `TryGetComponent(out IDamageable damageable)`) - same reasoning as Phase 2's
     /// PlayerHealth: REFACTORING_PLAN.md section 5 keeps IDamageable as-is ("Добрий патерн - залишити майже без
     /// змін, DI-конструктор замість ServiceLocator.Get&lt;T&gt;() всередині").
@@ -53,7 +54,7 @@ namespace _Project.Mechanics.Viruses.Macro
     /// waiting for it before raising the event that triggers destruction, rather than destroying and animating
     /// as two independent timers like old code did.
     /// </summary>
-    public sealed class MacroVirusController : MonoBehaviour, GMTK.IDamageable, IDriftBody
+    public sealed class MacroVirusController : MonoBehaviour, IDamageable, IDriftBody
     {
         // Old: VirusController._maxHealth (serialized per-prefab-instance, not a shared config value -
         // BigBob.prefab: 3, PinkGlist.prefab: 4). Kept as a per-instance field here for the same reason: the two
@@ -199,7 +200,7 @@ namespace _Project.Mechanics.Viruses.Macro
             _behavior.Init(transform);
         }
 
-        void GMTK.IDamageable.Damage(int damage, Vector3 attackDirection)
+        void IDamageable.Damage(int damage, Vector3 attackDirection)
         {
             if (!_isAlive)
                 return;

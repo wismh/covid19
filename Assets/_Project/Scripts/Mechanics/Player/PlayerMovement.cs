@@ -1,5 +1,6 @@
 using UnityEngine;
 using Zenject;
+using _Project.Input;
 
 namespace _Project.Mechanics.Player
 {
@@ -8,14 +9,6 @@ namespace _Project.Mechanics.Player
     /// (the player-specific input wiring on top of it) - Assets/GMTK/Scripts/Behaviors/DriftMovableObject.cs and
     /// Assets/GMTK/Scripts/Behaviors/Player/PlayerBodyController.cs. No ServiceLocator: config/stats arrive via
     /// Zenject method injection, input is read directly (no transform.Find/GetChild).
-    ///
-    /// Input bridge: this temporarily constructs the OLD generated GMTK.Actions wrapper (Assets/GMTK/Input/
-    /// Actions.cs, action map "PlayerBody" / action "Move") directly, rather than inventing a new input
-    /// abstraction. Assets/_Lumenwake's only input-adjacent piece (Lumenwake.UIModule.InputRebindManager) is a
-    /// UI key-rebinding listener, not a gameplay input service, so there's nothing to plug into yet.
-    /// REFACTORING_PLAN.md section 6 assigns "Перегенерувати з виправленим мапінгом" (regenerate the input
-    /// asset, including fixing the A/D inversion bug noted in TECHNICAL_AUDIT.md) to Phase 4 ("Built to Scale"),
-    /// so a dedicated `_Project` input actions asset is deliberately deferred rather than built here.
     /// </summary>
     public sealed class PlayerMovement : MonoBehaviour
     {
@@ -27,7 +20,7 @@ namespace _Project.Mechanics.Player
         private PlayerConfig _config;
         private PlayerStatsService _stats;
 
-        private GMTK.Actions _inputActions;
+        private Actions _inputActions;
 
         private Vector3 _velocity;
         private float _angularVelocity;
@@ -43,6 +36,7 @@ namespace _Project.Mechanics.Player
 
         public Vector3 Velocity => _velocity;
         public float AngularVelocity => _angularVelocity;
+        public float MaxSpeed => _stats != null ? _stats.EffectiveMoveSpeed : (_config != null ? _config.BaseMoveSpeed : 3f);
 
         [Inject]
         public void Construct(PlayerConfig config, PlayerStatsService stats)
@@ -60,7 +54,7 @@ namespace _Project.Mechanics.Player
 
         private void Awake()
         {
-            _inputActions = new GMTK.Actions();
+            _inputActions = new Actions();
         }
 
         private void OnEnable()

@@ -275,7 +275,7 @@ namespace _Project.Mechanics.WorldScale
         private async UniTask RunTweensAsync(
             Transform playerTransform,
             Vector3 targetPlayerScale,
-            Camera camera,
+            UnityEngine.Camera camera,
             float targetOrthographicSize,
             Transform cameraTransform,
             float targetCameraRotationZ,
