@@ -30,7 +30,6 @@ namespace _Project.UI.MainMenu
 
         private void Awake()
         {
-            EnsureDependencies();
             if (_audioSource == null)
             {
                 TryGetComponent(out _audioSource);
@@ -39,7 +38,6 @@ namespace _Project.UI.MainMenu
 
         private void Start()
         {
-            EnsureDependencies();
             PlayFadeIn();
             PlayMusic();
         }
@@ -67,14 +65,6 @@ namespace _Project.UI.MainMenu
             }
         }
 
-        private void EnsureDependencies()
-        {
-            if ((_stateMachine == null || _audioSystem == null) && ProjectContext.Instance != null && ProjectContext.Instance.Container != null)
-            {
-                ProjectContext.Instance.Container.Inject(this);
-            }
-        }
-
         private void PlayFadeIn()
         {
             if (_fadeInPanel != null)
@@ -99,7 +89,6 @@ namespace _Project.UI.MainMenu
         private async UniTaskVoid PlayAsync()
         {
             _isPlaying = true;
-            EnsureDependencies();
 
             if (_cutscene != null)
             {
