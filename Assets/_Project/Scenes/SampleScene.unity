@@ -4193,6 +4193,114 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1616133034}
   m_CullTransparentMesh: 1
+--- !u!1 &1630128548
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1630128549}
+  - component: {fileID: 1630128550}
+  - component: {fileID: 1630128551}
+  - component: {fileID: 1630128552}
+  m_Layer: 0
+  m_Name: SceneContext
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1630128549
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1630128548}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1630128550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1630128548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89715ad69b973a14899afa2c6730b30b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Zenject::Zenject.SceneContext
+  _scriptableObjectInstallers: []
+  _monoInstallers:
+  - {fileID: 1630128551}
+  - {fileID: 1630128552}
+  _installerPrefabs: []
+  _autoRun: 1
+  OnPreInstall:
+    m_PersistentCalls:
+      m_Calls: []
+  OnPostInstall:
+    m_PersistentCalls:
+      m_Calls: []
+  OnPreResolve:
+    m_PersistentCalls:
+      m_Calls: []
+  OnPostResolve:
+    m_PersistentCalls:
+      m_Calls: []
+  _parentNewObjectsUnderSceneContext: 0
+  _contractNames: []
+  _parentContractNames: []
+--- !u!114 &1630128551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1630128548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 790158bd68f22a04e9434e7c9f9d0dcb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_Project.Mechanics.Composition.GameplaySceneInstaller
+  _playerConfig: {fileID: 11400000, guid: 78e9e5a65a4dc9d40bfcf4ba901cb207, type: 2}
+  _upgradeDefinitions:
+  - {fileID: 11400000, guid: 5ea277fd40f05e7d04ccaa12ae6ec436, type: 2}
+  - {fileID: 11400000, guid: 74b83fad47897c6e67d59bfe5ae499a9, type: 2}
+  - {fileID: 11400000, guid: 15b1cc424fbfe9db98e74000e8f2fc5f, type: 2}
+  - {fileID: 11400000, guid: d5c22d47487850ea2cd8936c6c3da561, type: 2}
+  - {fileID: 11400000, guid: 98c921dcd1882fe38da09d3cac821772, type: 2}
+  - {fileID: 11400000, guid: e1d09ba18ab9c5c8c40725cd6b177db9, type: 2}
+  _cellConfig: {fileID: 11400000, guid: 6421f115f1264b2cd9fd501ae511b7cf, type: 2}
+  _macroVirusConfig: {fileID: 11400000, guid: f59d974784a1871b8e9a7e0433a2e966, type: 2}
+  _waveScalingConfig: {fileID: 11400000, guid: c526b4c270a5ed59980fd1bd36c061eb, type: 2}
+  _worldScaleConfig: {fileID: 11400000, guid: e73d57b41d53b054fde896015e439bb3, type: 2}
+  _gameAudioCatalog: {fileID: 11400000, guid: 6a6ed9b10a11e75477ad69ca586ecfc5, type: 2}
+--- !u!114 &1630128552
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1630128548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8fc5169525f7b8d832bb65f67821e47, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_Project.UI.UiInstaller
+  _screens:
+  - {fileID: 817364529}
+  - {fileID: 642187733}
+  - {fileID: 355982164}
 --- !u!224 &1650952324 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3596877509855920544, guid: 1bd7450eb76f597498de0411e3fb7d63, type: 3}
@@ -5775,6 +5883,8 @@ MonoBehaviour:
   _playerMovement: {fileID: 2337103139321944}
   _playerTurret: {fileID: 5614351604738210}
   _playerHealth: {fileID: 4696518097923576}
+  _playerParticlesController: {fileID: 0}
+  _arrowController: {fileID: 0}
   _bulletManager: {fileID: 2122897178}
   _cellConfig: {fileID: 11400000, guid: 6421f115f1264b2cd9fd501ae511b7cf, type: 2}
   _cellSpawner: {fileID: 7016120388211641}
@@ -5991,3 +6101,4 @@ SceneRoots:
   - {fileID: 124502039}
   - {fileID: 7027037699782355}
   - {fileID: 4159032421751930}
+  - {fileID: 1630128549}
