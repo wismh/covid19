@@ -30,7 +30,7 @@
 |---|---|
 | Рушій | Unity **6000.3.10f1** |
 | Render Pipeline | URP 17.3.0, 2D Renderer |
-| DI-контейнер | Zenject (лише для платформних сервісів — розділ 4.1) |
+| DI-контейнер | Zenject — `ProjectContext` (рівень застосунку) + `SceneContext` на кожній сцені (розділ 4) |
 | Асинхронність | UniTask (`Cysharp.Threading.Tasks`) — витіснив корутини в новому коді |
 | Твінінг | DOTween (той самий інстанс, що й у старому коді) |
 | Збереження | `_Lumenwake.SaveServiceModule` (Newtonsoft.Json-серіалізація) поверх `ISaveService<TState>` |
@@ -51,12 +51,12 @@ Assets/
         ├── Save/           — GameSaveState, GameSaveService, SaveTrigger
         ├── Mechanics/       — ігрові правила, одна папка на систему
         │   ├── AppFlow/          — GlobalGameStateMachine, MenuState, GameplayState
-        │   ├── Player/           — PlayerConfig, PlayerStatsService, PlayerMovement/Turret/Health
-        │   ├── Cells/            — CellConfig, CellHealth/InfectionState/Visuals, CellSpawner/Registry
-        │   ├── Viruses/Macro/    — MacroVirusConfig/Controller/Spawner/Registry, 3 IMacroVirusBehavior
+        │   ├── Player/           — PlayerConfig, PlayerStatsService, PlayerMovement/Turret/Health, PlayerInstaller
+        │   ├── Cells/            — CellConfig, CellHealth/InfectionState/Visuals, CellSpawner/Registry, CellsInstaller
+        │   ├── Viruses/Macro/    — MacroVirusConfig/Controller/Spawner/Registry, 3 IMacroVirusBehavior, VirusesInstaller
         │   ├── Viruses/InCell/   — InCellVirusConfig/Controller/Spawner/Registry, 3 IInCellVirusBehavior
         │   ├── Waves/            — WaveScalingConfig (єдиний спільний конфіг ескалації складності)
-        │   ├── WorldScale/       — WorldScaleController/Transition/Config/TransitionContext
+        │   ├── WorldScale/       — WorldScaleController/Transition/Config/TransitionContext, WorldScaleInstaller
         │   ├── Combat/           — Bullet, BulletManager, IDamageable, VirusBullet/VirusBulletSpawner
         │   ├── Camera/           — CameraFollow, CameraExtensions
         │   ├── Navigation/       — Arrow, ArrowController (стрілка-локатор)
@@ -64,8 +64,8 @@ Assets/
         │   ├── Environment/      — BackgroundBacteria/Manager, BackgroundParallax (декор)
         │   ├── Audio/            — GameAudioService/Catalog, GameSfxCue enum, AudioList
         │   ├── Shared/           — EntityRegistry<T>, SpawnPlacementUtility
-        │   └── Composition/      — MainSceneComposition (композиційний корінь геймплею)
-        ├── UI/              — Hud/, Upgrades/, GameOver/, MainMenu/ — по одній папці на екран
+        │   └── Composition/      — MainSceneComposition, GameplaySceneInstaller (розділ 4.1.1)
+        ├── UI/              — Hud/, Upgrades/, GameOver/, MainMenu/ (по одній папці на екран), UiInstaller.cs
         └── _Generated/      — Address_g.cs, PrefabNames_g.cs, SceneInBuild_g.cs (кодогенерація шаблону)
 ```
 
@@ -76,46 +76,73 @@ Assets/
 
 ## 4. Composition Root і DI
 
-Проєкт свідомо **не** проганяє все через Zenject. Межа проведена так (зафіксовано в
-`REFACTORING_PLAN.md` розділ 4):
+**Оновлено 2026-09-19 — межу між "через Zenject" і "вручну" пересунуто.** До цієї дати проєкт
+свідомо тримав геймплейні `Mechanics/*` POCO поза Zenject (жодного `SceneContext` не існувало,
+кожен `MonoBehaviour` сам себе інжектував через `ProjectContext.Instance.Container.Inject(this)`).
+Це визнано костилем і скасовано: обидві сцени (`Menu.unity`, `SampleScene.unity`) тепер мають
+справжній `Zenject.SceneContext`, а майже всі `Mechanics/*` POCO — реальні Zenject-біндинги,
+за зразком, підглянутим у локальних референс-проєктах `space-bac`/`tactics-cards` (`ProjectContext`
++ per-scene `SceneContext` + умбрела-installer, що делегує дрібним `XxxInstaller.Install(...)`
+static-хелперам). Причина й повний журнал переходу — `REFACTORING_PLAN.md`, "Пост-міграційний
+DI-рефакторинг" (двома тестовими раундами: спершу дешевий `Menu.unity`, потім увесь `SampleScene`
+одним великим раундом, оскільки ~13 компонентів там уже мали `[Inject] Construct`, який ніхто не
+викликав — сцену не можна було мігрувати частинами).
 
-- **Наскрізні/платформні сервіси** (Save, Audio, SceneLoader, Assets, app-flow стейт-машина) —
-  через Zenject-контейнер.
-- **Геймплейні системи** (`Mechanics/*`, окрім Save/Audio-обгорток) — прості C#-POCO, які
-  композиційний корінь створює вручну через `new X(...)` і з'єднує їхні C#-події напряму.
+Практичний наслідок: **`[Inject]`-тегнутий `Construct(...)` на будь-якому статично розміщеному в
+сцені `MonoBehaviour` тепер викликається Zenject-ом автоматично** при вході в Play Mode, а не
+вручну композиційним коренем. Лишились лише дві категорії, де ручна композиція досі свідомо
+використовується (розділ 4.3):
+- Дані, а не сервіс (`WorldScaleTransitionContext` — простий holder, чиї поля per-tick змінюються).
+- Два компоненти, чий `Construct` **ніколи не був `[Inject]`-тегнутий** і свідомо лишений поза
+  цією міграцією: `MedicalSpawner`, `BulletManager`.
 
-Причина: у проєкті немає жодного Zenject `SceneContext` (перевірено — нуль збігів по всіх
-`.unity`-файлах і референс-проєктах `template`/`td-over-unity`), тож жоден сценний `MonoInstaller`
-ніколи не запускається автоматично. Замість цього кожен `MonoBehaviour`, якому потрібен доступ до
-контейнера, сам себе інжектує через `Zenject.ProjectContext.Instance.Container.Inject(this)`
-(лениво ініціалізований статичний акцесор) у власному `Awake()`.
-
-### 4.1 `ProjectContextInstaller` — що реально є в Zenject-контейнері
+### 4.1 `ProjectContextInstaller` — рівень застосунку (без змін)
 
 `ScriptableObjectInstaller`, `Assets/_Project/Scripts/Bootstrap/ProjectContextInstaller.cs`,
 екземпляр `Configurations/ProjectContextInstaller_Default.asset`, встановлюється з
 `Assets/_Project/Resources/ProjectContext.prefab` (Zenject автозавантажує будь-який `.prefab` з
-папки `Resources/`, незалежно від активної сцени).
-
-Реально забайндженно (і більше нічого):
+папки `Resources/`, незалежно від активної сцени). Це найвищий рівень контейнера — біндинги тут
+доступні з будь-якої сцени.
 
 | Тип | Джерело |
 |---|---|
 | `ISceneLoaderService` | `SceneLoaderServiceModuleInstaller.Install` (`_Lumenwake`) |
 | Asset-loading сервіси | `AssetLoaderInstaller.Install` (`_Lumenwake`) |
 | `IAudioSystem` | `AudioSystemInstaller.Install` (`_Lumenwake`) |
-| `ISaveService<GameSaveState>` / `IGameSaveService` | `GameSaveModuleInstaller.Install` (розділ 4.4) |
+| `ISaveService<GameSaveState>` / `IGameSaveService` | `GameSaveModuleInstaller.Install` (розділ 6.7) |
 | `MenuState`, `GameplayState`, `GlobalGameStateMachine` | напряму в цьому інсталері, `AsSingle()` |
 | `LifeController` | `FromComponentInHierarchy().AsSingle()` (`_Lumenwake.ApplicationLifecycleModule`) |
 
-Жоден `PlayerConfig`/`CellConfig`/`MacroVirusConfig`/`WorldScaleConfig`/`WaveScalingConfig`/
-`GameAudioCatalog`/`UpgradeDefinition` — усе це `[SerializeField]`-посилання на
-ScriptableObject-асети, призначені напряму на `MainSceneComposition`, а не Zenject-біндинги.
+### 4.1.1 Рівень сцени — `SceneContext` на кожній із двох сцен
 
-`Assets/_Project/Scripts/UI/UiInstaller.cs` — **мертвий код**: без `SceneContext` жоден сценний
-`MonoInstaller` не виконується, тож нічого не викликає `UiInstaller.InstallBindings()`. Залишений
-у проєкті з коментарем, а не видалений (правило "вимкнути/лишити, не видаляти, поки не
-підтверджено").
+**`Menu.unity`**: голий `Zenject.SceneContext`, без жодного власного `MonoInstaller` — усе, що
+потрібно `MainMenuScreen` (`GlobalGameStateMachine`, `IAudioSystem`), уже є на рівні застосунку.
+
+**`SampleScene.unity`**: `SceneContext` із двома `MonoInstaller`-компонентами:
+
+| Installer | Тип | Біндить |
+|---|---|---|
+| `GameplaySceneInstaller` | `MonoInstaller`, тримає `[SerializeField]`-конфіги | делегує чотирьом static-хелперам нижче + `IPlayerTargetProvider`, `GameAudioCatalog`, `GameAudioService` |
+| ↳ `PlayerInstaller.Install(...)` | static-хелпер | `PlayerConfig`, `PlayerStatsService`, і сам `PlayerMovement`/`PlayerTurret`/`PlayerHealth` через `FromComponentInHierarchy()` |
+| ↳ `CellsInstaller.Install(...)` | static-хелпер | `CellConfig`, `CellRegistry` (`BindInterfacesAndSelfTo` — покриває й `ICellTargetProvider`) |
+| ↳ `VirusesInstaller.Install(...)` | static-хелпер | `MacroVirusConfig`, `WaveScalingConfig`, `MacroVirusRegistry` |
+| ↳ `WorldScaleInstaller.Install(...)` | static-хелпер | `WorldScaleConfig`, `IWorldScaleTransition → WorldScaleTransition`, `WorldScaleController` |
+| `UiInstaller` | `MonoInstaller`, тримає `List<BaseScreen>` | **ожив** (розділ 4.1.2) — `IScreenManager`/`BaseScreenManager` + кожен конкретний тип екрана |
+
+Чотири `XxxInstaller` — НЕ `MonoInstaller`, а прості `static void Install(DiContainer, ...)`
+хелпери (той самий патерн, що й у `space-bac`/`tactics-cards`) — `GameplaySceneInstaller` просто
+викликає їх по черзі зі своїх `[SerializeField]`-конфігів. Порядок виклику між ними не має
+значення (Zenject-біндинги — лише декларації в контейнері, не послідовний код).
+
+### 4.1.2 `UiInstaller` — більше не мертвий код
+
+До 2026-09-19 цей файл існував, але ніколи не виконувався (нічого не запускало `MonoInstaller` без
+`SceneContext`) — `MainSceneComposition` збирала `BaseScreenManager` вручну. Тепер, коли
+`SceneContext` реально є на `SampleScene`, `UiInstaller.InstallBindings()` справді викликається:
+біндить `BaseScreenManager`/`IScreenManager` (`BindInterfacesAndSelfTo`, з переданим у конструктор
+`List<BaseScreen>`) і кожен конкретний тип екрана окремо (`Container.Bind(screen.GetType())
+.FromInstance(screen)`), щоб `HudScreen`/`UpgradeScreen`/`GameOverScreen` могли резолвити одне
+одного напряму, якщо колись знадобиться.
 
 ### 4.2 App-flow: `Bootstrap` → `GlobalGameStateMachine` → сцени
 
@@ -137,35 +164,67 @@ GameplayState.Enter()  → ISceneLoaderService.LoadSceneAsync(SceneInBuild.Sampl
 (перевірено — `m_MethodName: Play`/`Exit` у `Menu.unity`), а от `GameOverScreen.Restart()` у
 `SampleScene.unity` досі ніким не викликається (розділ 8.2).
 
-### 4.3 `MainSceneComposition` — композиційний корінь геймплею
+### 4.3 `MainSceneComposition` — тепер вузький "клей", не будівельник POCO
 
 `Assets/_Project/Scripts/Mechanics/Composition/MainSceneComposition.cs` — єдиний `MonoBehaviour`
-у `SampleScene.unity`, що "знає про все". Прямий аналог `td-over-unity`'s `MainSceneView.BuildArena()`.
-Послідовність у `Awake()` (усе саме в `Awake()`, не `Start()` — Unity гарантує, що всі `Awake()` у
-сцені відпрацюють раніше за будь-який `Start()`, а кілька спавнерів залежать від цього):
+у `SampleScene.unity`, що "знає про все", але після DI-рефакторингу 2026-09-19 його роль **значно
+звузилась**: майже все, що він раніше створював вручну (`new PlayerStatsService(...)`, `new
+CellRegistry()` тощо) і підключав вручну (`.Construct(...)` на ~13 компонентах), тепер робить сам
+`SceneContext` через installer-и з розділу 4.1.1 — цей клас лише **отримує вже готові результати
+через `[Inject] Construct`** і з'єднує їх подіями. `Construct(...)` цього класу приймає одразу
+10 параметрів: 3 рівня застосунку (`IAudioSystem`, `IGameSaveService`, `GlobalGameStateMachine`) і
+7 рівня сцени (`PlayerStatsService`, `CellRegistry`, `MacroVirusRegistry`, `WorldScaleController`,
+`GameAudioService`, `IPlayerTargetProvider`, `IScreenManager`) — Zenject викликає його автоматично
+до `Awake()`, самоін'єкції більше немає.
 
-1. `Zenject.ProjectContext.Instance.Container.Inject(this)` — самоін'єкція (розділ 4).
-2. `ResolvePlayerComponentReferences()` — обхід відомого Unity-бага (розділ 8.2), тепер також резолвить `BulletManager`/`PlayerParticlesController`/`ArrowController`.
-3. `BuildScreenManager()` — вручну збирає `BaseScreenManager` зі списку `[HudScreen, UpgradeScreen, GameOverScreen]`, примусово ховає Upgrade/GameOver-групи (сирий стан сцени лишає обидві активними).
-4. `BuildMechanicsPocos()` — `new PlayerStatsService(...)`, `new CellRegistry()`, `new MacroVirusRegistry()`, `new WorldScaleController(new WorldScaleTransition(...))`, `new GameAudioService(...)`.
-5. `ConstructSpawners()` — `CellSpawner`/`MacroVirusSpawner`/`MedicalSpawner.Construct(...)`, `PlayerMovement/Turret/Health.Construct(...)`, `BulletManager.Construct(_playerStats, _worldScaleController)`, `ArrowController.Construct(_macroVirusRegistry, _cellRegistry, _worldScaleController, _playerHealth, _worldCamera)`, `PlayerParticlesController.Construct(_worldScaleController, _playerMovement)`.
-6. `ConstructScreens()` — ручний виклик `Construct(...)` на кожному `BaseScreen` (не покладаючись на Zenject `FromInstance`-повторну ін'єкцію — прибирає невизначеність порядку).
-7. `WireCrossSystemEvents()` — фактична "склейка": `CellRegistry.OnStatisticsChanged → HudScreen.SetStatistics`, `OnAllCellsDied → GameOverScreen`, `OnCellDied → MacroVirusSpawner.SpawnReplacementVirusesAsync`, `WorldScaleController.OnEntered/ExitedMicroWorld → MacroVirusSpawner.SetPaused`, `PlayerHealth.OnDied → HandleGameOver`, XP-підписки на `OnKilled` кожного вбитого вірусу.
-8. `_gameAudioService.PlayGameplayMusic()` і `_screenManager.OpenScreen<HudScreen>()` — музика й HUD стартують одразу, без жодної узгодженості зі старою системою (її більше не існує).
-9. `PollNearestCellAsync` — UniTask-цикл кожні 0.2с, що оновлює "найближчу клітину" для `CellProximityPrompt` і полів `WorldScaleTransitionContext`.
+Що лишилось у `Awake()` (усе так само в `Awake()`, не `Start()` — та сама гарантія Unity, що всі
+`Awake()` у сцені відпрацюють раніше за будь-який `Start()`):
 
-`Start()` тепер лише встановлює ціль камери (`CameraFollow.SetTarget`) — до фінального видалення
-старого коду тут же жив цілий блок мостів до `GMTK.Services.ServiceLocator` (камера, кулі,
-пігулки, стрілка, синхронізація масштабу світу зі старим `GamePlayState`); увесь цей блок прибрано
-разом з видаленням `Assets/GMTK` (розділ 7). **Застереження щодо doc-коментарів**: великий
-блок XML-doc-коментарів усередині цього файлу (над `Construct`, `Start`, `WireCrossSystemEvents`)
-досі детально описує ці вже видалені мости слово в слово — вони не оновлені після фінального
-рефакторингу й описують код, якого більше немає в цьому ж файлі. Читати як історичний запис
-причин, не як опис поточної поведінки; сама логіка методів (яку варто читати) — коротка й
-нативна.
+1. `ResolvePlayerComponentReferences()` — обхід відомого Unity-бага (розділ 8.2), не пов'язаного з
+   DI-переходом; лишається потрібним, бо стосується "stripped" PrefabInstance-посилань, а не
+   способу побудови POCO.
+2. `HideOverlayScreensOnStart()` — примусово ховає Upgrade/GameOver-групи (сирий стан сцени лишає
+   обидві активними; `BaseScreenManager`, тепер зібраний `UiInstaller`-ом, не має власного
+   інваріанта "усе почате закритим").
+3. `BuildWorldScaleTransitionContext()` — **єдиний POCO, який цей клас і далі будує вручну**
+   (`new WorldScaleTransitionContext { ... }`), бо це простий data holder з per-tick полями, а не
+   сервіс, який має сенс біндити в контейнер.
+4. `ConstructSpawners()` — **звузився до двох викликів**: `MedicalSpawner.Construct(...)` і
+   `BulletManager.Construct(...)` — єдині два компоненти в усьому геймплеї, чий `Construct` ніколи
+   не тегувався `[Inject]`, свідомо поза межами DI-міграції. Усе інше (`CellSpawner`,
+   `MacroVirusSpawner`, `PlayerMovement`/`Turret`/`Health`/`ParticlesController`, `ArrowController`)
+   Zenject уже підключив сам через `SceneContext`.
+5. `ConstructScreens()` — звузився до `CellProximityPrompt.SetContext(...)`/`SetPlayer(...)` (це
+   звичайні сетери, не `[Inject] Construct` — сам `CellProximityPrompt.Construct(...)` теж уже
+   викликаний Zenject-ом).
+6. `WireCrossSystemEvents()` — не змінився, і це справжня причина, чому цей клас досі існує:
+   крос-системна "склейка" подій (`CellRegistry.OnStatisticsChanged → HudScreen.SetStatistics`,
+   `OnAllCellsDied → GameOverScreen`, `OnCellDied → MacroVirusSpawner.SpawnReplacementVirusesAsync`,
+   `WorldScaleController.OnEntered/ExitedMicroWorld → MacroVirusSpawner.SetPaused`,
+   `PlayerHealth.OnDied → HandleGameOver`, XP-підписки на `OnKilled` кожного вбитого вірусу) — не
+   природний DI-біндинг, її нема куди перенести в installer.
+7. `_gameAudioService.PlayGameplayMusic()` і `_screenManager.OpenScreen<HudScreen>()` — музика й
+   HUD стартують одразу.
+8. `PollNearestCellAsync` — UniTask-цикл кожні 0.2с, що оновлює "найближчу клітину" для
+   `CellProximityPrompt` і полів `WorldScaleTransitionContext`.
+
+`Start()` лише встановлює ціль камери (`CameraFollow.SetTarget`).
+
+**Застереження щодо doc-коментарів**: великий блок XML-doc-коментарів усередині цього файлу (над
+`Construct`/`Start`/`WireCrossSystemEvents`) досі детально описує і вже видалені мости до старого
+`GMTK`-коду (розділ 7), і стару self-injection-модель ("Zenject.ProjectContext.Instance.Container.
+Inject(this)") — жодне з двох більше не існує в самому коді цього файлу. Читати doc-коментарі як
+історичний запис причин, не як опис поточної поведінки; сама логіка методів (яку варто читати) —
+коротка й нативна, і саме вона описана вище.
 
 ## 5. Ключові патерни проєкту
 
+- **`SceneContext` + дрібні static `XxxInstaller.Install(DiContainer, ...)`-хелпери, зібрані під
+  однією умбрела-`MonoInstaller`** (розділ 4.1.1) — конвенція, взята напряму з референс-проєктів
+  `space-bac`/`tactics-cards`, а не винайдена тут. Кожен хелпер відповідає за одну фічу (Player/
+  Cells/Viruses/WorldScale) і не знає про решту; умбрела (`GameplaySceneInstaller`) — єдине місце,
+  що тримає `[SerializeField]`-конфіги й вирішує, у якому порядку викликати хелпери (порядок
+  насправді байдужий — Zenject-біндинги лише декларації, не послідовний код).
 - **POCO "факт" + MonoBehaviour/DOTween-колаборатор "дія".** Повторюється в кожній системі:
   `WorldScaleController` (стан + події) керує ін'єктованим `IWorldScaleTransition`
   (`WorldScaleTransition`, весь DOTween/Camera/Rigidbody2D-код); `CellHealth`/`CellInfectionState`
@@ -275,7 +334,7 @@ GameplayState.Enter()  → ISceneLoaderService.LoadSceneAsync(SceneInBuild.Sampl
 | `HudScreen` | Default | автоматично, раз, на старті гри (`MainSceneComposition.Awake()`) |
 | `UpgradeScreen` | Overlay | `HudScreen` підписана на `PlayerStatsService.OnLevelUp` |
 | `GameOverScreen` | Overlay | `HudScreen` підписана на `PlayerHealth.OnDied`; або напряму `MainSceneComposition.HandleAllCellsDied` |
-| `MainMenuScreen` | — (сцена `Menu`) | нічого — не підключений до реальних кнопок (розділ 7) |
+| `MainMenuScreen` | — (сцена `Menu`) | нічого автоматично — кнопки Play/Exit у сцені викликають його напряму (розділ 4.2) |
 
 `HudScreen` навмисно тримає обидві тригер-підписки (Upgrade і GameOver), бо закритий екран не
 може підписатись сам на подію, яка мала б його відкрити.
@@ -343,7 +402,7 @@ int   BestPlayerLevel = 1;
 ### 6.11 Navigation (`Mechanics/Navigation/`)
 
 `ArrowController` (`[Inject] Construct(MacroVirusRegistry, CellRegistry, WorldScaleController,
-PlayerHealth, Camera)`) — щ 0.1с шукає найближчу ціль напряму через
+PlayerHealth, Camera)`) — кожні 0.1с шукає найближчу ціль напряму через
 `MacroVirusRegistry.FindNearestVirusTransform`/`CellRegistry.FindNearestInfectedCellTransform`
 (макро-вірус має пріоритет при рівній відстані), ховає `Arrow`, коли ціль у кадрі камери, коли
 гравець мертвий, або коли `WorldScaleController.CurrentScale == Micro`.
