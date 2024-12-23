@@ -433,7 +433,7 @@ PlayerHealth, Camera)`) — щ 0.1с шукає найближчу ціль на
   гучності. `GameSaveState` вже зберігає три окремі значення гучності, але керувати ними окремо
   зараз нема через що — вимагає ручного авторингу мікшера (Music/SFX-групи + exposed parameters)
   в Editor.
-- **`Physics2D`-шари** (`InsideCellPlayer`, `BulletMacro`/`BulletMicro`, `Barier`) прив'язані до
+- **`Physics2D`-шари** (`InsideCellPlayer`, `BulletMacro`/`BulletMicro`, `Barrier`) прив'язані до
   конкретних рядкових імен у кількох місцях — при подальшому редагуванні collision matrix звіряти
   з оригіналом.
 

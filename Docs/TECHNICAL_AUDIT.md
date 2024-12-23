@@ -72,7 +72,7 @@
 
 ## 4. Фізика й шари
 
-Кастомні фізичні шари (`TagManager.asset`): `Ally`, `Enemy`, `InsideCell`, `PostProcessing`, `Cell`, `BulletMacro`, `BulletMicro`, `InsideCellPlayer`, `Barier`. Кастомних тегів немає (`tags: []`) — ідентифікація об'єктів через `GetComponent`/`TryGetComponent`, узгоджено з патерном `IDamageable`.
+Кастомні фізичні шари (`TagManager.asset`): `Ally`, `Enemy`, `InsideCell`, `PostProcessing`, `Cell`, `BulletMacro`, `BulletMicro`, `InsideCellPlayer`, `Barrier` (перейменовано з одруківки `Barier` під час naming-паса). Кастомних тегів немає (`tags: []`) — ідентифікація об'єктів через `GetComponent`/`TryGetComponent`, узгоджено з патерном `IDamageable`.
 
 Індекс збірки сцен є **логічно значущим** (не лише порядком): `AudioMixerController` перевіряє `buildIndex == 1`/`== 0`, `MenuManager`/`HUD` жорстко викликають `SceneManager.LoadScene(0/1)` — переставити сцени в Build Settings мовчки зламає аудіо-логіку й флоу меню.
 

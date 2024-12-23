@@ -53,7 +53,7 @@ namespace _Project.Mechanics.WorldScale
 
         [Header("Macro exit placement (old: TransitionIntoMacroWorld - `var outsidePosition = _player.position + " +
                 "_player.right * 5`, flipped to `- _player.right * 5` if a Physics2D.Linecast from the player to " +
-                "that point hits the \"Barier\" layer)")]
+                "that point hits the \"Barrier\" layer)")]
         [SerializeField] private float _macroExitOffsetDistance = 5f;
 
         [Header("Player audio (old: TransitionIntoMicroWorld ONLY - `_player.GetComponent<AudioSource>().volume " +

@@ -1272,7 +1272,7 @@ GameObject:
   - component: {fileID: 473275167}
   - component: {fileID: 473275168}
   m_Layer: 15
-  m_Name: LeftBottomBarier
+  m_Name: LeftBottomBarrier
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2340,7 +2340,7 @@ GameObject:
   - component: {fileID: 821766884}
   - component: {fileID: 821766885}
   m_Layer: 15
-  m_Name: RightTopBarier
+  m_Name: RightTopBarrier
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2647,7 +2647,7 @@ GameObject:
   - component: {fileID: 842654157}
   - component: {fileID: 842654158}
   m_Layer: 15
-  m_Name: RightBottomBarier
+  m_Name: RightBottomBarrier
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4745,7 +4745,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1837538770}
   m_Layer: 0
-  m_Name: Barier
+  m_Name: Barrier
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5006,7 +5006,7 @@ GameObject:
   - component: {fileID: 1981940443}
   - component: {fileID: 1981940444}
   m_Layer: 15
-  m_Name: LeftTopBarier
+  m_Name: LeftTopBarrier
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

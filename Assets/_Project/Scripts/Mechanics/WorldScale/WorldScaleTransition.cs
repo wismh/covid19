@@ -40,14 +40,13 @@ namespace _Project.Mechanics.WorldScale
     /// </summary>
     public sealed class WorldScaleTransition : IWorldScaleTransition
     {
-        // Old: ProjectSettings/TagManager.asset layer list (also documented in TECHNICAL_AUDIT.md). "Barier" is
-        // the ACTUAL layer name in TagManager.asset (line 23) - not a transcription typo here, the original jam
-        // project misspelled it and every reference (including this one) has to match the real string or
-        // LayerMask.NameToLayer/GetMask silently returns -1/0. Renaming the layer itself is a ProjectSettings
-        // change out of scope for this pure-C#-only phase.
+        // ProjectSettings/TagManager.asset layer list (also documented in TECHNICAL_AUDIT.md). The original jam
+        // project misspelled this layer "Barier" - fixed to "Barrier" as part of the project-wide naming pass
+        // (TagManager.asset layer 15 renamed alongside this constant and the scene GameObjects/textures that
+        // shared the typo).
         private const string DefaultLayerName = "Default";
         private const string InsideCellPlayerLayerName = "InsideCellPlayer";
-        private const string BarrierLayerName = "Barier";
+        private const string BarrierLayerName = "Barrier";
 
         private readonly WorldScaleConfig _config;
 
