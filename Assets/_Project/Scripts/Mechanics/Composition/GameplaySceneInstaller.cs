@@ -12,7 +12,7 @@ using _Project.Mechanics.WorldScale;
 namespace _Project.Mechanics.Composition
 {
     /// <summary>
-    /// Umbrella MonoInstaller for SampleScene's SceneContext - holds the Mechanics-POCO config assets and calls
+    /// Umbrella MonoInstaller for GameplayScene's SceneContext - holds the Mechanics-POCO config assets and calls
     /// out to the small per-feature XxxInstaller.Install(Container, ...) static helpers, the same shape
     /// tactics-cards' GamePlayContextInstaller uses. Replaces MainSceneComposition.BuildMechanicsPocos() (which
     /// used to `new` every POCO by hand) - MainSceneComposition now receives them via [Inject] instead.

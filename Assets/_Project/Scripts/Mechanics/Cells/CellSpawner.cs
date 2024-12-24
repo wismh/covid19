@@ -20,7 +20,7 @@ namespace _Project.Mechanics.Cells
     /// Old CellSpawner.SpawnCell() had its own copy of the rejection-sampling loop (`MAX_CHOICES_VALUE = 5000`,
     /// `_distanceThreshold`, `_sqrSizeOfStartZone`) - Phase 3 already unified this into
     /// <see cref="_Project.Mechanics.Shared.SpawnPlacementUtility.FindPosition"/>. This class calls that utility
-    /// with the same field names/defaults old CellSpawner's SampleScene.unity instance used (cellCount=20,
+    /// with the same field names/defaults old CellSpawner's GameplayScene.unity instance used (cellCount=20,
     /// minSqrDistanceBetweenCells=35, minSqrDistanceFromOrigin=10, maxPlacementAttempts=5000, spawnBounds
     /// center=(0,0,0) extent=(10,25,0)) rather than re-guessing numbers - read directly from the scene, not
     /// invented - so a future Stage 6 scene-composition step can drop this component in with correct-by-default
@@ -55,7 +55,7 @@ namespace _Project.Mechanics.Cells
         [Header("Prefab - assigned by a later stage (prefab/scene surgery), see class doc comment")]
         [SerializeField] private Transform _cellPrefab;
 
-        [Header("Placement (ported from GMTK.CellSpawner, values from SampleScene.unity's CellSpawner instance)")]
+        [Header("Placement (ported from GMTK.CellSpawner, values from GameplayScene.unity's CellSpawner instance)")]
         [SerializeField] private int _cellCount = 20;
         [SerializeField] private float _minSqrDistanceBetweenCells = 35f;
         [SerializeField] private float _minSqrDistanceFromOrigin = 10f;

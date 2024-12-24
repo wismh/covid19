@@ -16,7 +16,7 @@ namespace _Project.Mechanics.AppFlow
 
         public override async UniTask Enter()
         {
-            await _sceneLoaderService.LoadSceneAsync(SceneInBuild.SampleScene, unloadRedundant: true);
+            await _sceneLoaderService.LoadSceneAsync(SceneInBuild.GameplayScene, unloadRedundant: true);
         }
 
         public override UniTask Exit()

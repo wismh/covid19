@@ -107,7 +107,7 @@ namespace _Project.UI.Hud
 
         /// <summary>
         /// Phase 7 testing fix (2026-09-11): <see cref="_player"/> was left as a bare [SerializeField] with no
-        /// setter, and nothing wired it in SampleScene.unity - Update()'s "_player == null" guard silently kept
+        /// setter, and nothing wired it in GameplayScene.unity - Update()'s "_player == null" guard silently kept
         /// the prompt hidden and the E-key handler always took the "enter macro" no-op branch. A composition root
         /// now calls this the same way it calls SetTargetCell/SetContext.
         /// </summary>

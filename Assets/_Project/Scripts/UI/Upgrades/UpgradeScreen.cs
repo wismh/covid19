@@ -40,7 +40,7 @@ namespace _Project.UI.Upgrades
     /// [SerializeField]s instead (this migration's established convention - see CellVisuals/PlayerHealth for the
     /// same GetChild-to-SerializeField fix applied elsewhere). <see cref="_upgradeIcons"/>/
     /// <see cref="_upgradeTexts"/> recover the exact Sprite/string data old UpgradesHUD had serialized (read
-    /// directly from SampleScene.unity's YAML before it was lost by removing that component, not re-authored
+    /// directly from GameplayScene.unity's YAML before it was lost by removing that component, not re-authored
     /// blind) - index order matches UpgradeStat's declaration order 1:1, which is itself already documented as a
     /// direct port of the old UpgradeType order (see UpgradeStat's own doc comment).
     ///

@@ -38,7 +38,7 @@
 | UI-фреймворк | `_Lumenwake.UIModule` (`BaseScreen`/`BaseScreenManager`, шарова система екранів) |
 | Асети | TextMesh Pro (з `com.unity.ugui` 2.0.0 в Unity 6, окремий пакет TMP більше не потрібен) |
 | Платформи збірки | WebGL (itch.io), Windows x64 |
-| Сцени в білді | `BootstrapScene` (0) → `Menu` (1) → `SampleScene` (2) |
+| Сцени в білді | `BootstrapScene` (0) → `Menu` (1) → `GameplayScene` (2) |
 
 ## 3. Конвенція неймспейсів і папок
 
@@ -54,7 +54,7 @@ Assets/
         │   ├── Player/           — PlayerConfig, PlayerStatsService, PlayerMovement/Turret/Health, PlayerInstaller
         │   ├── Cells/            — CellConfig, CellHealth/InfectionState/Visuals, CellSpawner/Registry, CellsInstaller
         │   ├── Viruses/Macro/    — MacroVirusConfig/Controller/Spawner/Registry, 3 IMacroVirusBehavior, VirusesInstaller
-        │   ├── Viruses/InCell/   — InCellVirusConfig/Controller/Spawner/Registry, 3 IInCellVirusBehavior
+        │   ├── Viruses/Micro/   — MicroVirusConfig/Controller/Spawner/Registry, 3 IMicroVirusBehavior
         │   ├── Waves/            — WaveScalingConfig (єдиний спільний конфіг ескалації складності)
         │   ├── WorldScale/       — WorldScaleController/Transition/Config/TransitionContext, WorldScaleInstaller
         │   ├── Combat/           — Bullet, BulletManager, IDamageable, VirusBullet/VirusBulletSpawner
@@ -79,12 +79,12 @@ Assets/
 **Оновлено 2026-09-19 — межу між "через Zenject" і "вручну" пересунуто.** До цієї дати проєкт
 свідомо тримав геймплейні `Mechanics/*` POCO поза Zenject (жодного `SceneContext` не існувало,
 кожен `MonoBehaviour` сам себе інжектував через `ProjectContext.Instance.Container.Inject(this)`).
-Це визнано костилем і скасовано: обидві сцени (`Menu.unity`, `SampleScene.unity`) тепер мають
+Це визнано костилем і скасовано: обидві сцени (`Menu.unity`, `GameplayScene.unity`) тепер мають
 справжній `Zenject.SceneContext`, а майже всі `Mechanics/*` POCO — реальні Zenject-біндинги,
 за зразком, підглянутим у локальних референс-проєктах `space-bac`/`tactics-cards` (`ProjectContext`
 + per-scene `SceneContext` + умбрела-installer, що делегує дрібним `XxxInstaller.Install(...)`
 static-хелперам). Причина й повний журнал переходу — `REFACTORING_PLAN.md`, "Пост-міграційний
-DI-рефакторинг" (двома тестовими раундами: спершу дешевий `Menu.unity`, потім увесь `SampleScene`
+DI-рефакторинг" (двома тестовими раундами: спершу дешевий `Menu.unity`, потім увесь `GameplayScene`
 одним великим раундом, оскільки ~13 компонентів там уже мали `[Inject] Construct`, який ніхто не
 викликав — сцену не можна було мігрувати частинами).
 
@@ -118,7 +118,7 @@ DI-рефакторинг" (двома тестовими раундами: сп
 **`Menu.unity`**: голий `Zenject.SceneContext`, без жодного власного `MonoInstaller` — усе, що
 потрібно `MainMenuScreen` (`GlobalGameStateMachine`, `IAudioSystem`), уже є на рівні застосунку.
 
-**`SampleScene.unity`**: `SceneContext` із двома `MonoInstaller`-компонентами:
+**`GameplayScene.unity`**: `SceneContext` із двома `MonoInstaller`-компонентами:
 
 | Installer | Тип | Біндить |
 |---|---|---|
@@ -138,7 +138,7 @@ DI-рефакторинг" (двома тестовими раундами: сп
 
 До 2026-09-19 цей файл існував, але ніколи не виконувався (нічого не запускало `MonoInstaller` без
 `SceneContext`) — `MainSceneComposition` збирала `BaseScreenManager` вручну. Тепер, коли
-`SceneContext` реально є на `SampleScene`, `UiInstaller.InstallBindings()` справді викликається:
+`SceneContext` реально є на `GameplayScene`, `UiInstaller.InstallBindings()` справді викликається:
 біндить `BaseScreenManager`/`IScreenManager` (`BindInterfacesAndSelfTo`, з переданим у конструктор
 `List<BaseScreen>`) і кожен конкретний тип екрана окремо (`Container.Bind(screen.GetType())
 .FromInstance(screen)`), щоб `HudScreen`/`UpgradeScreen`/`GameOverScreen` могли резолвити одне
@@ -155,19 +155,19 @@ GlobalGameStateMachine : StateMachineBehaviour<StateBase>   (_Lumenwake.StateMac
   states = [ MenuState, GameplayState ]
 
 MenuState.Enter()      → ISceneLoaderService.LoadSceneAsync(SceneInBuild.Menu, unloadRedundant: true)
-GameplayState.Enter()  → ISceneLoaderService.LoadSceneAsync(SceneInBuild.SampleScene, unloadRedundant: true)
+GameplayState.Enter()  → ISceneLoaderService.LoadSceneAsync(SceneInBuild.GameplayScene, unloadRedundant: true)
 ```
 
 `Bootstrap.cs` сам ще не переведений на стейт-машину (лишається прямим `SceneManager.LoadScene`).
 `MainMenuScreen.Play()` і `GameOverScreen.Restart()` викликають `GlobalGameStateMachine.Enter<T>()`
 коректно; кнопки в сцені `Menu.unity` тепер справді викликають `MainMenuScreen.Play()`/`Exit()`
 (перевірено — `m_MethodName: Play`/`Exit` у `Menu.unity`), а от `GameOverScreen.Restart()` у
-`SampleScene.unity` досі ніким не викликається (розділ 8.2).
+`GameplayScene.unity` досі ніким не викликається (розділ 8.2).
 
 ### 4.3 `MainSceneComposition` — тепер вузький "клей", не будівельник POCO
 
 `Assets/_Project/Scripts/Mechanics/Composition/MainSceneComposition.cs` — єдиний `MonoBehaviour`
-у `SampleScene.unity`, що "знає про все", але після DI-рефакторингу 2026-09-19 його роль **значно
+у `GameplayScene.unity`, що "знає про все", але після DI-рефакторингу 2026-09-19 його роль **значно
 звузилась**: майже все, що він раніше створював вручну (`new PlayerStatsService(...)`, `new
 CellRegistry()` тощо) і підключав вручну (`.Construct(...)` на ~13 компонентах), тепер робить сам
 `SceneContext` через installer-и з розділу 4.1.1 — цей клас лише **отримує вже готові результати
@@ -233,14 +233,14 @@ Inject(this)") — жодне з двох більше не існує в сам
 - **`EntityRegistry<T> where T : Component`** (`Mechanics/Shared/EntityRegistry.cs`) — заміна
   п'яти порожніх підкласів старого `ObjectManager`, що існували лише заради типу-тегу для
   `ServiceLocator`. Дає `Register`/`Unregister`/`FindNearest(point[, out sqrDistance])` +
-  `OnRegistered`/`OnUnregistered`. `CellRegistry`/`MacroVirusRegistry`/`InCellVirusRegistry`
+  `OnRegistered`/`OnUnregistered`. `CellRegistry`/`MacroVirusRegistry`/`MicroVirusRegistry`
   композують його всередині; `CellRegistry` додає поверх реальну доменну логіку (живі/хворі/
   загиблі лічильники, `OnAllCellsDied` vs `OnCellDied`).
 - **Strategy для ШІ ворогів**, збережено з оригінального коду як найсильніший його шматок:
   `IMacroVirusBehavior` (`MoveToCellBehavior`/`AttackCellBehavior`/`PenetrationIntoCellBehavior`)
-  і `IInCellVirusBehavior` (`OrangeVirusBehavior`/`CucumberVirusBehavior`/`SpinerVirusBehavior`).
+  і `IMicroVirusBehavior` (`OrangeVirusBehavior`/`CucumberVirusBehavior`/`SpinerVirusBehavior`).
 - **Конфіг як ScriptableObject**, іменування `<ClassName>_<Variant>` (`PlayerConfig_Default`,
-  `InCellVirusConfig_Orange`, `UpgradeDefinition_Damage`) — жодних магічних чисел інлайн; `menuName`
+  `MicroVirusConfig_Orange`, `UpgradeDefinition_Damage`) — жодних магічних чисел інлайн; `menuName`
   завжди дзеркалить `Configurations/<Feature>/`.
 - **Прямі `[SerializeField]`-посилання й сиблінг-`GetComponent<T>()`** замість
   `transform.Find("string")`/`GetChild(index)` — єдиний виняток, коли sibling-lookup свідомо
@@ -271,7 +271,7 @@ Inject(this)") — жодне з двох більше не існує в сам
 | `PlayerHealth` | MonoBehaviour, реалізує `Combat.IDamageable` | HP/броня, `Damage()`, послідовність смерті, підписка на `PlayerStatsService.OnUpgraded`/`OnBonusHealthGranted` |
 | `IProjectileSpawner` | інтерфейс | реалізується `Combat.BulletManager` (розділ 6.9) |
 
-`PlayerHealth`, `MacroVirusController`, `InCellVirusController`, `MedicalPickup` — усі
+`PlayerHealth`, `MacroVirusController`, `MicroVirusController`, `MedicalPickup` — усі
 реалізують один спільний `_Project.Mechanics.Combat.IDamageable` (розділ 6.9), а не свій власний
 інтерфейс кожен — єдина точка входу для будь-якого джерела урону (`Bullet`, `VirusBullet`,
 ближній бій вірусів).
@@ -295,15 +295,15 @@ Inject(this)") — жодне з двох більше не існує в сам
 `MacroVirusRegistry` — тонка обгортка над `EntityRegistry<MacroVirusController>`, без власної
 логіки (на відміну від `CellRegistry`).
 
-### 6.4 In-Cell Viruses (`Mechanics/Viruses/InCell/`)
+### 6.4 Micro Viruses (`Mechanics/Viruses/Micro/`)
 
-`InCellVirusController` + один з трьох `IInCellVirusBehavior`
+`MicroVirusController` + один з трьох `IMicroVirusBehavior`
 (`OrangeVirusBehavior`/`CucumberVirusBehavior`/`SpinerVirusBehavior`), один клас
-`InCellVirusConfig` × 3 асети-варіанти (`_variant` — enum-дискримінатор). `InCellVirusSpawner`
+`MicroVirusConfig` × 3 асети-варіанти (`_variant` — enum-дискримінатор). `MicroVirusSpawner`
 сидить на кожному `Cell.prefab`; кількість вірусів встановлюється **лінькво, один раз**, коли
 гравець реально входить у клітину (`WorldScaleTransition.EnterMicroWorldAsync` викликає
 `SetVirusesCount`), а не реактивно на кожну зміну лічильника зараження — свідомий вибір,
-задокументований у `InCellVirusSpawner`'s doc comment (реактивна версія була відкинута раундом
+задокументований у `MicroVirusSpawner`'s doc comment (реактивна версія була відкинута раундом
 тестування: давала повнорозмірних вірусів, що блукали макро-світом).
 
 ### 6.5 World Scale (`Mechanics/WorldScale/`)
@@ -383,7 +383,7 @@ int   BestPlayerLevel = 1;
 
 | Клас | Відповідальність |
 |---|---|
-| `IDamageable` | `void Damage(int damage, Vector3 attackDirection)` — реалізують `PlayerHealth`, `MacroVirusController`, `InCellVirusController`, `MedicalPickup` |
+| `IDamageable` | `void Damage(int damage, Vector3 attackDirection)` — реалізують `PlayerHealth`, `MacroVirusController`, `MicroVirusController`, `MedicalPickup` |
 | `Bullet` | політ снаряда гравця, масштаб/швидкість 0.3× у мікро-світі (запитує стан через `Func<bool> isMicroWorld`, не читає жоден стан напряму), `OnTriggerEnter2D` шукає `IDamageable` |
 | `BulletManager` | `MonoBehaviour, IProjectileSpawner`; `UnityEngine.Pool.ObjectPool<Bullet>` (ємність 50, максимум 100); `Construct(PlayerStatsService, WorldScaleController)` — урон кожного пострілу читається напряму з `PlayerStatsService.EffectiveDamage` |
 | `VirusBullet` / `VirusBulletSpawner` | дальня атака Cucumber (розділ 6.4) |
@@ -483,7 +483,7 @@ PlayerHealth, Camera)`) — кожні 0.1с шукає найближчу ці�
   через `SetActive(false)` не заморожує вже запущену анімацію проникнення вірусу в клітину.
   Обхід: явний `DOTween.Pause(virus.transform)`/`DOTween.Play(...)` по кожному зареєстрованому
   вірусу, окремо від `GameObject`-тогла.
-- **Колізія GUID між двома `.meta`-файлами** (`SampleScene.unity`/`URP2DSceneTemplate.unity`)
+- **Колізія GUID між двома `.meta`-файлами** (`GameplayScene.unity`/`URP2DSceneTemplate.unity`)
   ламала саме рантайм-завантаження сцени (`SceneManager.LoadScene`), хоча `EditorSceneManager`/
   CLI-команда відкриття за шляхом працювали нормально — `AssetDatabase.Refresh()`/`ImportAsset`
   не виправляють цей розсинхрон, потрібен ручний перезапис `.meta` + `EditorBuildSettings.asset`.

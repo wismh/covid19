@@ -4,6 +4,6 @@ namespace Project.Generated
     {
         public const string BootstrapScene = "BootstrapScene";
         public const string Menu = "Menu";
-        public const string SampleScene = "SampleScene";
+        public const string GameplayScene = "GameplayScene";
     }
 }

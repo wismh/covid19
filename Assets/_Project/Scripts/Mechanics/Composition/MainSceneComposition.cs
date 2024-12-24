@@ -30,7 +30,7 @@ namespace _Project.Mechanics.Composition
     /// DI-рефакторинг" entry). Originally a fully hand-composed "arena builder" that `new`-ed every Mechanics/*
     /// POCO itself (mirroring `td-over-unity`'s `MainSceneView.BuildArena()`) - those POCOs
     /// (PlayerStatsService, CellRegistry, MacroVirusRegistry, WorldScaleController, GameAudioService) are now
-    /// bound in SampleScene's SceneContext container instead (GameplaySceneInstaller + its feature
+    /// bound in GameplayScene's SceneContext container instead (GameplaySceneInstaller + its feature
     /// XxxInstaller.Install helpers) and reach this class via `[Inject] Construct`. This class remains the
     /// composition root for the cross-system event glue that isn't naturally a container binding
     /// (`WireCrossSystemEvents`) and for `WorldScaleTransitionContext` (a plain data holder whose per-cell
@@ -119,7 +119,7 @@ namespace _Project.Mechanics.Composition
         private IGameSaveService _gameSaveService;
         private GlobalGameStateMachine _stateMachine;
 
-        // --- Zenject-bound: scene-level, from SampleScene's SceneContext (GameplaySceneInstaller + feature
+        // --- Zenject-bound: scene-level, from GameplayScene's SceneContext (GameplaySceneInstaller + feature
         // XxxInstaller.Install helpers, UiInstaller for IScreenManager) - see this class's Construct method. ---
         private IScreenManager _screenManager;
         private PlayerStatsService _playerStats;
@@ -145,7 +145,7 @@ namespace _Project.Mechanics.Composition
 
         /// <summary>
         /// DI-migration update (2026-09-19, see Docs/REFACTORING_PLAN.md's "Пост-міграційний DI-рефакторинг"):
-        /// SampleScene now has a real `SceneContext` (`GameplaySceneInstaller` + feature `XxxInstaller.Install`
+        /// GameplayScene now has a real `SceneContext` (`GameplaySceneInstaller` + feature `XxxInstaller.Install`
         /// helpers + `UiInstaller`), so this `[Inject]`-tagged method is called automatically by Zenject before
         /// Unity calls `Awake()` on this object - no more self-injection. Three params are project-level
         /// (`ProjectContextInstaller.cs`: `IAudioSystem`, `IGameSaveService`, `GlobalGameStateMachine`); the rest
@@ -208,7 +208,7 @@ namespace _Project.Mechanics.Composition
         /// Phase 7 testing fix (2026-09-11): wires the old-GMTK-ServiceLocator dependencies this composition
         /// root needs (<see cref="GMTK.CameraFollow"/>, <see cref="GMTK.BulletManager"/>,
         /// <see cref="GMTK.Services.PlayerStats"/>) - all three still fully active/registering themselves in
-        /// SampleScene.unity (deliberately kept running per Phase 5's "keep the old game playable" rule), each
+        /// GameplayScene.unity (deliberately kept running per Phase 5's "keep the old game playable" rule), each
         /// registering itself via GMTK.Services.ServiceLocator in its own Awake() (PlayerStats itself is
         /// registered by the old BootstrapState, Assets/GMTK/Scripts/GameStates/BootstrapState.cs, which still
         /// runs alongside the new _Project.Bootstrap flow). Deliberately done in Start(), not Awake(), even
@@ -315,7 +315,7 @@ namespace _Project.Mechanics.Composition
 
         /// <summary>
         /// Workaround for a reproducible Unity engine quirk, confirmed via Unity CLI Play Mode testing
-        /// (2026-09-11, both directly and through the real Menu -&gt; SampleScene flow): when this scene loads
+        /// (2026-09-11, both directly and through the real Menu -&gt; GameplayScene flow): when this scene loads
         /// through a runtime <see cref="UnityEngine.SceneManagement.SceneManager.LoadScene(string)"/> call (the
         /// actual gameplay path - Menu's "Play" button, ported in MenuManager.LoadGameScene) rather than being
         /// opened directly in the Editor, the direct <c>[SerializeField]</c> "stripped" PrefabInstance
@@ -424,7 +424,7 @@ namespace _Project.Mechanics.Composition
         //
         // DI-migration update (2026-09-19): CellSpawner/MacroVirusSpawner/PlayerMovement/PlayerTurret/
         // PlayerHealth/PlayerParticlesController/ArrowController all have [Inject]-tagged Construct methods and
-        // are statically placed in SampleScene, so SceneContext now calls their Construct automatically (see
+        // are statically placed in GameplayScene, so SceneContext now calls their Construct automatically (see
         // GameplaySceneInstaller/PlayerInstaller/CellsInstaller/VirusesInstaller/WorldScaleInstaller). Only
         // MedicalSpawner/BulletManager remain here - their Construct methods were never [Inject]-tagged (see
         // their own doc comments) and stay hand-composed, using the same injected _playerStats/
@@ -445,7 +445,7 @@ namespace _Project.Mechanics.Composition
 
         // --- 3. UI screens ---
         // DI-migration update (2026-09-19): HudScreen/UpgradeScreen/GameOverScreen/CellProximityPrompt all have
-        // [Inject]-tagged Construct methods and are statically placed in SampleScene, so SceneContext now calls
+        // [Inject]-tagged Construct methods and are statically placed in GameplayScene, so SceneContext now calls
         // their Construct automatically (IScreenManager comes from UiInstaller, everything else from
         // GameplaySceneInstaller's feature installers). Only the non-Construct setup calls remain here.
 
@@ -455,7 +455,7 @@ namespace _Project.Mechanics.Composition
             {
                 _cellProximityPrompt.SetContext(_worldScaleTransitionContext);
 
-                // See CellProximityPrompt.SetPlayer's doc comment - nothing wired _player in SampleScene.unity,
+                // See CellProximityPrompt.SetPlayer's doc comment - nothing wired _player in GameplayScene.unity,
                 // so the proximity prompt/E-key handler were silently inert.
                 if (_playerMovement != null)
                     _cellProximityPrompt.SetPlayer(_playerMovement.transform);

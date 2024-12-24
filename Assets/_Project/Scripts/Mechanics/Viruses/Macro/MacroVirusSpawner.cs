@@ -65,7 +65,7 @@ namespace _Project.Mechanics.Viruses.Macro
         [SerializeField] private MacroVirusController _virusPrefab;
         [SerializeField] private MacroVirusController _glistPrefab;
 
-        [Header("Wave sizing (ported from GMTK.VirusSpawner, values from SampleScene.unity's VirusSpawner instance)")]
+        [Header("Wave sizing (ported from GMTK.VirusSpawner, values from GameplayScene.unity's VirusSpawner instance)")]
         [SerializeField] private float _initialWaveSize = 10f;
         [SerializeField] private float _distanceFromCenter = 30f;
 
