@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using _Project.Mechanics.Player;
-using _Project.Mechanics.Viruses.InCell;
+using _Project.Mechanics.Viruses.Micro;
 
 namespace _Project.Mechanics.Pickups
 {

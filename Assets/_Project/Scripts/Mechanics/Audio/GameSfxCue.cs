@@ -15,10 +15,10 @@ namespace _Project.Mechanics.Audio
     /// 14 distinct .mp3 files (several sites intentionally share a clip - see below). That's a small, flat,
     /// finite set with no combinatorial growth (it does not scale with wave count, upgrade count, or virus
     /// variant count the way e.g. UpgradeStat's per-stat split does) - a single enum keeps GameAudioService's
-    /// public surface ("play cue X") trivially simple for callers (PlayerHealth, CellHealth, InCellVirusController,
+    /// public surface ("play cue X") trivially simple for callers (PlayerHealth, CellHealth, MicroVirusController,
     /// MacroVirusController, etc. - none of which this phase is allowed to edit, but whose future call sites will
     /// read this enum) without needing a per-entity-type sub-catalog. Splitting (e.g. a separate
-    /// InCellVirusSfxCue/MacroVirusSfxCue) would only pay off if the cue set were expected to grow per-variant,
+    /// MicroVirusSfxCue/MacroVirusSfxCue) would only pay off if the cue set were expected to grow per-variant,
     /// which nothing in the old code or GDD.md suggests.
     /// </summary>
     public enum GameSfxCue

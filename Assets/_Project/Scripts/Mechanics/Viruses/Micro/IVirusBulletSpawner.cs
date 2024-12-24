@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace _Project.Mechanics.Viruses.InCell
+namespace _Project.Mechanics.Viruses.Micro
 {
     /// <summary>
     /// Small seam between CucumberVirusBehavior and whatever actually spawns the bullet, mirroring
@@ -14,12 +14,12 @@ namespace _Project.Mechanics.Viruses.InCell
     /// Old code's `Instantiate(_bulletPrefab, _bulletSpawnPoint)` used the 2-arg overload that instantiates the
     /// bullet AS A CHILD of `_bulletSpawnPoint` - old CucumberBullet.prefab's own localScale was authored for a
     /// MACRO-world 1x parent, so being parented deep inside the tiny in-cell hierarchy (Cell.prefab's 3x root x
-    /// the "Viruses" container's compensating 0.15x, net ~0.45x world scale - see InCellVirusSpawner._
+    /// the "Viruses" container's compensating 0.15x, net ~0.45x world scale - see MicroVirusSpawner._
     /// virusContainer's doc comment) is what actually shrank the bullet to the right size; old code never scaled
     /// it explicitly. User-reported symptom this fixes: "у cucumber завеликі снаряди" - this bridge's original
     /// `Instantiate(_bulletPrefab, position, Quaternion.identity)` (no parent at all) skipped that inherited
     /// scale entirely, spawning bullets at their prefab's raw macro-sized scale inside the micro world. Passing
-    /// the same <see cref="_Project.Mechanics.Viruses.InCell.InCellVirusController"/>-owned bulletSpawnPoint
+    /// the same <see cref="_Project.Mechanics.Viruses.Micro.MicroVirusController"/>-owned bulletSpawnPoint
     /// Transform back through here (rather than reading it off the config) lets the implementation reproduce
     /// that exact parenting.
     /// </summary>

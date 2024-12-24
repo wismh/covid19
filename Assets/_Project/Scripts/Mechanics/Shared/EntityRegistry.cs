@@ -16,7 +16,7 @@ namespace _Project.Mechanics.Shared
     /// 1. Generic composition instead of inheritance-for-a-type-tag. The five old subclasses added no members and
     ///    existed only so ServiceLocator.Get&lt;CellManager&gt;() vs. Get&lt;VirusManager&gt;() could resolve to
     ///    different lists. A generic `EntityRegistry&lt;T&gt;` gives every feature-specific registry
-    ///    (CellRegistry/MacroVirusRegistry/InCellVirusRegistry, one per Phase-3 component type) the same
+    ///    (CellRegistry/MacroVirusRegistry/MicroVirusRegistry, one per Phase-3 component type) the same
     ///    behavior with zero duplicated code and no empty marker classes - each feature registry composes an
     ///    `EntityRegistry&lt;T&gt;` internally instead of inheriting from a shared MonoBehaviour base.
     /// 2. Stores the typed component (`T`, constrained to `Component` so `.transform` is available for distance

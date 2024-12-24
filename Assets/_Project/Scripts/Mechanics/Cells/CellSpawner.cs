@@ -5,7 +5,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Zenject;
 using _Project.Mechanics.Shared;
-using _Project.Mechanics.Viruses.InCell;
+using _Project.Mechanics.Viruses.Micro;
 using _Project.Mechanics.Waves;
 
 namespace _Project.Mechanics.Cells
@@ -75,17 +75,17 @@ namespace _Project.Mechanics.Cells
         private CancellationTokenSource _lifetimeCts;
 
         /// <summary>
-        /// Phase 8 testing fix (2026-09-11): lets MainSceneComposition reach each cell's own InCellVirusSpawner
+        /// Phase 8 testing fix (2026-09-11): lets MainSceneComposition reach each cell's own MicroVirusSpawner
         /// the moment it's constructed, without this class needing to know why (today: granting XP on in-cell
-        /// virus kills - see InCellVirusSpawner.OnVirusKilled's doc comment. Mirrors MacroVirusRegistry.
+        /// virus kills - see MicroVirusSpawner.OnVirusKilled's doc comment. Mirrors MacroVirusRegistry.
         /// OnRegistered's role for macro viruses, adapted for the fact that in-cell viruses have no shared
         /// registry to subscribe to - CellSpawner is the one place that constructs every cell's spawner.
         /// </summary>
-        public event Action<InCellVirusSpawner> OnInCellVirusSpawnerCreated;
+        public event Action<MicroVirusSpawner> OnMicroVirusSpawnerCreated;
 
         /// <summary>
         /// Phase 7 testing fix (2026-09-11): added <paramref name="playerTargetProvider"/>/
-        /// <paramref name="waveScalingConfig"/> to construct each spawned cell's InCellVirusSpawner - Cell.prefab
+        /// <paramref name="waveScalingConfig"/> to construct each spawned cell's MicroVirusSpawner - Cell.prefab
         /// never had that component at all before this fix, and even once added, nothing constructed one per
         /// spawned cell instance, so a cell's interior was permanently empty. Construct() only - see SpawnCell's
         /// own comment for why SetVirusesCount is deliberately NOT called/wired from here.
@@ -161,16 +161,16 @@ namespace _Project.Mechanics.Cells
             // are wired as same-prefab sibling references directly on Cell.prefab (matching CellHealth's own
             // sibling-reference idiom - no cross-scene dependency, safe to bake into the prefab asset). Only
             // Construct() happens here - NOT a CellInfectionState.OnVirusCountChanged subscription (an earlier,
-            // user-rejected draft of this fix did wire that reactively; see InCellVirusSpawner's own
+            // user-rejected draft of this fix did wire that reactively; see MicroVirusSpawner's own
             // "SetVirusesCount: LAZY, on micro-world entry only" doc comment for why that produced full-size
             // in-cell viruses wandering the macro world). SetVirusesCount is instead called lazily, once, by
             // WorldScaleTransition.EnterMicroWorldAsync at the moment the player actually enters this cell -
-            // MainSceneComposition's proximity-polling loop resolves this same InCellVirusSpawner instance onto
+            // MainSceneComposition's proximity-polling loop resolves this same MicroVirusSpawner instance onto
             // WorldScaleTransitionContext the same way it already does CellVisuals/CellRigidbody2D/CellAnimator.
-            if (instance.TryGetComponent(out InCellVirusSpawner inCellVirusSpawner))
+            if (instance.TryGetComponent(out MicroVirusSpawner inCellVirusSpawner))
             {
                 inCellVirusSpawner.Construct(_playerTargetProvider, _waveScalingConfig);
-                OnInCellVirusSpawnerCreated?.Invoke(inCellVirusSpawner);
+                OnMicroVirusSpawnerCreated?.Invoke(inCellVirusSpawner);
             }
         }
 

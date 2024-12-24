@@ -17,7 +17,7 @@ namespace _Project.Mechanics.Player
     /// own earlier doc comment explicitly deferred them ("a later UI/animation phase can subscribe to OnDamaged/
     /// OnDied to restore staged death-animation timing"), but no such phase ever followed up, so hits/death were
     /// silent, effect-less, and animation-less. Restored directly here instead of via a separate subscriber -
-    /// matches how MacroVirusController/InCellVirusController already own their own damage/death presentation
+    /// matches how MacroVirusController/MicroVirusController already own their own damage/death presentation
     /// rather than delegating it to a listener, now that this class also needs the same
     /// per-instance timing control (see <see cref="HandleDeathAsync"/>).
     ///
@@ -169,7 +169,7 @@ namespace _Project.Mechanics.Player
         }
 
         /// <summary>Old: PlayerDamageable.AnimationOnDamage() - swaps in the damage material for 0.1s. Mirrors
-        /// MacroVirusController/InCellVirusController's own PlayDamageFlashAsync exactly.</summary>
+        /// MacroVirusController/MicroVirusController's own PlayDamageFlashAsync exactly.</summary>
         private async UniTaskVoid PlayDamageFlashAsync()
         {
             if (_spriteRenderer == null || _damageMaterial == null)

@@ -170,10 +170,10 @@ namespace _Project.Mechanics.WorldScale
             context.CellVisuals?.SetMicroSprite();
 
             // Old: `cellController.SetMicroSprite()` also did `_inCellVirusManager.SetVirusesCount(_virusCount);`
-            // right here - see WorldScaleTransitionContext.CellInCellVirusSpawner's doc comment (Phase 7 testing
+            // right here - see WorldScaleTransitionContext.CellMicroVirusSpawner's doc comment (Phase 7 testing
             // fix, 2026-09-11) for why this has to be lazy/on-entry rather than reactive.
-            if (context.CellInCellVirusSpawner != null && context.CellInfectionState != null)
-                context.CellInCellVirusSpawner.SetVirusesCount(context.CellInfectionState.VirusCount);
+            if (context.CellMicroVirusSpawner != null && context.CellInfectionState != null)
+                context.CellMicroVirusSpawner.SetVirusesCount(context.CellInfectionState.VirusCount);
 
             // Old: `cellController.SetVelocity(WorldState.MICRO_WORLD);` - CellController.cs:152-155, inlined for
             // the same reason as the macro branch above. Old code ALSO does a redundant second

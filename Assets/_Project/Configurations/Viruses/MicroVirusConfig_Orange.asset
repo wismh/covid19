@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 331329a01b63d04e2bb6d701f39f5c76, type: 3}
-  m_Name: InCellVirusConfig_Spiner
+  m_Name: MicroVirusConfig_Orange
   m_EditorClassIdentifier: Assembly-CSharp::_Project.Mechanics.Viruses.InCell.InCellVirusConfig
-  _variant: 2
+  _variant: 0
   _maxHealth: 4
-  _meleeDamage: 2
+  _meleeDamage: 1
   _collisionDamageCooldownSeconds: 2
   _homingForce: 0.1
   _kitingForce: 0.1

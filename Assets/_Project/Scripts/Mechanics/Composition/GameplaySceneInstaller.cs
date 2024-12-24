@@ -4,7 +4,7 @@ using Zenject;
 using _Project.Mechanics.Audio;
 using _Project.Mechanics.Cells;
 using _Project.Mechanics.Player;
-using _Project.Mechanics.Viruses.InCell;
+using _Project.Mechanics.Viruses.Micro;
 using _Project.Mechanics.Viruses.Macro;
 using _Project.Mechanics.Waves;
 using _Project.Mechanics.WorldScale;

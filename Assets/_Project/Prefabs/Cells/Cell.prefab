@@ -810,7 +810,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e12b3af6b8a28727ef6c53ad862bce5b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_Project.Mechanics.Viruses.InCell.InCellVirusSpawner
+  m_EditorClassIdentifier: Assembly-CSharp::_Project.Mechanics.Viruses.Micro.MicroVirusSpawner
   _cellInfectionState: {fileID: 2383433699385333}
   _virusContainer: {fileID: 5278171966705873521}
   _orangePrefab: {fileID: 5719283746102938, guid: 0183e584c89852141b0e344f8190177e, type: 3}

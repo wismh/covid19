@@ -28,7 +28,7 @@ namespace _Project.Mechanics.Cells
     ///   shared placement utility is in scope per REFACTORING_PLAN.md Phase 3 item 5, not a CellManager port).
     ///   A future composition root subscribes to OnInfectionStarted/OnInfectionCleared to update whatever
     ///   registry/stats system exists by then - the same seam pattern as MacroVirusController.OnKilled /
-    ///   InCellVirusController.OnKilled deferring XP-granting to a composition root instead of reaching into
+    ///   MicroVirusController.OnKilled deferring XP-granting to a composition root instead of reaching into
     ///   GMTK.Services.PlayerStats directly.
     /// </summary>
     public sealed class CellInfectionState : MonoBehaviour
@@ -65,7 +65,7 @@ namespace _Project.Mechanics.Cells
         /// <summary>
         /// Old: CellController.OnDestroyVirus(), called when an in-cell virus dies (old code wired this via
         /// `_inCellVirusManager.GetComponent&lt;InCellVirusManager&gt;().OnObjectRemoved += OnDestroyVirus;` in
-        /// CellController.Start() - a future composition root wires InCellVirusController.OnKilled to this method
+        /// CellController.Start() - a future composition root wires MicroVirusController.OnKilled to this method
         /// the same way once a per-cell virus registry exists).
         ///
         /// Clamped at 0 as a defensive guard the old code didn't have (`_virusCount -= 1` could theoretically go

@@ -11,7 +11,7 @@ namespace _Project.Mechanics.Viruses.Macro
     /// <see cref="EntityRegistry{T}"/> rather than a bare `EntityRegistry&lt;MacroVirusController&gt;` used
     /// directly, for two reasons:
     /// 1. Symmetry with <see cref="_Project.Mechanics.Cells.CellRegistry"/> and
-    ///    <see cref="_Project.Mechanics.Viruses.InCell.InCellVirusRegistry"/> - every feature gets one discoverable,
+    ///    <see cref="_Project.Mechanics.Viruses.Micro.MicroVirusRegistry"/> - every feature gets one discoverable,
     ///    named registry type in its own namespace rather than generic-type spelled out at every call site.
     /// 2. Room to grow without a breaking API change - e.g. a future balance pass wanting a normal-vs-glist
     ///    breakdown count (old VirusSpawner only ever checked `_virusManager.Pool.Count`, but a future HUD

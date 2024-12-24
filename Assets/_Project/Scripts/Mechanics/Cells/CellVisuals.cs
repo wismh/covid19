@@ -27,7 +27,7 @@ namespace _Project.Mechanics.Cells
     /// Out of scope: old CellController.SetMicroSprite() also called
     /// `_inCellVirusManager.SetVirusesCount(_virusCount)` to spawn/reposition in-cell virus instances to match
     /// the infection count. That's a spawning/pooling concern for a future in-cell-virus manager class (not part
-    /// of this phase's file list - Phase 3 only asks for the InCellVirusController/behaviors/config, not a
+    /// of this phase's file list - Phase 3 only asks for the MicroVirusController/behaviors/config, not a
     /// spawner), so it's left for a future composition root to wire via CellInfectionState.OnVirusCountChanged.
     ///
     /// Death animation/audio (Phase 8 testing fix, 2026-09-11): now also subscribes to CellHealth.OnDied - see
@@ -60,7 +60,7 @@ namespace _Project.Mechanics.Cells
         /// when a cell dies. Resolved via GetComponent in Awake rather than new [SerializeField]s - Cell.prefab
         /// already carries a root-level Animator ("Cell" controller, with a "Dead" state under "Base Layer",
         /// confirmed live) and AudioSource ("CellDead" clip) - the exact same layout/reasoning
-        /// MacroVirusController/InCellVirusController already used for their own death audio.
+        /// MacroVirusController/MicroVirusController already used for their own death audio.
         /// </summary>
         private Animator _animator;
         private AudioSource _deathAudioSource;

@@ -5,12 +5,12 @@ using _Project.Mechanics.Cells;
 using _Project.Mechanics.Shared;
 using _Project.Mechanics.Waves;
 
-namespace _Project.Mechanics.Viruses.InCell
+namespace _Project.Mechanics.Viruses.Micro
 {
     /// <summary>
     /// Phase 7 Stage 1 - replaces GMTK.MicroViruses.InCellViruses (Assets/GMTK/Scripts/Behaviors/MicroVirus/
-    /// InCellViruses.cs). Spawns the new InCellVirusController (Phase 3) instead of the old InCellVirus, and
-    /// registers/unregisters with a private <see cref="InCellVirusRegistry"/> instead of the old
+    /// InCellViruses.cs). Spawns the new MicroVirusController (Phase 3) instead of the old InCellVirus, and
+    /// registers/unregisters with a private <see cref="MicroVirusRegistry"/> instead of the old
     /// InCellVirusManager - see that class's doc comment for why this one is privately owned per-instance rather
     /// than a shared singleton like CellRegistry/MacroVirusRegistry.
     ///
@@ -27,7 +27,7 @@ namespace _Project.Mechanics.Viruses.InCell
     /// Construct(...) parameter, because it is a same-prefab-local dependency (this cell's own
     /// CellInfectionState), not a cross-system service a composition root supplies. It closes the loop
     /// CellInfectionState's own doc comment names: "a future composition root wires
-    /// InCellVirusController.OnKilled to this method [RemoveVirus] the same way once a per-cell virus registry
+    /// MicroVirusController.OnKilled to this method [RemoveVirus] the same way once a per-cell virus registry
     /// exists" - this spawner does that wiring itself (see <see cref="SpawnVirus"/>), since it already owns both
     /// halves (the spawned virus's OnKilled event AND the sibling CellInfectionState reference) at spawn time.
     ///
@@ -47,7 +47,7 @@ namespace _Project.Mechanics.Viruses.InCell
     /// `_playerStats.Time`, since no shared elapsed-time service exists yet) - see that class's doc comment for
     /// the full reasoning.
     /// </summary>
-    public sealed class InCellVirusSpawner : MonoBehaviour
+    public sealed class MicroVirusSpawner : MonoBehaviour
     {
         [Header("Sibling reference (this cell's own CellInfectionState - see class doc comment)")]
         [SerializeField] private CellInfectionState _cellInfectionState;
@@ -79,15 +79,15 @@ namespace _Project.Mechanics.Viruses.InCell
         [SerializeField] private Transform _virusContainer;
 
         [Header("Prefabs - assigned by a later stage (prefab/scene surgery), see class doc comment")]
-        [SerializeField] private InCellVirusController _orangePrefab;
-        [SerializeField] private InCellVirusController _cucumberPrefab;
-        [SerializeField] private InCellVirusController _spinerPrefab;
+        [SerializeField] private MicroVirusController _orangePrefab;
+        [SerializeField] private MicroVirusController _cucumberPrefab;
+        [SerializeField] private MicroVirusController _spinerPrefab;
 
         // Old: InCellViruses._bounds (values from Cell.prefab's InCellViruses component: center (0,0,0), extent
         // (2,2,0)) - local-space area viruses are randomly positioned within on spawn/reposition.
         [SerializeField] private Bounds _bounds = new Bounds(Vector3.zero, new Vector3(4f, 4f, 0f));
 
-        private readonly InCellVirusRegistry _registry = new();
+        private readonly MicroVirusRegistry _registry = new();
 
         private IPlayerTargetProvider _playerTargetProvider;
         private WaveScalingConfig _waveScalingConfig;
@@ -97,10 +97,10 @@ namespace _Project.Mechanics.Viruses.InCell
         /// `_playerStats.AddExperience()` directly, same as old VirusController.Damage() did for macro viruses.
         /// MainSceneComposition already restored that for macro kills (see its "XP-granting was never wired at
         /// all" doc comment) by subscribing to MacroVirusRegistry.OnRegistered - but in-cell viruses have no
-        /// equivalent global registry (each cell owns a private InCellVirusRegistry, see this class's own doc
+        /// equivalent global registry (each cell owns a private MicroVirusRegistry, see this class's own doc
         /// comment's "SetVirusesCount" section), so that same subscription shape doesn't reach them. Raised here
         /// instead, once per killed virus, alongside <see cref="HandleVirusKilled"/>'s existing bookkeeping -
-        /// CellSpawner.SpawnCell() forwards this spawner instance out via CellSpawner.OnInCellVirusSpawnerCreated
+        /// CellSpawner.SpawnCell() forwards this spawner instance out via CellSpawner.OnMicroVirusSpawnerCreated
         /// the moment it's constructed, so MainSceneComposition can subscribe an XP grant to every cell's spawner
         /// without this class needing to know about PlayerStatsService itself (same decoupling MacroVirusController.
         /// OnKilled already uses).
@@ -123,7 +123,7 @@ namespace _Project.Mechanics.Viruses.InCell
             for (int i = _registry.Count; i < count; i++)
                 SpawnVirus();
 
-            foreach (InCellVirusController virus in _registry.Viruses)
+            foreach (MicroVirusController virus in _registry.Viruses)
                 SetRandomPosition(virus.transform);
         }
 
@@ -134,14 +134,14 @@ namespace _Project.Mechanics.Viruses.InCell
         {
             if (_orangePrefab == null)
             {
-                Debug.LogWarning($"{nameof(InCellVirusSpawner)}.{nameof(SpawnVirus)} called before prefabs were assigned - no-op. See class doc comment's prefab seam.", this);
+                Debug.LogWarning($"{nameof(MicroVirusSpawner)}.{nameof(SpawnVirus)} called before prefabs were assigned - no-op. See class doc comment's prefab seam.", this);
                 return;
             }
 
-            InCellVirusController prefab = ChoosePrefab();
+            MicroVirusController prefab = ChoosePrefab();
 
             Transform container = _virusContainer != null ? _virusContainer : transform;
-            InCellVirusController virus = Instantiate(prefab, container);
+            MicroVirusController virus = Instantiate(prefab, container);
             virus.Construct(_playerTargetProvider);
 
             // Old: InCellViruses.SpawnVirus() -> `Instantiate(prefabs[...], transform);` (no explicit position -
@@ -153,7 +153,7 @@ namespace _Project.Mechanics.Viruses.InCell
             virus.OnKilled += () => HandleVirusKilled(virus);
         }
 
-        private InCellVirusController ChoosePrefab()
+        private MicroVirusController ChoosePrefab()
         {
             // Old: `prefabs = [_orangePrefab]; if (Time >= 50) prefabs.Add(_cucumberPrefab); if (Time >= 100)
             // prefabs.Add(_spinerPrefab); Instantiate(prefabs[Random.Range(0, prefabs.Count)]);`
@@ -185,7 +185,7 @@ namespace _Project.Mechanics.Viruses.InCell
             virusTransform.localPosition = SpawnPlacementUtility.FindPosition(_bounds, null, 0f, 1);
         }
 
-        private void HandleVirusKilled(InCellVirusController virus)
+        private void HandleVirusKilled(MicroVirusController virus)
         {
             _registry.Unregister(virus);
 

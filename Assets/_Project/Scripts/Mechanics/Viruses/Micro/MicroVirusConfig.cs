@@ -1,9 +1,9 @@
 using UnityEngine;
 
-namespace _Project.Mechanics.Viruses.InCell
+namespace _Project.Mechanics.Viruses.Micro
 {
     /// <summary>
-    /// One ScriptableObject class, instantiated three times (InCellVirusConfig_Orange/_Cucumber/_Spiner.asset) -
+    /// One ScriptableObject class, instantiated three times (MicroVirusConfig_Orange/_Cucumber/_Spiner.asset) -
     /// same convention as Phase 2's six UpgradeDefinition_&lt;Stat&gt; assets (REFACTORING_PLAN.md section 3.1:
     /// "`_&lt;ОписоваНазва&gt;` для одного з багатьох (співпадає з enum/id, який представляє)"). Every number
     /// below was read directly from the matching prefab's serialized InCellVirus component (Assets/GMTK/
@@ -14,18 +14,18 @@ namespace _Project.Mechanics.Viruses.InCell
     /// Note on the shared 2s collision-damage cooldown: old GMTK.MicroViruses.InCellVirus declares
     /// `k_attackCooldown = 2f` once, applied uniformly to melee contact damage against the player regardless of
     /// which VirusBehavior is active (Orange/Cucumber/Spiner all deal melee damage on contact - see
-    /// InCellVirusController.OnCollisionStay2D). Since this project's convention authors each variant as an
+    /// MicroVirusController.OnCollisionStay2D). Since this project's convention authors each variant as an
     /// independent asset rather than one shared config, the same value (2s) is duplicated across all three
-    /// InCellVirusConfig_* assets rather than factored into a fourth shared asset - not worth a whole extra
+    /// MicroVirusConfig_* assets rather than factored into a fourth shared asset - not worth a whole extra
     /// ScriptableObject for one duplicated float given only 3 variants exist.
     /// </summary>
     [CreateAssetMenu(
-        menuName = "Configurations/Viruses/" + nameof(InCellVirusConfig),
-        fileName = nameof(InCellVirusConfig) + "_New")]
-    public sealed class InCellVirusConfig : ScriptableObject
+        menuName = "Configurations/Viruses/" + nameof(MicroVirusConfig),
+        fileName = nameof(MicroVirusConfig) + "_New")]
+    public sealed class MicroVirusConfig : ScriptableObject
     {
         [Header("Identity")]
-        [SerializeField] private InCellVirusVariant _variant;
+        [SerializeField] private MicroVirusVariant _variant;
 
         [Header("Health & melee (values from Orange/Cucumber/Spiner.prefab InCellVirus component)")]
         [SerializeField] private int _maxHealth;
@@ -60,7 +60,7 @@ namespace _Project.Mechanics.Viruses.InCell
         // Old: SpinerVirus.k_attackCooldown (private const, 4f) - rush interval, its own separate constant.
         [SerializeField] private float _rushCooldownSeconds = 4f;
 
-        public InCellVirusVariant Variant => _variant;
+        public MicroVirusVariant Variant => _variant;
         public int MaxHealth => _maxHealth;
         public int MeleeDamage => _meleeDamage;
         public float CollisionDamageCooldownSeconds => _collisionDamageCooldownSeconds;

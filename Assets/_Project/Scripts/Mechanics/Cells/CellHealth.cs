@@ -30,7 +30,7 @@ namespace _Project.Mechanics.Cells
     /// existed: MainSceneComposition.WireCrossSystemEvents (force-macro-exit, game-over, replacement viruses -
     /// Phase 8 testing fix, 2026-09-11) and CellVisuals.HandleDied (death animation/audio, same round). CellHealth
     /// itself still only raises <see cref="OnDied"/> with the virus count at time of death, exactly like
-    /// MacroVirusController.OnKilled/InCellVirusController.OnKilled defer XP-granting to a future composition
+    /// MacroVirusController.OnKilled/MicroVirusController.OnKilled defer XP-granting to a future composition
     /// root instead of reaching into old ServiceLocator-resolved managers directly - it stays the single source
     /// of truth every listener above hangs off of.
     /// </summary>

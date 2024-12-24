@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace _Project.Mechanics.Viruses.InCell
+namespace _Project.Mechanics.Viruses.Micro
 {
     /// <summary>
     /// Replaces `ServiceLocator.Instance.Get&lt;PlayerStats&gt;().Player` (used by all three old

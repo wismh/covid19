@@ -1,15 +1,15 @@
 using UnityEngine;
 
-namespace _Project.Mechanics.Viruses.InCell
+namespace _Project.Mechanics.Viruses.Micro
 {
     /// <summary>
     /// Ports GMTK.MicroViruses.SpinerVirus (Assets/GMTK/Scripts/Behaviors/MicroVirus/Behaviors/SpinerVirus.cs) -
     /// no continuous movement at all, just a periodic impulse rush toward the player with an "Attack" animation
     /// wind-up 1 second before the rush fires.
     /// </summary>
-    public sealed class SpinerVirusBehavior : IInCellVirusBehavior
+    public sealed class SpinerVirusBehavior : IMicroVirusBehavior
     {
-        private readonly InCellVirusConfig _config;
+        private readonly MicroVirusConfig _config;
         private readonly Transform _target;
 
         private Transform _transform;
@@ -19,7 +19,7 @@ namespace _Project.Mechanics.Viruses.InCell
         private float _attackTime;
         private bool _animationPlaying;
 
-        public SpinerVirusBehavior(InCellVirusConfig config, Transform target)
+        public SpinerVirusBehavior(MicroVirusConfig config, Transform target)
         {
             _config = config;
             _target = target;

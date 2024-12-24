@@ -5,11 +5,11 @@ using UnityEngine;
 using Zenject;
 using _Project.Mechanics.Combat;
 
-namespace _Project.Mechanics.Viruses.InCell
+namespace _Project.Mechanics.Viruses.Micro
 {
     /// <summary>
     /// Ports GMTK.MicroViruses.InCellVirus (Assets/GMTK/Scripts/Behaviors/MicroVirus/InCellVirus.cs) - the
-    /// per-instance host for the three IInCellVirusBehavior strategies, plus health/damage and melee contact
+    /// per-instance host for the three IMicroVirusBehavior strategies, plus health/damage and melee contact
     /// damage against the player. No ServiceLocator, no transform.Find/GetChild - direct [SerializeField]
     /// references and Zenject method injection instead.
     ///
@@ -47,12 +47,12 @@ namespace _Project.Mechanics.Viruses.InCell
     ///
     /// See MacroVirusController's own "Why HandleDeathAsync waits again" doc comment for why
     /// <see cref="HandleDeathAsync"/> waits an extra beat after triggering the animation/audio before raising
-    /// <see cref="OnKilled"/> - identical reasoning, InCellVirusSpawner.HandleVirusKilled destroys the
+    /// <see cref="OnKilled"/> - identical reasoning, MicroVirusSpawner.HandleVirusKilled destroys the
     /// GameObject synchronously the instant OnKilled fires, same as MacroVirusSpawner.HandleVirusRemoved.
     /// </summary>
-    public sealed class InCellVirusController : MonoBehaviour, IDamageable
+    public sealed class MicroVirusController : MonoBehaviour, IDamageable
     {
-        [SerializeField] private InCellVirusConfig _config;
+        [SerializeField] private MicroVirusConfig _config;
         [SerializeField] private Collider2D _collider;
         [SerializeField] private Rigidbody2D _rigidbody2D;
         [SerializeField] private SpriteRenderer _spriteRenderer;
@@ -66,7 +66,7 @@ namespace _Project.Mechanics.Viruses.InCell
         [SerializeField] private _Project.Mechanics.Combat.VirusBulletSpawner _bulletSpawner;
 
         private IPlayerTargetProvider _playerTargetProvider;
-        private IInCellVirusBehavior _behavior;
+        private IMicroVirusBehavior _behavior;
         private Transform _playerTransform;
 
         // See class doc comment's "Damage/death audio + death animation" section.
@@ -154,15 +154,15 @@ namespace _Project.Mechanics.Viruses.InCell
         }
 
         /// <summary>Old: InCellVirus.Awake()'s `switch (_type)` statement.</summary>
-        private IInCellVirusBehavior BuildBehavior(Transform target)
+        private IMicroVirusBehavior BuildBehavior(Transform target)
         {
             switch (_config.Variant)
             {
-                case InCellVirusVariant.Orange:
+                case MicroVirusVariant.Orange:
                     return new OrangeVirusBehavior(_config, target);
-                case InCellVirusVariant.Cucumber:
+                case MicroVirusVariant.Cucumber:
                     return new CucumberVirusBehavior(_config, target, _bulletSpawnPoint, _attackAudioSource, _bulletSpawner);
-                case InCellVirusVariant.Spiner:
+                case MicroVirusVariant.Spiner:
                     return new SpinerVirusBehavior(_config, target);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(_config.Variant), _config.Variant, null);
@@ -174,7 +174,7 @@ namespace _Project.Mechanics.Viruses.InCell
         /// damageable)) { ... damageable.Damage(...); }`. Restricted to the known player Transform (rather than a
         /// generic `TryGetComponent&lt;IDamageable&gt;()`) to preserve that old specificity - a generic
         /// IDamageable check would also fire against other IDamageable implementers (MacroVirusController, other
-        /// InCellVirusController instances), which old code never did since it checked the concrete
+        /// MicroVirusController instances), which old code never did since it checked the concrete
         /// PlayerDamageable type. Still resolves damage through GMTK.IDamageable so it works whether the player
         /// GameObject carries the old PlayerDamageable or the new PlayerHealth.
         /// </summary>
@@ -245,7 +245,7 @@ namespace _Project.Mechanics.Viruses.InCell
 
             // See class doc comment's "Damage/death audio + death animation" section - gives the death
             // animation/audio time to actually be seen/heard before OnKilled triggers GameObject destruction
-            // (InCellVirusSpawner.HandleVirusKilled destroys synchronously the instant OnKilled fires).
+            // (MicroVirusSpawner.HandleVirusKilled destroys synchronously the instant OnKilled fires).
             try
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(0.8f), cancellationToken: _lifetimeCts.Token);

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace _Project.Mechanics.Viruses.InCell
+namespace _Project.Mechanics.Viruses.Micro
 {
     /// <summary>
     /// Ports GMTK.MicroViruses.CucumberVirus (Assets/GMTK/Scripts/Behaviors/MicroVirus/Behaviors/CucumberVirus.
@@ -9,19 +9,19 @@ namespace _Project.Mechanics.Viruses.InCell
     /// Direction sign, preserved exactly from old code: unlike OrangeVirusBehavior's chase-toward-player force,
     /// Cucumber's homing force points AWAY from the player (`(_transform.position - _target.position)
     /// .normalized`, not the reverse) - it kites at range while shooting rather than closing to melee. Easy to
-    /// misread as a bug when porting; it isn't - see InCellVirusConfig.KitingForce's doc comment.
+    /// misread as a bug when porting; it isn't - see MicroVirusConfig.KitingForce's doc comment.
     ///
     /// Fixes a fragile lookup along the way: old CucumberVirus.Init() did
     /// `_bulletSpawnPoint = transform.GetChild(0); _attackAudio = _bulletSpawnPoint.GetComponent&lt;AudioSource&gt;();`
     /// - a GetChild(0) index lookup of exactly the kind TECHNICAL_AUDIT.md section 2.2 flags. Both are passed in
-    /// via the constructor instead, sourced from InCellVirusController's direct [SerializeField] references.
+    /// via the constructor instead, sourced from MicroVirusController's direct [SerializeField] references.
     ///
     /// Bullet spawning goes through <see cref="IVirusBulletSpawner"/> rather than calling
     /// `Object.Instantiate` directly - see that interface's doc comment.
     /// </summary>
-    public sealed class CucumberVirusBehavior : IInCellVirusBehavior
+    public sealed class CucumberVirusBehavior : IMicroVirusBehavior
     {
-        private readonly InCellVirusConfig _config;
+        private readonly MicroVirusConfig _config;
         private readonly Transform _target;
         private readonly Transform _bulletSpawnPoint;
         private readonly AudioSource _attackAudioSource;
@@ -35,7 +35,7 @@ namespace _Project.Mechanics.Viruses.InCell
         private bool _animationPlaying;
 
         public CucumberVirusBehavior(
-            InCellVirusConfig config,
+            MicroVirusConfig config,
             Transform target,
             Transform bulletSpawnPoint,
             AudioSource attackAudioSource,

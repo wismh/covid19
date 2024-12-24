@@ -12,7 +12,7 @@ using _Project.Mechanics.Cells;
 using _Project.Mechanics.Navigation;
 using _Project.Mechanics.Pickups;
 using _Project.Mechanics.Player;
-using _Project.Mechanics.Viruses.InCell;
+using _Project.Mechanics.Viruses.Micro;
 using _Project.Mechanics.Viruses.Macro;
 using _Project.Mechanics.Waves;
 using _Project.Mechanics.WorldScale;
@@ -91,7 +91,7 @@ namespace _Project.Mechanics.Composition
         [Header("Medicals / Pickups (Stage 4)")]
         [SerializeField] private MedicalSpawner _medicalSpawner;
 
-        [Header("Waves (Phase 3) - shared by MacroVirusSpawner today; InCellVirusSpawner will need it too once " +
+        [Header("Waves (Phase 3) - shared by MacroVirusSpawner today; MicroVirusSpawner will need it too once " +
                 "Stage 3 attaches one per cell, see class doc comment's per-cell virus seam")]
         [SerializeField] private WaveScalingConfig _waveScalingConfig;
 
@@ -139,7 +139,7 @@ namespace _Project.Mechanics.Composition
         private Action _handlePauseMacroSpawning;
         private Action _handleResumeMacroSpawning;
         private Action<MacroVirusController> _handleVirusRegistered;
-        private Action<InCellVirusSpawner> _handleInCellVirusSpawnerCreated;
+        private Action<MicroVirusSpawner> _handleMicroVirusSpawnerCreated;
 
         private CancellationTokenSource _lifetimeCts;
 
@@ -308,7 +308,7 @@ namespace _Project.Mechanics.Composition
                 _macroVirusRegistry.OnRegistered -= _handleVirusRegistered;
 
             if (_cellSpawner != null)
-                _cellSpawner.OnInCellVirusSpawnerCreated -= _handleInCellVirusSpawnerCreated;
+                _cellSpawner.OnMicroVirusSpawnerCreated -= _handleMicroVirusSpawnerCreated;
 
             _gameAudioService?.Dispose();
         }
@@ -529,13 +529,13 @@ namespace _Project.Mechanics.Composition
             // in-cell viruses were killable, granted no XP at all. Old InCellVirus.Damage()'s death branch called
             // `_playerStats.AddExperience()` directly, same as old macro-virus code. Mirrors the shape above
             // exactly, adapted for the fact that in-cell viruses have no shared registry to subscribe to (each
-            // cell owns a private InCellVirusRegistry) - CellSpawner.OnInCellVirusSpawnerCreated fires once per
-            // cell, the moment that cell's own InCellVirusSpawner is constructed, so this subscribes the XP grant
-            // to every cell's spawner exactly once. See InCellVirusSpawner.OnVirusKilled's doc comment.
+            // cell owns a private MicroVirusRegistry) - CellSpawner.OnMicroVirusSpawnerCreated fires once per
+            // cell, the moment that cell's own MicroVirusSpawner is constructed, so this subscribes the XP grant
+            // to every cell's spawner exactly once. See MicroVirusSpawner.OnVirusKilled's doc comment.
             if (_cellSpawner != null)
             {
-                _handleInCellVirusSpawnerCreated = spawner => spawner.OnVirusKilled += () => _playerStats.AddExperience();
-                _cellSpawner.OnInCellVirusSpawnerCreated += _handleInCellVirusSpawnerCreated;
+                _handleMicroVirusSpawnerCreated = spawner => spawner.OnVirusKilled += () => _playerStats.AddExperience();
+                _cellSpawner.OnMicroVirusSpawnerCreated += _handleMicroVirusSpawnerCreated;
             }
         }
 
@@ -582,7 +582,7 @@ namespace _Project.Mechanics.Composition
         /// --- Elapsed-time source: reusing Stage 1's Time.timeSinceLevelLoad substitute, not a third timer ---
         /// Two elapsed-time readers already exist and were both deliberately left as independent, undocumented-as-
         /// canonical values: HudScreen's own MM:SS display counter (a UniTask tick starting from 0 in OnOpen) and
-        /// MacroVirusSpawner/InCellVirusSpawner's `Time.timeSinceLevelLoad` reads (their own class doc comments:
+        /// MacroVirusSpawner/MicroVirusSpawner's `Time.timeSinceLevelLoad` reads (their own class doc comments:
         /// "no _Project equivalent shared elapsed-time service exists yet ... uses Time.timeSinceLevelLoad as a
         /// direct substitute"). Rather than add a THIRD independent accumulator here, this handler reads
         /// `Time.timeSinceLevelLoad` directly too - it is already the de-facto shared elapsed-time source for
@@ -612,7 +612,7 @@ namespace _Project.Mechanics.Composition
         /// whatever Stage 2/3 wires up ... this registry doesn't decide the polling cadence itself". This
         /// composition root is that "whoever" - a small UniTask + CancellationTokenSource loop (matching the
         /// UniTask idiom used everywhere else in this codebase, e.g. CellHealth.PoisonTickLoopAsync,
-        /// InCellVirusSpawner has no such loop but MacroVirusSpawner.Update() polls every frame instead - this
+        /// MicroVirusSpawner has no such loop but MacroVirusSpawner.Update() polls every frame instead - this
         /// loop intentionally polls on a fixed interval rather than every frame, since "nearest cell" changes far
         /// slower than player movement and a several-times-a-second check is indistinguishable to the player from
         /// a per-frame one while costing much less).
@@ -659,19 +659,19 @@ namespace _Project.Mechanics.Composition
                 _worldScaleTransitionContext.CellRigidbody2D = nearestCell != null ? nearestCell.GetComponent<Rigidbody2D>() : null;
                 _worldScaleTransitionContext.CellAnimator = nearestCell != null ? nearestCell.GetComponent<Animator>() : null;
 
-                // Phase 7 testing fix (2026-09-11) - see WorldScaleTransitionContext.CellInCellVirusSpawner's doc
+                // Phase 7 testing fix (2026-09-11) - see WorldScaleTransitionContext.CellMicroVirusSpawner's doc
                 // comment for why these are resolved here (same per-poll pattern as CellVisuals/CellRigidbody2D/
                 // CellAnimator above) rather than reactively wired at spawn time.
-                _worldScaleTransitionContext.CellInCellVirusSpawner = nearestCell != null ? nearestCell.GetComponent<InCellVirusSpawner>() : null;
+                _worldScaleTransitionContext.CellMicroVirusSpawner = nearestCell != null ? nearestCell.GetComponent<MicroVirusSpawner>() : null;
                 _worldScaleTransitionContext.CellInfectionState = nearestCell != null ? nearestCell.GetComponent<CellInfectionState>() : null;
             }
         }
 
         // --- Per-cell in-cell-virus wiring: RESOLVED, 2026-09-11 (was a documented gap above this line) ---
         //
-        // CellInfectionState.OnVirusCountChanged -> InCellVirusSpawner.SetVirusesCount is now wired directly in
+        // CellInfectionState.OnVirusCountChanged -> MicroVirusSpawner.SetVirusesCount is now wired directly in
         // CellSpawner.SpawnCell() (see that method), the exact spot this comment used to point at as the natural
-        // place for it - InCellVirusSpawner was added to Cell.prefab, and CellSpawner resolves IPlayerTargetProvider
+        // place for it - MicroVirusSpawner was added to Cell.prefab, and CellSpawner resolves IPlayerTargetProvider
         // itself via its own [Inject] Construct (bound by GameplaySceneInstaller - see its own doc comment).
     }
 }

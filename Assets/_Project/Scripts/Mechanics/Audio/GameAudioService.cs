@@ -39,10 +39,10 @@ namespace _Project.Mechanics.Audio
     /// .md's Phase 5 mapping, not raw AudioClip fields threaded through a per-call context object).
     ///
     /// --- What this seam does NOT (yet) do: the mixer-group swap ---
-    /// Old `SetMaster()`/`SetIncell()` gave the in-cell mixed audio a distinct EQ (InCellMixer.mixer's Master
+    /// Old `SetMaster()`/`SetIncell()` gave the in-cell mixed audio a distinct EQ (MicroMixer.mixer's Master
     /// group has an extra ParamEQ effect DefaultMixer.mixer's Master group lacks - verified by reading both
     /// .mixer YAML files directly) by routing the gameplay-music AudioSource through one of TWO ENTIRELY SEPARATE
-    /// AudioMixer assets (InCellMixer is its own top-level mixer, not a child group inside DefaultMixer).
+    /// AudioMixer assets (MicroMixer is its own top-level mixer, not a child group inside DefaultMixer).
     /// Per Phase 0's documented compromise, the ProjectContext.prefab AudioSystem instance's `_mixer`/`_sfxGroup`/
     /// `_musicGroup` are ALL bound to DefaultMixer's single "Master" group - there is no second exposed group or
     /// mixer wired into AudioSystem to swap to, IAudioSystem exposes no API to change which AudioMixerGroup its
@@ -53,7 +53,7 @@ namespace _Project.Mechanics.Audio
     /// <see cref="HandleExitedMicroWorld"/> for exactly what IS reproduced (the whoosh SFX only). A real fix
     /// needs either: (a) a second AudioMixerGroup authored under DefaultMixer in the Editor with its own exposed
     /// EQ/volume parameters and AudioSystem's serialized fields extended to reference it, or (b) wiring the
-    /// existing separate InCellMixer.mixer asset's own Master group into a dedicated raw AudioSource the
+    /// existing separate MicroMixer.mixer asset's own Master group into a dedicated raw AudioSource the
     /// composition root manages outside of AudioSystem (closer to how the old code worked, but reintroduces the
     /// exact "manual AudioSource swap" pattern REFACTORING_PLAN.md section 5 says AudioSystem should replace).
     /// Either way, it is Editor-authoring work, deferred past this phase.

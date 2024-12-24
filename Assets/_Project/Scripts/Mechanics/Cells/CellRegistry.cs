@@ -15,7 +15,7 @@ namespace _Project.Mechanics.Cells
     /// "documented gap", CellProximityPrompt.cs's "which cell problem").
     ///
     /// --- Why a purpose-built class instead of a bare EntityRegistry&lt;CellHealth&gt; ---
-    /// Unlike MacroVirusRegistry/InCellVirusRegistry (thin pass-through wrappers - see their doc comments), Cells
+    /// Unlike MacroVirusRegistry/MicroVirusRegistry (thin pass-through wrappers - see their doc comments), Cells
     /// need real domain logic beyond "list of components": living/sick/died counts and the two composed
     /// game-over/statistics rules old GameStatistics + CellController.Die() implemented by hand. This class
     /// composes one `EntityRegistry&lt;CellHealth&gt;` internally as its bookkeeping primitive (register/
@@ -31,7 +31,7 @@ namespace _Project.Mechanics.Cells
     /// spawns a cell (CellSpawner, which naturally has both component references right after Instantiate) passes
     /// both in at once.
     ///
-    /// --- Lifecycle ownership split (mirrors MacroVirusSpawner/InCellVirusSpawner's split) ---
+    /// --- Lifecycle ownership split (mirrors MacroVirusSpawner/MicroVirusSpawner's split) ---
     /// This registry owns bookkeeping ONLY (counts, events) - it subscribes to a registered cell's own events
     /// purely to keep its counters and <see cref="OnStatisticsChanged"/>/<see cref="OnAllCellsDied"/>/
     /// <see cref="OnCellDied"/> events accurate, and unsubscribes/removes the cell from its internal list on

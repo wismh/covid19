@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace _Project.Mechanics.Viruses.InCell
+namespace _Project.Mechanics.Viruses.Micro
 {
     /// <summary>
     /// Fresh interface for this phase - deliberately NOT a fork/reuse of the abstract
@@ -12,7 +12,7 @@ namespace _Project.Mechanics.Viruses.InCell
     /// OnDestroy or OnDamage - so this interface only declares the four hooks actually used, rather than
     /// reproducing two permanently-unused ones.
     /// </summary>
-    public interface IInCellVirusBehavior
+    public interface IMicroVirusBehavior
     {
         void Init(Transform transform);
         void OnEnable();
