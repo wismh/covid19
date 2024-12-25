@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 
 using UnityEditor;
+using UnityEngine;
 
 namespace Project.Core.CustomCodeGeneratorModule.Editor 
 {
@@ -18,12 +19,19 @@ namespace Project.Core.CustomCodeGeneratorModule.Editor
             bool changed = false;
             foreach (var generatorType in generatorTypes)
             {
-                var generator = (ICodeGenerator)Activator.CreateInstance(generatorType);
-                GeneratorContext context = new();
-                generator.Execute(context);
+                try
+                {
+                    var generator = (ICodeGenerator)Activator.CreateInstance(generatorType);
+                    GeneratorContext context = new();
+                    generator.Execute(context);
 
-                if (GenerateScriptFromContext(context))
-                    changed = true;
+                    if (GenerateScriptFromContext(context))
+                        changed = true;
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogError($"[ScriptFileGenerator] Generator '{generatorType.Name}' threw and was skipped:\n{exception}");
+                }
             }
 
             if (!changed)

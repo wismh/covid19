@@ -22,7 +22,10 @@ namespace Project.Core.SourceGeneratorModule.Editor
         public void Execute(GeneratorContext context)
         {
             var settings = AddressableAssetSettingsDefaultObject.Settings;
-            
+
+            if (settings == null)
+                return;
+
             var mainClassInstance = new ClassInstance()
                 .AddUsing("System.Collections.Generic")
                 .AddNamespace(GeneratorConstants.DefaultNameSpace)
