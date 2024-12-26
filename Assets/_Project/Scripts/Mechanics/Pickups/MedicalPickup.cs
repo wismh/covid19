@@ -12,7 +12,9 @@ namespace _Project.Mechanics.Pickups
     /// Stage 4: Medical pill pickup component. Replaces legacy GMTK.Medical (Assets/GMTK/Scripts/Behaviors/Medicals/Medical.cs).
     /// Implements _Project.Mechanics.Combat.IDamageable. When taking lethal damage:
     /// plays explosion animation and audio, disables collision, and releases child VitaminPickups to fly towards the player.
-    /// Manages destruction and passes PlayerStatsService and player target dependencies down to vitamins.
+    /// Awards one XP via PlayerStatsService when the pill finishes (all vitamins collected, or the
+    /// safety-timeout fallback), matching the original GMTK.Medical's "+1 XP per pill" behavior.
+    /// Passes player target dependencies down to vitamins.
     /// </summary>
     public class MedicalPickup : MonoBehaviour, IDamageable
     {
@@ -91,11 +93,11 @@ namespace _Project.Mechanics.Pickups
 
                 if (_targetProvider != null)
                 {
-                    vitamin.Construct(_playerStatsService, _targetProvider, _collectAudioSource, null, HandleVitaminCollected);
+                    vitamin.Construct(_targetProvider, _collectAudioSource, null, HandleVitaminCollected);
                 }
                 else
                 {
-                    vitamin.Construct(_playerStatsService, _playerTransform, _collectAudioSource, null, HandleVitaminCollected);
+                    vitamin.Construct(_playerTransform, _collectAudioSource, null, HandleVitaminCollected);
                 }
             }
         }
@@ -157,9 +159,9 @@ namespace _Project.Mechanics.Pickups
                 }
 
                 if (_targetProvider != null)
-                    vitamin.Construct(_playerStatsService, _targetProvider, _collectAudioSource, null, HandleVitaminCollected);
+                    vitamin.Construct(_targetProvider, _collectAudioSource, null, HandleVitaminCollected);
                 else
-                    vitamin.Construct(_playerStatsService, _playerTransform, _collectAudioSource, null, HandleVitaminCollected);
+                    vitamin.Construct(_playerTransform, _collectAudioSource, null, HandleVitaminCollected);
 
                 Vector2 outwardDir = (vitamin.transform.position - transform.position);
                 Vector2 dir = outwardDir.sqrMagnitude > 0.001f ? outwardDir.normalized : UnityEngine.Random.insideUnitCircle.normalized;
@@ -191,6 +193,8 @@ namespace _Project.Mechanics.Pickups
 
         private void FinishAndDestroy()
         {
+            _playerStatsService?.AddExperience();
+
             // Hide sprite renderer while audio finishes playing
             var sr = GetComponent<SpriteRenderer>();
             if (sr != null)

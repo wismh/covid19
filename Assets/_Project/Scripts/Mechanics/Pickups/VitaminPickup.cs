@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using _Project.Mechanics.Player;
 using _Project.Mechanics.Viruses.Micro;
 
 namespace _Project.Mechanics.Pickups
@@ -8,7 +7,8 @@ namespace _Project.Mechanics.Pickups
     /// <summary>
     /// Stage 4: Vitamin pickup component. Replaces legacy GMTK.Vitamin (Assets/GMTK/Scripts/Behaviors/Medicals/Vitamin.cs).
     /// Disperses with an initial impulse/scatter and smoothly flies toward the player.
-    /// When reaching the player, awards XP via PlayerStatsService, plays a collection sound, and destroys itself.
+    /// When reaching the player, invokes its collected callback (XP is awarded by the owning
+    /// MedicalPickup once all vitamins from the same pill arrive), plays a collection sound, and destroys itself.
     /// </summary>
     public class VitaminPickup : MonoBehaviour
     {
@@ -25,7 +25,6 @@ namespace _Project.Mechanics.Pickups
         [SerializeField] private AudioSource _collectAudioSource;
         [SerializeField] private AudioClip _collectClip;
 
-        private PlayerStatsService _playerStatsService;
         private IPlayerTargetProvider _targetProvider;
         private Transform _playerTransform;
         private Action _onCollected;
@@ -37,13 +36,11 @@ namespace _Project.Mechanics.Pickups
         private bool _isCollected;
 
         public void Construct(
-            PlayerStatsService playerStatsService,
             IPlayerTargetProvider targetProvider,
             AudioSource collectAudioSource = null,
             AudioClip collectClip = null,
             Action onCollected = null)
         {
-            _playerStatsService = playerStatsService;
             _targetProvider = targetProvider;
             _collectAudioSource = collectAudioSource != null ? collectAudioSource : _collectAudioSource;
             _collectClip = collectClip != null ? collectClip : _collectClip;
@@ -51,13 +48,11 @@ namespace _Project.Mechanics.Pickups
         }
 
         public void Construct(
-            PlayerStatsService playerStatsService,
             Transform playerTransform,
             AudioSource collectAudioSource = null,
             AudioClip collectClip = null,
             Action onCollected = null)
         {
-            _playerStatsService = playerStatsService;
             _playerTransform = playerTransform;
             _collectAudioSource = collectAudioSource != null ? collectAudioSource : _collectAudioSource;
             _collectClip = collectClip != null ? collectClip : _collectClip;
@@ -145,8 +140,6 @@ namespace _Project.Mechanics.Pickups
 
             _isCollected = true;
             _isFlying = false;
-
-            _playerStatsService?.AddExperience();
 
             PlayCollectSound();
 
