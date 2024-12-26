@@ -80,7 +80,7 @@ namespace _Project.Mechanics.WorldScale
             // than duplicated.
             if (context.CellRigidbody2D != null)
             {
-                context.CellRigidbody2D.isKinematic = false;
+                context.CellRigidbody2D.bodyType = RigidbodyType2D.Dynamic;
                 Vector2 maxVelocity = _config.CellMacroMaxVelocity;
                 context.CellRigidbody2D.linearVelocity = new Vector2(
                     UnityEngine.Random.Range(-maxVelocity.x, maxVelocity.x),
@@ -183,7 +183,7 @@ namespace _Project.Mechanics.WorldScale
             {
                 context.CellRigidbody2D.linearVelocity = Vector2.zero;
                 context.CellRigidbody2D.angularVelocity = 0f;
-                context.CellRigidbody2D.isKinematic = true;
+                context.CellRigidbody2D.bodyType = RigidbodyType2D.Kinematic;
             }
 
             // Old: `_player.GetComponent<DriftMovableObject>().Stop();`
