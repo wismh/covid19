@@ -19,7 +19,8 @@ MonoBehaviour:
   _angularAcceleration: 5
   _angularFriction: 0.8
   _backwardMovementMultiplier: 0.05
-  _baseMaxHealth: 3
+  _startingHealth: 3
+  _baseMaxHealth: 8
   _baseArmor: 0
   _maxArmor: 8
   _armorIgnoreChanceDivisor: 6

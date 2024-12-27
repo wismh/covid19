@@ -161,10 +161,10 @@ namespace _Project.Mechanics.Player
                 _config.MaxArmor);
 
         /// <summary>
-        /// Old: `_maxHealth` was a static ceiling PlayerDamageable never actually grew from upgrades - only
-        /// current health moved toward it - so it's a pure PlayerConfig value with no per-level term. This is
-        /// also the "real" starting health per the phase-2 fix (old code hardcoded `_health = 3` in Start() and
-        /// ignored the serialized `_maxHealth` entirely - see TECHNICAL_AUDIT.md section 5 / PlayerConfig doc).
+        /// Old: `_maxHealth` was a static ceiling itself (not derived from level) that current health moved
+        /// toward via the HP upgrade card - `if (_health &lt; _maxHealth) _health += 1;` - so it's a pure
+        /// PlayerConfig value with no per-level term. NOT the starting health - see PlayerConfig.StartingHealth/
+        /// BaseMaxHealth doc comments for why those are two distinct original values (3 and 8 respectively).
         /// </summary>
         public int EffectiveMaxHealth => _config.BaseMaxHealth;
 

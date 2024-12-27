@@ -26,14 +26,20 @@ namespace _Project.Mechanics.Player
         [SerializeField] private float _backwardMovementMultiplier = 0.05f;
 
         [Header("Health & armor (ported from GMTK.PlayerDamageable)")]
-        // Old PlayerDamageable.Start() hardcoded `_health = 3`, ignoring the serialized `_maxHealth` field
-        // (which was only ever used as the upgrade ceiling) - TECHNICAL_AUDIT.md section 5 flagged this as a bug,
-        // and an earlier phase "fixed" it by using the higher intended value (8, read from Player.prefab's
-        // ignored _maxHealth) as the real starting health. Reverted per explicit user testing feedback
-        // (2026-09-11): the ORIGINAL shipped game's players only ever actually experienced 3 starting HP (the
-        // hardcoded value, bug or not) - matching that observed behavior takes priority over the unshipped
-        // "intended" design value. Back to 3.
-        [SerializeField] private int _baseMaxHealth = 3;
+        // Old PlayerDamageable.Start() hardcoded `_health = 3;`, ignoring the serialized `_maxHealth` field
+        // entirely for the STARTING value (TECHNICAL_AUDIT.md section 5's flagged bug) - kept here, bug and all,
+        // per explicit user testing feedback (2026-09-11): players only ever actually experienced 3 starting HP.
+        [SerializeField] private int _startingHealth = 3;
+
+        // The OLD `_maxHealth` field itself, confirmed via git history (Player.prefab, right before the Phase 2
+        // port) to be genuinely 8 in the final shipped jam build - NOT a bug, and NOT the same number as the
+        // starting-HP bug above. It was the real, working ceiling for `PlayerDamageable.OnUpgrade`'s
+        // `if (_upgrade == UpgradeType.PLAYER_HP && _health < _maxHealth) _health += 1;` - i.e. players started
+        // at the buggy 3 HP but could genuinely grow to 8 by picking the HP upgrade card. A prior round collapsed
+        // this and the starting-HP value into one field (both set to 3) while fixing the starting-HP bug above,
+        // which silently also capped the upgrade ceiling at 3 - the HP upgrade card became a no-op once at full
+        // health. Split back into two fields so both original behaviors are preserved simultaneously.
+        [SerializeField] private int _baseMaxHealth = 8;
 
         [SerializeField] private int _baseArmor = 0;
 
@@ -74,6 +80,7 @@ namespace _Project.Mechanics.Player
         public float AngularFriction => _angularFriction;
         public float BackwardMovementMultiplier => _backwardMovementMultiplier;
 
+        public int StartingHealth => _startingHealth;
         public int BaseMaxHealth => _baseMaxHealth;
         public int BaseArmor => _baseArmor;
         public int MaxArmor => _maxArmor;

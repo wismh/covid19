@@ -96,10 +96,10 @@ namespace _Project.Mechanics.Player
             _config = config;
             _stats = stats;
 
-            // Fixes the old hardcoded-3 bug: GMTK.PlayerDamageable.Start() did `_health = 3;`, ignoring the
-            // serialized `_maxHealth` field entirely (TECHNICAL_AUDIT.md section 5). Starts at the configured
-            // base max health instead.
-            _health = _stats.EffectiveMaxHealth;
+            // Matches the old shipped game exactly: PlayerDamageable.Start() hardcoded `_health = 3;`
+            // (TECHNICAL_AUDIT.md section 5) - kept as its own StartingHealth value, distinct from
+            // EffectiveMaxHealth (the real, separate upgrade ceiling - see PlayerConfig's doc comment).
+            _health = _config.StartingHealth;
             _armor = _config.BaseArmor;
 
             _stats.OnUpgraded += HandleUpgraded;
