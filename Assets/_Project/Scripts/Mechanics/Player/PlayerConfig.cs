@@ -26,19 +26,21 @@ namespace _Project.Mechanics.Player
         [SerializeField] private float _backwardMovementMultiplier = 0.05f;
 
         [Header("Health & armor (ported from GMTK.PlayerDamageable)")]
-        // Old PlayerDamageable.Start() hardcoded `_health = 3;`, ignoring the serialized `_maxHealth` field
-        // entirely for the STARTING value (TECHNICAL_AUDIT.md section 5's flagged bug) - kept here, bug and all,
-        // per explicit user testing feedback (2026-09-11): players only ever actually experienced 3 starting HP.
+        // Intentional starting health value (design decision, not a bug) - matches what players actually
+        // experienced in the shipped jam build. Old PlayerDamageable.Start() set this via a hardcoded literal
+        // (`_health = 3;`) rather than reading it from a config/serialized field, which is a separate,
+        // purely code-quality issue (magic number, not centrally tunable) - not a statement about the value
+        // itself being wrong. Now a proper config value here instead of a literal buried in code.
         [SerializeField] private int _startingHealth = 3;
 
-        // The OLD `_maxHealth` field itself, confirmed via git history (Player.prefab, right before the Phase 2
-        // port) to be genuinely 8 in the final shipped jam build - NOT a bug, and NOT the same number as the
-        // starting-HP bug above. It was the real, working ceiling for `PlayerDamageable.OnUpgrade`'s
-        // `if (_upgrade == UpgradeType.PLAYER_HP && _health < _maxHealth) _health += 1;` - i.e. players started
-        // at the buggy 3 HP but could genuinely grow to 8 by picking the HP upgrade card. A prior round collapsed
-        // this and the starting-HP value into one field (both set to 3) while fixing the starting-HP bug above,
-        // which silently also capped the upgrade ceiling at 3 - the HP upgrade card became a no-op once at full
-        // health. Split back into two fields so both original behaviors are preserved simultaneously.
+        // The OLD `_maxHealth` field, confirmed via git history (Player.prefab, right before the Phase 2 port)
+        // to be 8 in the final shipped jam build - a distinct value from StartingHealth above, not the same
+        // number and not interchangeable with it. It was the real, working ceiling for
+        // `PlayerDamageable.OnUpgrade`'s `if (_upgrade == UpgradeType.PLAYER_HP && _health < _maxHealth)
+        // _health += 1;` - i.e. players started at 3 HP and could grow to 8 by picking the HP upgrade card. A
+        // prior round collapsed this and StartingHealth into one field (both set to 3), which silently also
+        // capped the upgrade ceiling at 3 - the HP upgrade card became a no-op once at full health. Split back
+        // into two fields so both original values are preserved simultaneously.
         [SerializeField] private int _baseMaxHealth = 8;
 
         [SerializeField] private int _baseArmor = 0;
