@@ -12,19 +12,12 @@ namespace _Project.Mechanics.Pickups
     /// </summary>
     public class VitaminPickup : MonoBehaviour
     {
-        [Header("Flight Settings")]
-        [SerializeField] private float _distanceToEnd = 0.25f;
-        [SerializeField] private float _vitaminSpeed = 9f;
-        [SerializeField] private float _acceleration = 12f;
-
-        [Header("Impulse Settings")]
-        [SerializeField] private float _impulseDuration = 0.25f;
-        [SerializeField] private float _impulseSpeed = 3.5f;
-
         [Header("Audio")]
         [SerializeField] private AudioSource _collectAudioSource;
         [SerializeField] private AudioClip _collectClip;
 
+        // Flight/impulse tunables now live on PickupsConfig instead of local [SerializeField]s.
+        private PickupsConfig _config;
         private IPlayerTargetProvider _targetProvider;
         private Transform _playerTransform;
         private Action _onCollected;
@@ -36,11 +29,13 @@ namespace _Project.Mechanics.Pickups
         private bool _isCollected;
 
         public void Construct(
+            PickupsConfig config,
             IPlayerTargetProvider targetProvider,
             AudioSource collectAudioSource = null,
             AudioClip collectClip = null,
             Action onCollected = null)
         {
+            _config = config;
             _targetProvider = targetProvider;
             _collectAudioSource = collectAudioSource != null ? collectAudioSource : _collectAudioSource;
             _collectClip = collectClip != null ? collectClip : _collectClip;
@@ -48,11 +43,13 @@ namespace _Project.Mechanics.Pickups
         }
 
         public void Construct(
+            PickupsConfig config,
             Transform playerTransform,
             AudioSource collectAudioSource = null,
             AudioClip collectClip = null,
             Action onCollected = null)
         {
+            _config = config;
             _playerTransform = playerTransform;
             _collectAudioSource = collectAudioSource != null ? collectAudioSource : _collectAudioSource;
             _collectClip = collectClip != null ? collectClip : _collectClip;
@@ -103,20 +100,20 @@ namespace _Project.Mechanics.Pickups
             Vector3 targetPos = GetTargetPosition();
 
             // Initial impulse phase
-            if (_impulseTimer < _impulseDuration)
+            if (_impulseTimer < _config.VitaminImpulseDurationSeconds)
             {
                 _impulseTimer += Time.deltaTime;
-                float decay = 1f - Mathf.Clamp01(_impulseTimer / _impulseDuration);
-                transform.position += (Vector3)(_impulseDirection * (_impulseSpeed * decay * Time.deltaTime));
+                float decay = 1f - Mathf.Clamp01(_impulseTimer / _config.VitaminImpulseDurationSeconds);
+                transform.position += (Vector3)(_impulseDirection * (_config.VitaminImpulseSpeed * decay * Time.deltaTime));
             }
 
             // Magnetic homing towards the player
-            _currentSpeed = Mathf.MoveTowards(_currentSpeed, _vitaminSpeed, _acceleration * Time.deltaTime);
+            _currentSpeed = Mathf.MoveTowards(_currentSpeed, _config.VitaminSpeed, _config.VitaminAcceleration * Time.deltaTime);
             transform.position = Vector3.Lerp(transform.position, targetPos, _currentSpeed * Time.deltaTime);
 
             // Arrival check
             float sqrDistance = (targetPos - transform.position).sqrMagnitude;
-            if (sqrDistance < _distanceToEnd * _distanceToEnd || sqrDistance < 0.05f)
+            if (sqrDistance < _config.VitaminDistanceToEnd * _config.VitaminDistanceToEnd || sqrDistance < _config.VitaminMinArrivalDistanceSqr)
             {
                 Collect();
             }

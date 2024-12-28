@@ -20,12 +20,16 @@ namespace _Project.Mechanics.Combat
         [SerializeField] private Bullet _bulletPrefab;
 
         private IObjectPool<Bullet> _bulletPool;
+        private PlayerConfig _playerConfig;
         private PlayerStatsService _playerStats;
+        private WorldScaleConfig _worldScaleConfig;
         private WorldScaleController _worldScaleController;
 
-        public void Construct(PlayerStatsService playerStats, WorldScaleController worldScaleController)
+        public void Construct(PlayerConfig playerConfig, PlayerStatsService playerStats, WorldScaleConfig worldScaleConfig, WorldScaleController worldScaleController)
         {
+            _playerConfig = playerConfig;
             _playerStats = playerStats;
+            _worldScaleConfig = worldScaleConfig;
             _worldScaleController = worldScaleController;
         }
 
@@ -57,7 +61,7 @@ namespace _Project.Mechanics.Combat
         private Bullet CreateBullet()
         {
             Bullet bullet = Instantiate(_bulletPrefab, transform);
-            bullet.Init(DestroyBullet, IsMicroWorld);
+            bullet.Init(DestroyBullet, IsMicroWorld, _worldScaleConfig, _playerConfig.BulletSpeed, _playerConfig.BulletLifetimeSeconds);
             bullet.gameObject.SetActive(false);
             return bullet;
         }

@@ -15,12 +15,10 @@ namespace _Project.Mechanics.Waves
     ///   `if (_playerStats.Time >= 100) prefabs.Add(_spinerPrefab);` (in-cell virus variant unlocks).
     ///
     /// Every field name below deliberately echoes its old-code origin so the source of each number stays
-    /// legible from the field name alone, per this phase's explicit instructions. This is intentionally scoped
-    /// to ONLY the four numbers called out above - it does not include VirusSpawner's other tunables
-    /// (_virusCount=10, _distanceFromCenter=30) or InCellViruses._bounds, since those aren't difficulty-gating
-    /// thresholds and weren't part of the audit's duplication complaint; they'd belong to a future
-    /// VirusSpawner/InCellViruses port instead (out of scope for this phase - only the shared placement utility
-    /// and this config were asked for, not spawner-manager classes).
+    /// legible from the field name alone, per this phase's explicit instructions. Originally scoped to ONLY the
+    /// four difficulty-gating thresholds above; extended later (2026-09-19 hardcode audit) to also cover
+    /// MacroVirusSpawner's wave-size/placement/elite-chance/respawn-delay numbers, which this class's own doc
+    /// comment used to explicitly call "out of scope for this phase" - that gap is now closed.
     /// </summary>
     [CreateAssetMenu(
         menuName = "Configurations/Waves/" + nameof(WaveScalingConfig),
@@ -41,9 +39,27 @@ namespace _Project.Mechanics.Waves
         // Old: InCellViruses.SpawnVirus() -> `if (_playerStats.Time >= 100) prefabs.Add(_spinerPrefab);`
         [SerializeField] private float _spinerUnlockTimeSeconds = 100f;
 
+        [Header("Macro virus wave sizing/placement (ported from GMTK.VirusSpawner, values from GameplayScene.unity's " +
+                "VirusSpawner instance)")]
+        [SerializeField] private float _initialWaveSize = 10f;
+        [SerializeField] private float _distanceFromCenter = 30f;
+
+        // Old: VirusSpawner.SpawnVirus(Vector3) -> `Random.Range(0, 2) == 1` - a coin-flip once the glist variant
+        // is unlocked (GlistUnlockTimeSeconds elapsed).
+        [SerializeField] private float _eliteSpawnChance = 0.5f;
+
+        // Old: CellController.Die()'s `else StartCoroutine(SpawnVirusesByDelay())` -> `yield return new
+        // WaitForSeconds(1f);` before spawning replacement viruses.
+        [SerializeField] private float _replacementSpawnDelaySeconds = 1f;
+
         public float GlistUnlockTimeSeconds => _glistUnlockTimeSeconds;
         public float WaveSizeGrowthMultiplier => _waveSizeGrowthMultiplier;
         public float CucumberUnlockTimeSeconds => _cucumberUnlockTimeSeconds;
         public float SpinerUnlockTimeSeconds => _spinerUnlockTimeSeconds;
+
+        public float InitialWaveSize => _initialWaveSize;
+        public float DistanceFromCenter => _distanceFromCenter;
+        public float EliteSpawnChance => _eliteSpawnChance;
+        public float ReplacementSpawnDelaySeconds => _replacementSpawnDelaySeconds;
     }
 }

@@ -66,6 +66,7 @@ namespace _Project.UI.Upgrades
         [SerializeField] private List<string> _upgradeTexts = new();
 
         private PlayerStatsService _stats;
+        private PlayerConfig _playerConfig;
         private IScreenManager _screenManager;
 
         private readonly List<UpgradeStat> _offeredUpgrades = new();
@@ -74,12 +75,13 @@ namespace _Project.UI.Upgrades
         /// `_upgradeTypes` list in GMTK.UI.UpgradesHUD, redrawn in OnEnable().</summary>
         public IReadOnlyList<UpgradeStat> OfferedUpgrades => _offeredUpgrades;
 
-        /// <summary>See HudScreen.Construct's doc comment - PlayerStatsService is a Mechanics/* POCO outside
-        /// Zenject binding today, supplied by a future composition root. IScreenManager is a real binding.</summary>
+        /// <summary>PlayerStatsService/PlayerConfig/IScreenManager are all real Zenject bindings post the
+        /// 2026-09-19 SceneContext/Installer migration - see PlayerInstaller.</summary>
         [Inject]
-        public void Construct(PlayerStatsService stats, IScreenManager screenManager)
+        public void Construct(PlayerStatsService stats, PlayerConfig playerConfig, IScreenManager screenManager)
         {
             _stats = stats;
+            _playerConfig = playerConfig;
             _screenManager = screenManager;
         }
 
@@ -138,7 +140,7 @@ namespace _Project.UI.Upgrades
             var pool = new List<UpgradeStat>((UpgradeStat[])Enum.GetValues(typeof(UpgradeStat)));
             _offeredUpgrades.Clear();
 
-            for (int i = 0; i < 3 && pool.Count > 0; i++)
+            for (int i = 0; i < _playerConfig.UpgradeChoicesPerLevelUp && pool.Count > 0; i++)
             {
                 int index = Random.Range(0, pool.Count);
                 _offeredUpgrades.Add(pool[index]);

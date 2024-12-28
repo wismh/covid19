@@ -16,8 +16,18 @@ MonoBehaviour:
   _maxHealth: 4
   _meleeDamage: 1
   _collisionDamageCooldownSeconds: 2
+  _knockbackForceOnHit: 0.8
+  _damageFlashDurationSeconds: 0.1
+  _deathAnimationDelaySeconds: 0.2
+  _deathToKillDelaySeconds: 0.8
   _homingForce: 0.1
   _kitingForce: 0.1
   _bulletFireCooldownSeconds: 2
+  _virusBulletSpeed: 4
+  _virusBulletLifetimeSeconds: 5
+  _virusBulletDamage: 1
   _rushImpulse: 5
   _rushCooldownSeconds: 4
+  _initialCooldownJitterMultiplier: 1.5
+  _bulletWindupLeadFraction: 0.5
+  _rushWindupLeadSeconds: 1

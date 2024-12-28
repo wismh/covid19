@@ -16,3 +16,7 @@ MonoBehaviour:
   _waveSizeGrowthMultiplier: 1.5
   _cucumberUnlockTimeSeconds: 50
   _spinerUnlockTimeSeconds: 100
+  _initialWaveSize: 10
+  _distanceFromCenter: 30
+  _eliteSpawnChance: 0.5
+  _replacementSpawnDelaySeconds: 1

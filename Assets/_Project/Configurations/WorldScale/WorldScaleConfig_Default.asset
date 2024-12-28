@@ -21,3 +21,13 @@ MonoBehaviour:
   _microPlayerAudioVolume: 0.4
   _restoredPlayerAudioVolume: 1
   _cellMacroMaxVelocity: {x: 0.6, y: 0.6}
+  _macroSpeedScale: 1
+  _microSpeedScale: 0.01
+  _particleMinMaxEmissionRate: {x: 0, y: 15}
+  _macroParticleStartSpeedMultiplier: 1
+  _macroParticleStartSizeMultiplier: 1
+  _macroParticleEmissionMultiplier: 1
+  _microParticleStartSpeedMultiplier: 0.3
+  _microParticleStartSizeMultiplier: 0.3
+  _microParticleEmissionMultiplier: 3
+  _cellProximityActivationSqrDistance: 10

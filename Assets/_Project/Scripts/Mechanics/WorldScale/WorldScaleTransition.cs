@@ -115,7 +115,7 @@ namespace _Project.Mechanics.WorldScale
 
             // Old: `ServiceLocator.Instance.Get<PlayerStats>().SpeedScale = 1f;` - see WorldScaleController's
             // class doc comment, seam item 4, and WorldScaleTransitionContext.SetPlayerSpeedScale's doc comment.
-            context.SetPlayerSpeedScale?.Invoke(1f);
+            context.SetPlayerSpeedScale?.Invoke(_config.MacroSpeedScale);
 
             // Old: `_camera.Target = _player;` - see WorldScaleTransitionContext.SetCameraTarget's doc comment.
             context.SetCameraTarget?.Invoke(context.Player);
@@ -219,7 +219,7 @@ namespace _Project.Mechanics.WorldScale
                 context.GameplayMusicAudioSource.outputAudioMixerGroup = context.MicroMixerGroup;
 
             // Old: `ServiceLocator.Instance.Get<PlayerStats>().SpeedScale = 0.01f;`
-            context.SetPlayerSpeedScale?.Invoke(0.01f);
+            context.SetPlayerSpeedScale?.Invoke(_config.MicroSpeedScale);
 
             // Old: `_camera.Target = nearestCell;`
             context.SetCameraTarget?.Invoke(context.Cell);

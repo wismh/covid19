@@ -51,6 +51,19 @@ namespace _Project.Mechanics.Player
         // Old: PlayerDamageable.Damage -> `float chanceIgnore = Armor / 6.0f;`.
         [SerializeField] private float _armorIgnoreChanceDivisor = 6.0f;
 
+        // Old: PlayerDamageable.Damage -> `Random.Range(0.1f, 1.0f) < chanceIgnore` - the proc-roll range for
+        // the armor-ignore chance (deliberately NOT [0,1): a roll can never actually land below 0.1).
+        [SerializeField] private float _armorIgnoreRollMin = 0.1f;
+        [SerializeField] private float _armorIgnoreRollMax = 1.0f;
+
+        // Old: PlayerDamageable.AnimationOnDamage -> `_body.Impulse(attackDirection * 0.3f);`
+        [SerializeField] private float _knockbackImpulseStrength = 0.3f;
+
+        [Header("Damage/death presentation timing (values from PlayerDamageable.AnimationOnDamage()/AnimationOnDied())")]
+        [SerializeField] private float _damageFlashDurationSeconds = 0.1f;
+        [SerializeField] private float _deathAnimationDelaySeconds = 0.2f;
+        [SerializeField] private float _deathToGameOverDelaySeconds = 1.8f;
+
         [Header("Combat (ported from GMTK.PlayerTurretController / GMTK.Bullet, values from prefabs)")]
         [SerializeField] private int _baseDamage = 1;
         [SerializeField] private float _baseReloadTime = 1.75f;
@@ -64,6 +77,11 @@ namespace _Project.Mechanics.Player
 
         [SerializeField] private float _minReloadTime = 0.25f;
 
+        // Old: GMTK.Bullet's own [SerializeField] defaults (speed 10f, lifetime 2f) - previously a prefab-only
+        // value with no config backing at all (2026-09-19 hardcode audit).
+        [SerializeField] private float _bulletSpeed = 10f;
+        [SerializeField] private float _bulletLifetimeSeconds = 2f;
+
         [Header("Progression (ported from GMTK.Services.PlayerStats)")]
         [SerializeField] private int _startingMaxExperience = 3;
         [SerializeField] private float _experienceGrowthMultiplierPerLevel = 1.5f;
@@ -73,6 +91,9 @@ namespace _Project.Mechanics.Player
         // Named explicitly here; see PlayerStatsService.ApplyUpgrade / OnBonusHealthGranted for where it's now
         // an explicit, documented rule instead of a hidden side effect.
         [SerializeField] private int _bonusHealthPerEvenLevel = 1;
+
+        // Old: UpgradesHUD.ShowUpgrades() -> offers 3 random upgrade cards (of 6 total types) per level-up.
+        [SerializeField] private int _upgradeChoicesPerLevelUp = 3;
 
         public float BaseMoveSpeed => _baseMoveSpeed;
         public float Acceleration => _acceleration;
@@ -87,14 +108,24 @@ namespace _Project.Mechanics.Player
         public int BaseArmor => _baseArmor;
         public int MaxArmor => _maxArmor;
         public float ArmorIgnoreChanceDivisor => _armorIgnoreChanceDivisor;
+        public float ArmorIgnoreRollMin => _armorIgnoreRollMin;
+        public float ArmorIgnoreRollMax => _armorIgnoreRollMax;
+        public float KnockbackImpulseStrength => _knockbackImpulseStrength;
+
+        public float DamageFlashDurationSeconds => _damageFlashDurationSeconds;
+        public float DeathAnimationDelaySeconds => _deathAnimationDelaySeconds;
+        public float DeathToGameOverDelaySeconds => _deathToGameOverDelaySeconds;
 
         public int BaseDamage => _baseDamage;
         public float BaseReloadTime => _baseReloadTime;
         public float ReloadTimeReductionPerUpgradeLevel => _reloadTimeReductionPerUpgradeLevel;
         public float MinReloadTime => _minReloadTime;
+        public float BulletSpeed => _bulletSpeed;
+        public float BulletLifetimeSeconds => _bulletLifetimeSeconds;
 
         public int StartingMaxExperience => _startingMaxExperience;
         public float ExperienceGrowthMultiplierPerLevel => _experienceGrowthMultiplierPerLevel;
         public int BonusHealthPerEvenLevel => _bonusHealthPerEvenLevel;
+        public int UpgradeChoicesPerLevelUp => _upgradeChoicesPerLevelUp;
     }
 }

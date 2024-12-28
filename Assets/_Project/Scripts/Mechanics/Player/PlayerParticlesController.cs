@@ -11,21 +11,14 @@ namespace _Project.Mechanics.Player
     /// </summary>
     public sealed class PlayerParticlesController : MonoBehaviour
     {
-        [Header("Particle System & Base Emission")]
+        [Header("Particle System")]
         [SerializeField] private ParticleSystem _particleSystem;
-        [SerializeField] private Vector2 _minMaxEmissionRate = new Vector2(0f, 15f);
         [SerializeField] private PlayerMovement _playerMovement;
 
-        [Header("Macro World Scale Modifiers")]
-        [SerializeField] private float _macroStartSpeedMultiplier = 1f;
-        [SerializeField] private float _macroStartSizeMultiplier = 1f;
-        [SerializeField] private float _macroEmissionMultiplier = 1f;
-
-        [Header("Micro World Scale Modifiers")]
-        [SerializeField] private float _microStartSpeedMultiplier = 0.3f;
-        [SerializeField] private float _microStartSizeMultiplier = 0.3f;
-        [SerializeField] private float _microEmissionMultiplier = 3f;
-
+        // Emission-rate range and Macro/Micro speed/size/emission multipliers now live on
+        // WorldScaleConfig instead of local [SerializeField]s - see that class's own "Player particle trail"
+        // header.
+        private WorldScaleConfig _worldScaleConfig;
         private WorldScaleController _worldScaleController;
         private ParticleSystem.EmissionModule _emissionModule;
         private ParticleSystem.MainModule _mainModule;
@@ -36,8 +29,10 @@ namespace _Project.Mechanics.Player
         private bool _isInitialized;
 
         [Inject]
-        public void Construct(WorldScaleController worldScaleController, PlayerMovement playerMovement = null)
+        public void Construct(WorldScaleConfig worldScaleConfig, WorldScaleController worldScaleController, PlayerMovement playerMovement = null)
         {
+            _worldScaleConfig = worldScaleConfig;
+
             if (playerMovement != null)
                 _playerMovement = playerMovement;
 
@@ -119,10 +114,10 @@ namespace _Project.Mechanics.Player
                 return;
 
             bool isMicro = scale == WorldScale.WorldScale.Micro;
-            _currentEmissionMultiplier = isMicro ? _microEmissionMultiplier : _macroEmissionMultiplier;
+            _currentEmissionMultiplier = isMicro ? _worldScaleConfig.MicroParticleEmissionMultiplier : _worldScaleConfig.MacroParticleEmissionMultiplier;
 
-            float speedMult = isMicro ? _microStartSpeedMultiplier : _macroStartSpeedMultiplier;
-            float sizeMult = isMicro ? _microStartSizeMultiplier : _macroStartSizeMultiplier;
+            float speedMult = isMicro ? _worldScaleConfig.MicroParticleStartSpeedMultiplier : _worldScaleConfig.MacroParticleStartSpeedMultiplier;
+            float sizeMult = isMicro ? _worldScaleConfig.MicroParticleStartSizeMultiplier : _worldScaleConfig.MacroParticleStartSizeMultiplier;
 
             _mainModule.startSpeedMultiplier = _baseStartSpeed * speedMult;
             _mainModule.startSizeMultiplier = _baseStartSize * sizeMult;
@@ -145,8 +140,9 @@ namespace _Project.Mechanics.Player
             if (maxSpeed <= 0.001f)
                 maxSpeed = 3f;
 
+            Vector2 minMaxEmissionRate = _worldScaleConfig.ParticleMinMaxEmissionRate;
             float speedRatio = Mathf.Clamp01(velocityMagnitude / maxSpeed);
-            float targetRate = Mathf.Lerp(_minMaxEmissionRate.x, _minMaxEmissionRate.y, speedRatio * _currentEmissionMultiplier);
+            float targetRate = Mathf.Lerp(minMaxEmissionRate.x, minMaxEmissionRate.y, speedRatio * _currentEmissionMultiplier);
 
             _emissionModule.rateOverTime = targetRate;
         }

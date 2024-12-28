@@ -61,21 +61,10 @@ namespace _Project.UI.Hud
         [SerializeField] private Transform _player;
         [SerializeField] private Transform _targetCell;
 
-        // Old: `[SerializeField] private float _distanceToActivate;` compared directly against a SQUARED
-        // distance (`_cellManager.FindNearToPoint` returns sqrDistance, never sqrt'd before the `<` check) -
-        // i.e. despite its name, the old field was already a squared-distance threshold, not a linear one. Named
-        // accurately here instead of reproducing the misleading old name.
-        //
-        // Value bumped 4 -> 10 (2026-09-11 testing round): the ported value (4, i.e. a 2-unit linear threshold)
-        // was copied verbatim from the old scene's AdviceDialog instance, but is unreachable with THIS project's
-        // current Player/Cell.prefab collider sizes - measured live via Unity CLI (Physics2D.Distance, walking
-        // the player's BoxCollider2D into a cell's PolygonCollider2D from 5 angles until they touch): center-to-
-        // center distance at the moment of contact ranges ~2.27-2.63 units (sqrMagnitude ~5.1-6.9), already past
-        // the old 2-unit threshold from every angle tested - the prompt could never activate no matter how close
-        // the player got. 10 (~3.16 units) clears the worst-case measured contact distance with comfortable
-        // margin so the prompt reliably shows once the player is genuinely standing next to a cell.
-        [SerializeField] private float _sqrDistanceToActivate = 10f;
-
+        // Squared-distance activation threshold now lives on WorldScaleConfig.CellProximityActivationSqrDistance
+        // instead of a local [SerializeField] (2026-09-19 hardcode audit) - see that field's own doc comment for
+        // the full history (old misleading-name field, the 4->10 retuning round, etc.), preserved there.
+        private WorldScaleConfig _worldScaleConfig;
         private WorldScaleController _worldScale;
         private WorldScaleTransitionContext _context;
 
@@ -84,12 +73,12 @@ namespace _Project.UI.Hud
 
         private bool _isPromptShown;
 
-        /// <summary>WorldScaleController is a Mechanics/* POCO outside Zenject binding today (see
-        /// WorldScaleController's own class doc comment - hand-composed per REFACTORING_PLAN.md section 4), same
-        /// gap as PlayerConfig/PlayerStatsService elsewhere in this phase; a future composition root supplies it.</summary>
+        /// <summary>WorldScaleConfig/WorldScaleController are real Zenject bindings post the 2026-09-19
+        /// SceneContext/Installer migration - see WorldScaleInstaller.</summary>
         [Inject]
-        public void Construct(WorldScaleController worldScale)
+        public void Construct(WorldScaleConfig worldScaleConfig, WorldScaleController worldScale)
         {
+            _worldScaleConfig = worldScaleConfig;
             _worldScale = worldScale;
         }
 
@@ -160,7 +149,7 @@ namespace _Project.UI.Hud
             }
 
             float sqrDistance = (_targetCell.position - _player.position).sqrMagnitude;
-            if (sqrDistance < _sqrDistanceToActivate)
+            if (sqrDistance < _worldScaleConfig.CellProximityActivationSqrDistance)
                 ShowPrompt();
             else
                 HidePrompt();

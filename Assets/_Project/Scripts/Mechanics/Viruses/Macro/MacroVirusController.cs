@@ -240,7 +240,7 @@ namespace _Project.Mechanics.Viruses.Macro
 
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(0.2f), cancellationToken: _lifetimeCts.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(_config.DeathAnimationDelaySeconds), cancellationToken: _lifetimeCts.Token);
             }
             catch (OperationCanceledException)
             {
@@ -255,7 +255,7 @@ namespace _Project.Mechanics.Viruses.Macro
             // audio time to actually be seen/heard before OnKilled triggers GameObject destruction.
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(0.8f), cancellationToken: _lifetimeCts.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(_config.DeathToKillDelaySeconds), cancellationToken: _lifetimeCts.Token);
             }
             catch (OperationCanceledException)
             {
@@ -276,7 +276,7 @@ namespace _Project.Mechanics.Viruses.Macro
 
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(0.1f), cancellationToken: _lifetimeCts.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(_config.DamageFlashDurationSeconds), cancellationToken: _lifetimeCts.Token);
             }
             catch (OperationCanceledException)
             {

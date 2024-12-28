@@ -14,15 +14,11 @@ namespace _Project.Mechanics.Pickups
     /// </summary>
     public class MedicalSpawner : MonoBehaviour
     {
-        [Header("Prefab & Bounds")]
+        [Header("Prefab")]
         [SerializeField] private MedicalPickup _medicalPrefab;
-        [SerializeField] private Bounds _spawnBounds = new Bounds(Vector3.zero, new Vector3(24f, 54f, 0f));
 
-        [Header("Spawn Settings")]
-        [SerializeField] private float _spawnInterval = 15f;
-        [SerializeField] private int _numToSpawn = 3;
-        [SerializeField] private int _maxMedicals = 10;
-
+        // Spawn bounds/interval/count tunables now live on PickupsConfig instead of local [SerializeField]s.
+        private PickupsConfig _config;
         private PlayerStatsService _playerStatsService;
         private IPlayerTargetProvider _targetProvider;
         private Transform _playerTransform;
@@ -33,14 +29,16 @@ namespace _Project.Mechanics.Pickups
 
         public int ActiveCount => CleanAndCount();
 
-        public void Construct(PlayerStatsService playerStatsService, IPlayerTargetProvider targetProvider)
+        public void Construct(PickupsConfig config, PlayerStatsService playerStatsService, IPlayerTargetProvider targetProvider)
         {
+            _config = config;
             _playerStatsService = playerStatsService;
             _targetProvider = targetProvider;
         }
 
-        public void Construct(PlayerStatsService playerStatsService, Transform playerTransform)
+        public void Construct(PickupsConfig config, PlayerStatsService playerStatsService, Transform playerTransform)
         {
+            _config = config;
             _playerStatsService = playerStatsService;
             _playerTransform = playerTransform;
         }
@@ -65,14 +63,14 @@ namespace _Project.Mechanics.Pickups
         {
             while (true)
             {
-                yield return new WaitForSeconds(_spawnInterval);
+                yield return new WaitForSeconds(_config.SpawnIntervalSeconds);
 
                 if (_isPaused || _medicalPrefab == null)
                     continue;
 
                 int activeCount = CleanAndCount();
-                int available = _maxMedicals - activeCount;
-                int toSpawn = Mathf.Clamp(_numToSpawn, 0, available);
+                int available = _config.MaxActiveMedicals - activeCount;
+                int toSpawn = Mathf.Clamp(_config.NumToSpawnPerInterval, 0, available);
 
                 for (int i = 0; i < toSpawn; i++)
                 {
@@ -86,9 +84,10 @@ namespace _Project.Mechanics.Pickups
             if (_medicalPrefab == null)
                 return;
 
+            Bounds spawnBounds = _config.SpawnBounds;
             Vector3 position = new Vector3(
-                UnityEngine.Random.Range(_spawnBounds.min.x, _spawnBounds.max.x),
-                UnityEngine.Random.Range(_spawnBounds.min.y, _spawnBounds.max.y),
+                UnityEngine.Random.Range(spawnBounds.min.x, spawnBounds.max.x),
+                UnityEngine.Random.Range(spawnBounds.min.y, spawnBounds.max.y),
                 0f
             );
 
@@ -96,9 +95,9 @@ namespace _Project.Mechanics.Pickups
             MedicalPickup medical = Instantiate(_medicalPrefab, position, rotation, transform);
 
             if (_targetProvider != null)
-                medical.Construct(_playerStatsService, _targetProvider);
+                medical.Construct(_config, _playerStatsService, _targetProvider);
             else if (_playerTransform != null)
-                medical.Construct(_playerStatsService, _playerTransform);
+                medical.Construct(_config, _playerStatsService, _playerTransform);
 
             medical.OnDestroyed += HandleMedicalDestroyed;
             _activeMedicals.Add(medical);

@@ -37,6 +37,11 @@ namespace _Project.Mechanics.Viruses.Macro
         // Old: PenetrationIntoCell.k_scaleFactor (private const, 0.5f) - DOScale target = originalScale * this.
         [SerializeField] private float _penetrationScaleFactor = 0.5f;
 
+        [Header("Damage/death presentation timing (values from VirusController.AnimationOnDamage()/AnimationOnDied())")]
+        [SerializeField] private float _damageFlashDurationSeconds = 0.1f;
+        [SerializeField] private float _deathAnimationDelaySeconds = 0.2f;
+        [SerializeField] private float _deathToKillDelaySeconds = 0.8f;
+
         public float BaseMoveSpeed => _baseMoveSpeed;
         public float Acceleration => _acceleration;
         public float Friction => _friction;
@@ -49,5 +54,9 @@ namespace _Project.Mechanics.Viruses.Macro
 
         public float PenetrationDurationSeconds => _penetrationDurationSeconds;
         public float PenetrationScaleFactor => _penetrationScaleFactor;
+
+        public float DamageFlashDurationSeconds => _damageFlashDurationSeconds;
+        public float DeathAnimationDelaySeconds => _deathAnimationDelaySeconds;
+        public float DeathToKillDelaySeconds => _deathToKillDelaySeconds;
     }
 }

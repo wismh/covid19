@@ -59,7 +59,7 @@ namespace _Project.Mechanics.Viruses.Micro
         /// * 1.5f); _animationPlaying = false;`</summary>
         public void OnEnable()
         {
-            _attackTime = Time.time + UnityEngine.Random.Range(0f, _config.BulletFireCooldownSeconds * 1.5f);
+            _attackTime = Time.time + UnityEngine.Random.Range(0f, _config.BulletFireCooldownSeconds * _config.InitialCooldownJitterMultiplier);
             _animationPlaying = false;
         }
 
@@ -75,7 +75,7 @@ namespace _Project.Mechanics.Viruses.Micro
             _rigidbody2D.AddForce((_transform.position - _target.position).normalized * _config.KitingForce, ForceMode2D.Force);
 
             // Old: `if (Time.time > _attackTime + k_attackCooldown / 2 && !_animationPlaying) { ...Play("Base Layer.Attack"); }`
-            if (Time.time > _attackTime + _config.BulletFireCooldownSeconds / 2f && !_animationPlaying)
+            if (Time.time > _attackTime + _config.BulletFireCooldownSeconds * _config.BulletWindupLeadFraction && !_animationPlaying)
             {
                 _animationPlaying = true;
                 _animator?.Play("Base Layer.Attack");
@@ -90,7 +90,8 @@ namespace _Project.Mechanics.Viruses.Micro
                 Vector3 direction = (_target.position - _transform.position).normalized;
                 Vector3 spawnPosition = _bulletSpawnPoint != null ? _bulletSpawnPoint.position : _transform.position;
 
-                _bulletSpawner?.SpawnBullet(spawnPosition, direction, _bulletSpawnPoint);
+                var bullet = _bulletSpawner?.SpawnBullet(spawnPosition, direction, _bulletSpawnPoint);
+                bullet?.Construct(_config.VirusBulletSpeed, _config.VirusBulletLifetimeSeconds, _config.VirusBulletDamage);
                 _attackAudioSource?.Play();
             }
         }

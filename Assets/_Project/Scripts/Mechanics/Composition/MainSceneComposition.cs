@@ -89,6 +89,7 @@ namespace _Project.Mechanics.Composition
         [SerializeField] private MacroVirusSpawner _macroVirusSpawner;
 
         [Header("Medicals / Pickups (Stage 4)")]
+        [SerializeField] private PickupsConfig _pickupsConfig;
         [SerializeField] private MedicalSpawner _medicalSpawner;
 
         [Header("Waves (Phase 3) - shared by MacroVirusSpawner today; MicroVirusSpawner will need it too once " +
@@ -434,10 +435,10 @@ namespace _Project.Mechanics.Composition
         private void ConstructSpawners()
         {
             if (_medicalSpawner != null)
-                _medicalSpawner.Construct(_playerStats, _playerTargetProvider);
+                _medicalSpawner.Construct(_pickupsConfig, _playerStats, _playerTargetProvider);
 
             if (_bulletManager != null)
-                _bulletManager.Construct(_playerStats, _worldScaleController);
+                _bulletManager.Construct(_playerConfig, _playerStats, _worldScaleConfig, _worldScaleController);
 
             if (_playerTurret != null)
                 _playerTurret.SetProjectileSpawner(_bulletManager);

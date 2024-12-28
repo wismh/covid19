@@ -36,9 +36,32 @@ namespace _Project.Mechanics.Cells
         // Old: CellController._entrailsArea, used by ShuffleEntrails() to randomize entrail piece positions.
         [SerializeField] private Bounds _entrailsArea = new Bounds(Vector3.zero, new Vector3(0.8f, 0.8f, 0f));
 
+        [Header("Spawning & lifecycle (ported from GMTK.CellSpawner/CellController, values from GameplayScene.unity's " +
+                "CellSpawner instance and CellController.Die()'s hardcoded destroy delay)")]
+        [SerializeField] private int _cellCount = 20;
+        [SerializeField] private float _minSqrDistanceBetweenCells = 35f;
+        [SerializeField] private float _minSqrDistanceFromOrigin = 10f;
+        [SerializeField] private int _maxPlacementAttempts = 5000;
+        [SerializeField] private Bounds _spawnBounds = new Bounds(Vector3.zero, new Vector3(20f, 50f, 0f));
+
+        // Old: CellController.Die() -> `Destroy(gameObject, 2f);`
+        [SerializeField] private float _deathDestroyDelaySeconds = 2f;
+
+        // Old: InCellViruses._bounds (values from Cell.prefab's InCellViruses component: center (0,0,0), extent
+        // (2,2,0)) - local-space area in-cell viruses are randomly positioned within on spawn/reposition.
+        [SerializeField] private Bounds _microVirusSpawnBounds = new Bounds(Vector3.zero, new Vector3(4f, 4f, 0f));
+
         public float BaseHealth => _baseHealth;
         public float PoisonTickIntervalSeconds => _poisonTickIntervalSeconds;
         public float PoisonDamagePerVirusPerTick => _poisonDamagePerVirusPerTick;
         public Bounds EntrailsArea => _entrailsArea;
+
+        public int CellCount => _cellCount;
+        public float MinSqrDistanceBetweenCells => _minSqrDistanceBetweenCells;
+        public float MinSqrDistanceFromOrigin => _minSqrDistanceFromOrigin;
+        public int MaxPlacementAttempts => _maxPlacementAttempts;
+        public Bounds SpawnBounds => _spawnBounds;
+        public float DeathDestroyDelaySeconds => _deathDestroyDelaySeconds;
+        public Bounds MicroVirusSpawnBounds => _microVirusSpawnBounds;
     }
 }

@@ -83,12 +83,11 @@ namespace _Project.Mechanics.Viruses.Micro
         [SerializeField] private MicroVirusController _cucumberPrefab;
         [SerializeField] private MicroVirusController _spinerPrefab;
 
-        // Old: InCellViruses._bounds (values from Cell.prefab's InCellViruses component: center (0,0,0), extent
-        // (2,2,0)) - local-space area viruses are randomly positioned within on spawn/reposition.
-        [SerializeField] private Bounds _bounds = new Bounds(Vector3.zero, new Vector3(4f, 4f, 0f));
-
+        // Spawn-area bounds now live on CellConfig.MicroVirusSpawnBounds instead of a local [SerializeField] -
+        // see CellConfig's own doc comment.
         private readonly MicroVirusRegistry _registry = new();
 
+        private CellConfig _cellConfig;
         private IPlayerTargetProvider _playerTargetProvider;
         private WaveScalingConfig _waveScalingConfig;
 
@@ -111,8 +110,9 @@ namespace _Project.Mechanics.Viruses.Micro
         private float ElapsedSeconds => Time.timeSinceLevelLoad;
 
         [Inject]
-        public void Construct(IPlayerTargetProvider playerTargetProvider, WaveScalingConfig waveScalingConfig)
+        public void Construct(CellConfig cellConfig, IPlayerTargetProvider playerTargetProvider, WaveScalingConfig waveScalingConfig)
         {
+            _cellConfig = cellConfig;
             _playerTargetProvider = playerTargetProvider;
             _waveScalingConfig = waveScalingConfig;
         }
@@ -182,7 +182,7 @@ namespace _Project.Mechanics.Viruses.Micro
             // maxAttempts: 1) so there's one placement code path in the codebase instead of a second hand-rolled
             // Random.Range pair - with these arguments it always accepts the first candidate, reproducing the old
             // unconditional placement exactly.
-            virusTransform.localPosition = SpawnPlacementUtility.FindPosition(_bounds, null, 0f, 1);
+            virusTransform.localPosition = SpawnPlacementUtility.FindPosition(_cellConfig.MicroVirusSpawnBounds, null, 0f, 1);
         }
 
         private void HandleVirusKilled(MicroVirusController virus)

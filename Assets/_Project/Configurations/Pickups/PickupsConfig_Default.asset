@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 933879179307ff24783ee0a50b2dcd5b, type: 3}
+  m_Name: PickupsConfig_Default
+  m_EditorClassIdentifier: Assembly-CSharp::_Project.Mechanics.Pickups.PickupsConfig
+  _medicalHealth: 1
+  _breakDelaySeconds: 1
+  _safetyTimeoutSeconds: 20
+  _destroyDelayWithAudioSeconds: 0.5
+  _destroyDelayWithoutAudioSeconds: 0.1
+  _spawnBounds:
+    m_Center: {x: 0, y: 0, z: 0}
+    m_Extent: {x: 12, y: 27, z: 0}
+  _spawnIntervalSeconds: 15
+  _numToSpawnPerInterval: 3
+  _maxActiveMedicals: 10
+  _vitaminDistanceToEnd: 0.25
+  _vitaminSpeed: 9
+  _vitaminAcceleration: 12
+  _vitaminImpulseDurationSeconds: 0.25
+  _vitaminImpulseSpeed: 3.5
+  _vitaminMinArrivalDistanceSqr: 0.05

@@ -55,17 +55,8 @@ namespace _Project.Mechanics.Cells
         [Header("Prefab - assigned by a later stage (prefab/scene surgery), see class doc comment")]
         [SerializeField] private Transform _cellPrefab;
 
-        [Header("Placement (ported from GMTK.CellSpawner, values from GameplayScene.unity's CellSpawner instance)")]
-        [SerializeField] private int _cellCount = 20;
-        [SerializeField] private float _minSqrDistanceBetweenCells = 35f;
-        [SerializeField] private float _minSqrDistanceFromOrigin = 10f;
-        [SerializeField] private int _maxPlacementAttempts = 5000;
-        [SerializeField] private Bounds _spawnBounds = new Bounds(Vector3.zero, new Vector3(20f, 50f, 0f));
-
-        [Header("GameObject lifecycle")]
-        // Old: CellController.Die() -> `Destroy(gameObject, 2f);`
-        [SerializeField] private float _deathDestroyDelaySeconds = 2f;
-
+        // Placement/lifecycle tunables (cell count, spacing, spawn bounds, death-destroy delay) now live on
+        // CellConfig instead of local [SerializeField]s - see CellConfig's own "Spawning & lifecycle" header.
         private CellConfig _cellConfig;
         private CellRegistry _registry;
         private IPlayerTargetProvider _playerTargetProvider;
@@ -109,7 +100,7 @@ namespace _Project.Mechanics.Cells
             // Old: CellSpawner.Awake() -> `for (int i = 0; i &lt; _cellCount; ++i) SpawnCell();`. Deferred to
             // Start() (rather than Awake, matching old code) so Construct() - called manually by a future
             // composition root, not guaranteed to run before Unity's own Awake - has definitely happened first.
-            for (int i = 0; i < _cellCount; i++)
+            for (int i = 0; i < _cellConfig.CellCount; i++)
                 SpawnCell();
         }
 
@@ -129,11 +120,11 @@ namespace _Project.Mechanics.Cells
             }
 
             Vector3 position = SpawnPlacementUtility.FindPosition(
-                _spawnBounds,
+                _cellConfig.SpawnBounds,
                 _spawnedPositions,
-                _minSqrDistanceBetweenCells,
-                _maxPlacementAttempts,
-                _minSqrDistanceFromOrigin);
+                _cellConfig.MinSqrDistanceBetweenCells,
+                _cellConfig.MaxPlacementAttempts,
+                _cellConfig.MinSqrDistanceFromOrigin);
 
             _spawnedPositions.Add(position);
 
@@ -169,7 +160,7 @@ namespace _Project.Mechanics.Cells
             // WorldScaleTransitionContext the same way it already does CellVisuals/CellRigidbody2D/CellAnimator.
             if (instance.TryGetComponent(out MicroVirusSpawner inCellVirusSpawner))
             {
-                inCellVirusSpawner.Construct(_playerTargetProvider, _waveScalingConfig);
+                inCellVirusSpawner.Construct(_cellConfig, _playerTargetProvider, _waveScalingConfig);
                 OnMicroVirusSpawnerCreated?.Invoke(inCellVirusSpawner);
             }
         }
@@ -178,7 +169,7 @@ namespace _Project.Mechanics.Cells
         {
             try
             {
-                await UniTask.Delay(System.TimeSpan.FromSeconds(_deathDestroyDelaySeconds), cancellationToken: _lifetimeCts.Token);
+                await UniTask.Delay(System.TimeSpan.FromSeconds(_cellConfig.DeathDestroyDelaySeconds), cancellationToken: _lifetimeCts.Token);
             }
             catch (System.OperationCanceledException)
             {

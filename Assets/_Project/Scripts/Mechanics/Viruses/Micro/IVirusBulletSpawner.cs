@@ -1,4 +1,5 @@
 using UnityEngine;
+using _Project.Mechanics.Combat;
 
 namespace _Project.Mechanics.Viruses.Micro
 {
@@ -25,6 +26,8 @@ namespace _Project.Mechanics.Viruses.Micro
     /// </summary>
     public interface IVirusBulletSpawner
     {
-        void SpawnBullet(Vector3 position, Vector3 direction, Transform scaleReference);
+        /// <returns>The spawned bullet instance (null if the spawner has no prefab assigned), so the caller can
+        /// configure its speed/lifetime/damage from its own MicroVirusConfig - see VirusBullet.Construct.</returns>
+        VirusBullet SpawnBullet(Vector3 position, Vector3 direction, Transform scaleReference);
     }
 }

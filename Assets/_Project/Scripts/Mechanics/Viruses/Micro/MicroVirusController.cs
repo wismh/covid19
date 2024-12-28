@@ -203,7 +203,7 @@ namespace _Project.Mechanics.Viruses.Micro
 
             // Old: AnimationOnDamage() -> `if (transform.TryGetComponent(out Rigidbody2D rd)) rd.AddForce(attackDirection * 0.8f, ForceMode2D.Impulse);`
             if (_rigidbody2D != null)
-                _rigidbody2D.AddForce(attackDirection * 0.8f, ForceMode2D.Impulse);
+                _rigidbody2D.AddForce(attackDirection * _config.KnockbackForceOnHit, ForceMode2D.Impulse);
 
             PlayDamageFlashAsync().Forget();
 
@@ -232,7 +232,7 @@ namespace _Project.Mechanics.Viruses.Micro
 
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(0.2f), cancellationToken: _lifetimeCts.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(_config.DeathAnimationDelaySeconds), cancellationToken: _lifetimeCts.Token);
             }
             catch (OperationCanceledException)
             {
@@ -248,7 +248,7 @@ namespace _Project.Mechanics.Viruses.Micro
             // (MicroVirusSpawner.HandleVirusKilled destroys synchronously the instant OnKilled fires).
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(0.8f), cancellationToken: _lifetimeCts.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(_config.DeathToKillDelaySeconds), cancellationToken: _lifetimeCts.Token);
             }
             catch (OperationCanceledException)
             {
@@ -269,7 +269,7 @@ namespace _Project.Mechanics.Viruses.Micro
 
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(0.1f), cancellationToken: _lifetimeCts.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(_config.DamageFlashDurationSeconds), cancellationToken: _lifetimeCts.Token);
             }
             catch (OperationCanceledException)
             {

@@ -36,7 +36,7 @@ namespace _Project.Mechanics.Viruses.Micro
         /// 1.5f); _animationPlaying = false;`</summary>
         public void OnEnable()
         {
-            _attackTime = Time.time + UnityEngine.Random.Range(0f, _config.RushCooldownSeconds * 1.5f);
+            _attackTime = Time.time + UnityEngine.Random.Range(0f, _config.RushCooldownSeconds * _config.InitialCooldownJitterMultiplier);
             _animationPlaying = false;
         }
 
@@ -49,7 +49,7 @@ namespace _Project.Mechanics.Viruses.Micro
                 return;
 
             // Old: `if (Time.time > (_attackTime + k_attackCooldown - 1) && !_animationPlaying) { ...Play("Base Layer.Attack"); }`
-            if (Time.time > _attackTime + _config.RushCooldownSeconds - 1f && !_animationPlaying)
+            if (Time.time > _attackTime + _config.RushCooldownSeconds - _config.RushWindupLeadSeconds && !_animationPlaying)
             {
                 _animationPlaying = true;
                 _animator?.Play("Base Layer.Attack");

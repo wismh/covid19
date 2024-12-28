@@ -482,12 +482,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _medicalPrefab: {fileID: -277016288498846649, guid: c9b8456fce40abd4eb1a023355e61296, type: 3}
-  _spawnBounds:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 12, y: 27, z: 0}
-  _spawnInterval: 15
-  _numToSpawn: 3
-  _maxMedicals: 10
 --- !u!1 &149748049
 GameObject:
   m_ObjectHideFlags: 0
@@ -6031,8 +6025,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _virusPrefab: {fileID: 8412739502618374, guid: b866b8fd8c81b3e4083ff6f07b0a6617, type: 3}
   _glistPrefab: {fileID: 9273841650918273, guid: f16281b56c1f2c14485b5d991aeb30d2, type: 3}
-  _initialWaveSize: 10
-  _distanceFromCenter: 30
 --- !u!114 &6531579475014130
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6063,6 +6055,7 @@ MonoBehaviour:
   _cellSpawner: {fileID: 7016120388211641}
   _macroVirusConfig: {fileID: 11400000, guid: f59d974784a1871b8e9a7e0433a2e966, type: 2}
   _macroVirusSpawner: {fileID: 5832045637886502}
+  _pickupsConfig: {fileID: 11400000, guid: 0302e93c3aba3be4489a2201f9493ba0, type: 2}
   _medicalSpawner: {fileID: 124502040}
   _waveScalingConfig: {fileID: 11400000, guid: c526b4c270a5ed59980fd1bd36c061eb, type: 2}
   _worldScaleConfig: {fileID: 11400000, guid: e73d57b41d53b054fde896015e439bb3, type: 2}
@@ -6094,14 +6087,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _cellPrefab: {fileID: 4010140487636830674, guid: a38a25f5f1589ec48983d3b4460eaf12, type: 3}
-  _cellCount: 20
-  _minSqrDistanceBetweenCells: 35
-  _minSqrDistanceFromOrigin: 10
-  _maxPlacementAttempts: 5000
-  _spawnBounds:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 10, y: 25, z: 0}
-  _deathDestroyDelaySeconds: 2
 --- !u!1001 &7027037699782355
 PrefabInstance:
   m_ObjectHideFlags: 0

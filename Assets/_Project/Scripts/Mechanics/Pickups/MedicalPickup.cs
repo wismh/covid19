@@ -18,10 +18,6 @@ namespace _Project.Mechanics.Pickups
     /// </summary>
     public class MedicalPickup : MonoBehaviour, IDamageable
     {
-        [Header("Health & Timing")]
-        [SerializeField] private int _health = 1;
-        [SerializeField] private float _breakDelay = 1f;
-
         [Header("Components")]
         [SerializeField] private Animator _animator;
         [SerializeField] private Collider2D _boxCollider;
@@ -29,6 +25,9 @@ namespace _Project.Mechanics.Pickups
         [SerializeField] private AudioSource _collectAudioSource;
         [SerializeField] private List<VitaminPickup> _vitamins;
 
+        // Health/timing tunables now live on PickupsConfig instead of local [SerializeField]s.
+        private PickupsConfig _config;
+        private int _health;
         private PlayerStatsService _playerStatsService;
         private IPlayerTargetProvider _targetProvider;
         private Transform _playerTransform;
@@ -38,8 +37,10 @@ namespace _Project.Mechanics.Pickups
 
         public event Action<MedicalPickup> OnDestroyed;
 
-        public void Construct(PlayerStatsService playerStatsService, IPlayerTargetProvider targetProvider)
+        public void Construct(PickupsConfig config, PlayerStatsService playerStatsService, IPlayerTargetProvider targetProvider)
         {
+            _config = config;
+            _health = config.MedicalHealth;
             _playerStatsService = playerStatsService;
             _targetProvider = targetProvider;
 
@@ -47,8 +48,10 @@ namespace _Project.Mechanics.Pickups
             PropagateDependenciesToVitamins();
         }
 
-        public void Construct(PlayerStatsService playerStatsService, Transform playerTransform)
+        public void Construct(PickupsConfig config, PlayerStatsService playerStatsService, Transform playerTransform)
         {
+            _config = config;
+            _health = config.MedicalHealth;
             _playerStatsService = playerStatsService;
             _playerTransform = playerTransform;
 
@@ -93,11 +96,11 @@ namespace _Project.Mechanics.Pickups
 
                 if (_targetProvider != null)
                 {
-                    vitamin.Construct(_targetProvider, _collectAudioSource, null, HandleVitaminCollected);
+                    vitamin.Construct(_config, _targetProvider, _collectAudioSource, null, HandleVitaminCollected);
                 }
                 else
                 {
-                    vitamin.Construct(_playerTransform, _collectAudioSource, null, HandleVitaminCollected);
+                    vitamin.Construct(_config, _playerTransform, _collectAudioSource, null, HandleVitaminCollected);
                 }
             }
         }
@@ -132,8 +135,8 @@ namespace _Project.Mechanics.Pickups
 
         private IEnumerator ReleaseVitaminsRoutine()
         {
-            if (_breakDelay > 0f)
-                yield return new WaitForSeconds(_breakDelay);
+            if (_config.BreakDelaySeconds > 0f)
+                yield return new WaitForSeconds(_config.BreakDelaySeconds);
 
             if (_animator != null)
                 _animator.enabled = false;
@@ -159,9 +162,9 @@ namespace _Project.Mechanics.Pickups
                 }
 
                 if (_targetProvider != null)
-                    vitamin.Construct(_targetProvider, _collectAudioSource, null, HandleVitaminCollected);
+                    vitamin.Construct(_config, _targetProvider, _collectAudioSource, null, HandleVitaminCollected);
                 else
-                    vitamin.Construct(_playerTransform, _collectAudioSource, null, HandleVitaminCollected);
+                    vitamin.Construct(_config, _playerTransform, _collectAudioSource, null, HandleVitaminCollected);
 
                 Vector2 outwardDir = (vitamin.transform.position - transform.position);
                 Vector2 dir = outwardDir.sqrMagnitude > 0.001f ? outwardDir.normalized : UnityEngine.Random.insideUnitCircle.normalized;
@@ -169,7 +172,7 @@ namespace _Project.Mechanics.Pickups
             }
 
             // Safety fallback: in case a vitamin gets stuck or missed, destroy after timeout
-            float safetyTimer = 20f;
+            float safetyTimer = _config.SafetyTimeoutSeconds;
             while (_remainingVitamins > 0 && safetyTimer > 0f)
             {
                 safetyTimer -= Time.deltaTime;
@@ -201,7 +204,9 @@ namespace _Project.Mechanics.Pickups
                 sr.enabled = false;
 
             // If collect audio is playing, give it a moment to finish before destroying the GameObject
-            float destroyDelay = (_collectAudioSource != null && _collectAudioSource.isPlaying) ? 0.5f : 0.1f;
+            float destroyDelay = (_collectAudioSource != null && _collectAudioSource.isPlaying)
+                ? _config.DestroyDelayWithAudioSeconds
+                : _config.DestroyDelayWithoutAudioSeconds;
             Destroy(gameObject, destroyDelay);
         }
 

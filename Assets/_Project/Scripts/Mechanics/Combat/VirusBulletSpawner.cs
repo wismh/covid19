@@ -12,10 +12,10 @@ namespace _Project.Mechanics.Combat
     {
         [SerializeField] private VirusBullet _bulletPrefab;
 
-        public void SpawnBullet(Vector3 position, Vector3 direction, Transform scaleReference)
+        public VirusBullet SpawnBullet(Vector3 position, Vector3 direction, Transform scaleReference)
         {
             if (_bulletPrefab == null)
-                return;
+                return null;
 
             VirusBullet bullet = scaleReference != null
                 ? Instantiate(_bulletPrefab, scaleReference)
@@ -24,6 +24,8 @@ namespace _Project.Mechanics.Combat
             Transform bulletTransform = bullet.transform;
             bulletTransform.position = position;
             bulletTransform.right = direction;
+
+            return bullet;
         }
     }
 }

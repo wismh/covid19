@@ -65,10 +65,8 @@ namespace _Project.Mechanics.Viruses.Macro
         [SerializeField] private MacroVirusController _virusPrefab;
         [SerializeField] private MacroVirusController _glistPrefab;
 
-        [Header("Wave sizing (ported from GMTK.VirusSpawner, values from GameplayScene.unity's VirusSpawner instance)")]
-        [SerializeField] private float _initialWaveSize = 10f;
-        [SerializeField] private float _distanceFromCenter = 30f;
-
+        // Wave sizing/placement now live on WaveScalingConfig (InitialWaveSize/DistanceFromCenter) instead of
+        // local [SerializeField]s - see WaveScalingConfig's own doc comment.
         private float _waveSize;
 
         private MacroVirusConfig _config;
@@ -89,12 +87,16 @@ namespace _Project.Mechanics.Viruses.Macro
             _cellRegistry = cellRegistry;
             _registry = registry;
             _waveScalingConfig = waveScalingConfig;
+
+            // Seeded here rather than Awake() - CellSpawner's own Construct/Start doc comment explains why
+            // Awake() can't be trusted to run after Construct() (Zenject guarantees injection before Start(),
+            // not before Awake()), and this needs WaveScalingConfig to already be assigned.
+            _waveSize = waveScalingConfig.InitialWaveSize;
         }
 
         private void Awake()
         {
             _lifetimeCts = new CancellationTokenSource();
-            _waveSize = _initialWaveSize;
         }
 
         private void OnDestroy()
@@ -123,9 +125,10 @@ namespace _Project.Mechanics.Viruses.Macro
         public void SpawnVirus()
         {
             float angle = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+            float distanceFromCenter = _waveScalingConfig.DistanceFromCenter;
             Vector3 position = new Vector3(
-                _distanceFromCenter * Mathf.Sin(angle),
-                _distanceFromCenter * Mathf.Cos(angle),
+                distanceFromCenter * Mathf.Sin(angle),
+                distanceFromCenter * Mathf.Cos(angle),
                 0f);
 
             SpawnVirus(position);
@@ -145,7 +148,7 @@ namespace _Project.Mechanics.Viruses.Macro
                 && _waveScalingConfig != null
                 && ElapsedSeconds >= _waveScalingConfig.GlistUnlockTimeSeconds;
 
-            MacroVirusController prefab = glistUnlocked && UnityEngine.Random.Range(0, 2) == 1 ? _glistPrefab : _virusPrefab;
+            MacroVirusController prefab = glistUnlocked && UnityEngine.Random.value < _waveScalingConfig.EliteSpawnChance ? _glistPrefab : _virusPrefab;
 
             MacroVirusController virus = Instantiate(prefab, transform);
             virus.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, 0f, UnityEngine.Random.Range(0, 360)));
@@ -178,7 +181,7 @@ namespace _Project.Mechanics.Viruses.Macro
 
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(1f), cancellationToken: linkedCts.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(_waveScalingConfig.ReplacementSpawnDelaySeconds), cancellationToken: linkedCts.Token);
             }
             catch (OperationCanceledException)
             {

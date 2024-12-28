@@ -36,6 +36,14 @@ namespace _Project.Mechanics.Viruses.Micro
         // Old: InCellVirus.k_attackCooldown (private const, 2f, shared by all three variants - see class doc).
         [SerializeField] private float _collisionDamageCooldownSeconds = 2f;
 
+        // Old: InCellVirus.AnimationOnDamage() -> `rd.AddForce(attackDirection * 0.8f, ForceMode2D.Impulse);`
+        [SerializeField] private float _knockbackForceOnHit = 0.8f;
+
+        [Header("Damage/death presentation timing (values from InCellVirus.AnimationOnDamage()/AnimationOnDied())")]
+        [SerializeField] private float _damageFlashDurationSeconds = 0.1f;
+        [SerializeField] private float _deathAnimationDelaySeconds = 0.2f;
+        [SerializeField] private float _deathToKillDelaySeconds = 0.8f;
+
         [Header("Orange - continuous homing force (Assets/GMTK/Scripts/.../OrangeVirus.cs)")]
         // Old: OrangeVirus.k_speed (private const, 0.1f) - ForceMode2D.Force magnitude, direction = toward player.
         [SerializeField] private float _homingForce = 0.1f;
@@ -53,6 +61,12 @@ namespace _Project.Mechanics.Viruses.Micro
         // silently change the other, exactly as they were two independent `const` declarations in old code.
         [SerializeField] private float _bulletFireCooldownSeconds = 2f;
 
+        // Old: GMTK.VirusBullet's own [SerializeField] defaults (speed 4f, lifetime 5f, damage 1) - previously a
+        // prefab-only value with no config backing at all (2026-09-19 hardcode audit).
+        [SerializeField] private float _virusBulletSpeed = 4f;
+        [SerializeField] private float _virusBulletLifetimeSeconds = 5f;
+        [SerializeField] private int _virusBulletDamage = 1;
+
         [Header("Spiner - periodic impulse rush (Assets/GMTK/Scripts/.../SpinerVirus.cs)")]
         // Old: SpinerVirus.k_impulse (private const, 5f) - ForceMode2D.Impulse magnitude toward the player.
         [SerializeField] private float _rushImpulse = 5f;
@@ -60,17 +74,44 @@ namespace _Project.Mechanics.Viruses.Micro
         // Old: SpinerVirus.k_attackCooldown (private const, 4f) - rush interval, its own separate constant.
         [SerializeField] private float _rushCooldownSeconds = 4f;
 
+        [Header("Attack timing (shared formula shape across Cucumber/Spiner's OnEnable/FixedUpdate - see " +
+                "CucumberVirusBehavior/SpinerVirusBehavior)")]
+        // Old: CucumberVirus.OnEnable()/SpinerVirus.OnEnable() -> `Random.Range(0, k_attackCooldown * 1.5f)` -
+        // randomizes each spawned virus's initial attack timer so a batch doesn't all attack in lockstep.
+        [SerializeField] private float _initialCooldownJitterMultiplier = 1.5f;
+
+        // Old: CucumberVirus.FixedUpdate() -> `Time.time > _attackTime + k_attackCooldown / 2` - the "Attack"
+        // wind-up animation starts halfway through the fire-cooldown window.
+        [SerializeField] private float _bulletWindupLeadFraction = 0.5f;
+
+        // Old: SpinerVirus.FixedUpdate() -> `Time.time > (_attackTime + k_attackCooldown - 1)` - the "Attack"
+        // wind-up animation starts exactly 1 second before the rush fires.
+        [SerializeField] private float _rushWindupLeadSeconds = 1f;
+
         public MicroVirusVariant Variant => _variant;
         public int MaxHealth => _maxHealth;
         public int MeleeDamage => _meleeDamage;
         public float CollisionDamageCooldownSeconds => _collisionDamageCooldownSeconds;
+        public float KnockbackForceOnHit => _knockbackForceOnHit;
+
+        public float DamageFlashDurationSeconds => _damageFlashDurationSeconds;
+        public float DeathAnimationDelaySeconds => _deathAnimationDelaySeconds;
+        public float DeathToKillDelaySeconds => _deathToKillDelaySeconds;
 
         public float HomingForce => _homingForce;
 
         public float KitingForce => _kitingForce;
         public float BulletFireCooldownSeconds => _bulletFireCooldownSeconds;
 
+        public float VirusBulletSpeed => _virusBulletSpeed;
+        public float VirusBulletLifetimeSeconds => _virusBulletLifetimeSeconds;
+        public int VirusBulletDamage => _virusBulletDamage;
+
         public float RushImpulse => _rushImpulse;
         public float RushCooldownSeconds => _rushCooldownSeconds;
+
+        public float InitialCooldownJitterMultiplier => _initialCooldownJitterMultiplier;
+        public float BulletWindupLeadFraction => _bulletWindupLeadFraction;
+        public float RushWindupLeadSeconds => _rushWindupLeadSeconds;
     }
 }

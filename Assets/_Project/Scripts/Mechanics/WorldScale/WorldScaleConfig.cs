@@ -74,6 +74,41 @@ namespace _Project.Mechanics.WorldScale
                 "finds per-cell-type velocity variance matters, this belongs to a per-cell config instead)")]
         [SerializeField] private Vector2 _cellMacroMaxVelocity = new(0.6f, 0.6f);
 
+        [Header("Player speed scale (old: GMTK.Services.PlayerStats.SpeedScale, read by DriftMovableObject's " +
+                "movement math and set by both transitions - `SpeedScale = 1f` on macro entry, `= 0.01f` on micro " +
+                "entry, i.e. movement throttled to 1% speed inside a cell)")]
+        [SerializeField] private float _macroSpeedScale = 1f;
+        [SerializeField] private float _microSpeedScale = 0.01f;
+
+        [Header("Player particle trail (ported from GMTK.PlayerParticlesController - same Macro/Micro modifier " +
+                "pattern as the player/camera scale fields above, previously local [SerializeField]s with no " +
+                "config at all)")]
+        [SerializeField] private Vector2 _particleMinMaxEmissionRate = new(0f, 15f);
+
+        [SerializeField] private float _macroParticleStartSpeedMultiplier = 1f;
+        [SerializeField] private float _macroParticleStartSizeMultiplier = 1f;
+        [SerializeField] private float _macroParticleEmissionMultiplier = 1f;
+
+        [SerializeField] private float _microParticleStartSpeedMultiplier = 0.3f;
+        [SerializeField] private float _microParticleStartSizeMultiplier = 0.3f;
+        [SerializeField] private float _microParticleEmissionMultiplier = 3f;
+
+        [Header("Cell proximity prompt (ported from GMTK.UI.AdviceDialog)")]
+        // Old: `[SerializeField] private float _distanceToActivate;` compared directly against a SQUARED
+        // distance (`_cellManager.FindNearToPoint` returns sqrDistance, never sqrt'd before the `<` check) -
+        // i.e. despite its name, the old field was already a squared-distance threshold, not a linear one. Named
+        // accurately here instead of reproducing the misleading old name.
+        //
+        // Value bumped 4 -> 10 (2026-09-11 testing round): the ported value (4, i.e. a 2-unit linear threshold)
+        // was copied verbatim from the old scene's AdviceDialog instance, but is unreachable with THIS project's
+        // current Player/Cell.prefab collider sizes - measured live via Unity CLI (Physics2D.Distance, walking
+        // the player's BoxCollider2D into a cell's PolygonCollider2D from 5 angles until they touch): center-to-
+        // center distance at the moment of contact ranges ~2.27-2.63 units (sqrMagnitude ~5.1-6.9), already past
+        // the old 2-unit threshold from every angle tested - the prompt could never activate no matter how close
+        // the player got. 10 (~3.16 units) clears the worst-case measured contact distance with comfortable
+        // margin so the prompt reliably shows once the player is genuinely standing next to a cell.
+        [SerializeField] private float _cellProximityActivationSqrDistance = 10f;
+
         public float TransitionDurationSeconds => _transitionDurationSeconds;
 
         public Vector3 MacroPlayerScale => _macroPlayerScale;
@@ -88,5 +123,20 @@ namespace _Project.Mechanics.WorldScale
         public float RestoredPlayerAudioVolume => _restoredPlayerAudioVolume;
 
         public Vector2 CellMacroMaxVelocity => _cellMacroMaxVelocity;
+
+        public float MacroSpeedScale => _macroSpeedScale;
+        public float MicroSpeedScale => _microSpeedScale;
+
+        public Vector2 ParticleMinMaxEmissionRate => _particleMinMaxEmissionRate;
+
+        public float MacroParticleStartSpeedMultiplier => _macroParticleStartSpeedMultiplier;
+        public float MacroParticleStartSizeMultiplier => _macroParticleStartSizeMultiplier;
+        public float MacroParticleEmissionMultiplier => _macroParticleEmissionMultiplier;
+
+        public float MicroParticleStartSpeedMultiplier => _microParticleStartSpeedMultiplier;
+        public float MicroParticleStartSizeMultiplier => _microParticleStartSizeMultiplier;
+        public float MicroParticleEmissionMultiplier => _microParticleEmissionMultiplier;
+
+        public float CellProximityActivationSqrDistance => _cellProximityActivationSqrDistance;
     }
 }

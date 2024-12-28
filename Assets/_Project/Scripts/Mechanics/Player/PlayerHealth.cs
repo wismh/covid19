@@ -147,7 +147,7 @@ namespace _Project.Mechanics.Player
             // Old: PlayerDamageable.Damage ->
             // `float chanceIgnore = Armor / 6.0f; if (Random.Range(0.1f, 1.0f) < chanceIgnore) Armor -= 1; else _health -= damage;`
             float chanceToIgnore = _armor / _config.ArmorIgnoreChanceDivisor;
-            if (UnityEngine.Random.Range(0.1f, 1.0f) < chanceToIgnore)
+            if (UnityEngine.Random.Range(_config.ArmorIgnoreRollMin, _config.ArmorIgnoreRollMax) < chanceToIgnore)
                 _armor = Mathf.Max(0, _armor - 1);
             else
                 _health -= damage;
@@ -156,7 +156,7 @@ namespace _Project.Mechanics.Player
 
             // Old: PlayerDamageable.AnimationOnDamage -> `_body.Impulse(attackDirection * 0.3f);`
             if (_movement != null)
-                _movement.ApplyImpulse(attackDirection * 0.3f);
+                _movement.ApplyImpulse(attackDirection * _config.KnockbackImpulseStrength);
 
             // Old: PlayerDamageable.Damage -> `_audioList.Play(2);` (unconditional, same as the virus classes'
             // own hit-sound calls - see class doc comment).
@@ -179,7 +179,7 @@ namespace _Project.Mechanics.Player
 
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(0.1f), cancellationToken: _lifetimeCts.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(_config.DamageFlashDurationSeconds), cancellationToken: _lifetimeCts.Token);
             }
             catch (OperationCanceledException)
             {
@@ -218,7 +218,7 @@ namespace _Project.Mechanics.Player
             // same total ~2s mark this class already used (HandleGameOver/game-over UI timing unchanged).
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(0.2f), cancellationToken: _lifetimeCts.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(_config.DeathAnimationDelaySeconds), cancellationToken: _lifetimeCts.Token);
             }
             catch (OperationCanceledException)
             {
@@ -231,7 +231,7 @@ namespace _Project.Mechanics.Player
 
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(1.8f), cancellationToken: _lifetimeCts.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(_config.DeathToGameOverDelaySeconds), cancellationToken: _lifetimeCts.Token);
             }
             catch (OperationCanceledException)
             {
