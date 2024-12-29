@@ -3178,7 +3178,6 @@ MonoBehaviour:
   _promptCanvas: {fileID: 989848342}
   _player: {fileID: 0}
   _targetCell: {fileID: 0}
-  _sqrDistanceToActivate: 10
 --- !u!1 &931402256
 GameObject:
   m_ObjectHideFlags: 0
