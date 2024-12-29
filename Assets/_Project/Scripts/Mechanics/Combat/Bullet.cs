@@ -1,5 +1,6 @@
-using System;
 using UnityEngine;
+using Zenject;
+using _Project.Mechanics.Player;
 using _Project.Mechanics.WorldScale;
 
 namespace _Project.Mechanics.Combat
@@ -9,31 +10,44 @@ namespace _Project.Mechanics.Combat
     /// Replaces legacy GMTK.Bullet (Assets/GMTK/Scripts/Behaviors/Bullet/Bullet.cs).
     /// Handles flight, damage application to GMTK.IDamageable, lifetime tracking, and pool return.
     /// Supports dynamic world scale (Macro 1x scale/speed vs Micro WorldScaleConfig.MicroPlayerScale-x speed).
+    /// Pooled via a Zenject <see cref="IMemoryPool"/> (bound by PlayerInstaller.Install) instead of the previous
+    /// <see cref="UnityEngine.Pool.ObjectPool{T}"/> - <see cref="OnSpawned"/> replaces the old Fire() call,
+    /// <see cref="ReturnToPool"/> now despawns back into that pool. <see cref="Construct"/> resolves
+    /// PlayerConfig/WorldScaleConfig/WorldScaleController via real Zenject injection, called ONCE when the pool
+    /// actually instantiates this prefab - not per spawn - since those are stable container singletons, unlike
+    /// position/direction/damage which vary every spawn and so go through <see cref="OnSpawned"/> instead.
     /// </summary>
-    public class Bullet : MonoBehaviour
+    public class Bullet : MonoBehaviour, IPoolable<Vector3, Vector3, int, IMemoryPool>
     {
         [SerializeField] private float _speed = 10f;
         [SerializeField] private float _bulletLifetime = 2f;
         [SerializeField] private int _damage = 1;
 
-        private Action<Bullet> _returnToPool;
-        private Func<bool> _isMicroWorld;
         private WorldScaleConfig _worldScaleConfig;
+        private WorldScaleController _worldScaleController;
+        private IMemoryPool _pool;
         private float _timeRemaining;
         private int _currentDamage;
         private bool _isReturned;
 
-        public void Init(Action<Bullet> returnToPool, Func<bool> isMicroWorld, WorldScaleConfig worldScaleConfig, float speed, float bulletLifetime)
+        [Inject]
+        public void Construct(PlayerConfig playerConfig, WorldScaleConfig worldScaleConfig, WorldScaleController worldScaleController)
         {
-            _returnToPool = returnToPool;
-            _isMicroWorld = isMicroWorld;
             _worldScaleConfig = worldScaleConfig;
-            _speed = speed;
-            _bulletLifetime = bulletLifetime;
+            _worldScaleController = worldScaleController;
+            _speed = playerConfig.BulletSpeed;
+            _bulletLifetime = playerConfig.BulletLifetimeSeconds;
         }
 
-        public void Fire(Vector3 position, Vector3 direction, int damage = -1)
+        private bool IsMicroWorld()
         {
+            return _worldScaleController != null && _worldScaleController.CurrentScale == WorldScale.WorldScale.Micro;
+        }
+
+        public void OnSpawned(Vector3 position, Vector3 direction, int damage, IMemoryPool pool)
+        {
+            _pool = pool;
+
             _isReturned = false;
             transform.position = position;
             transform.right = direction;
@@ -42,6 +56,13 @@ namespace _Project.Mechanics.Combat
 
             UpdateScaleAndVelocity(0f);
             gameObject.SetActive(true);
+        }
+
+        public void OnDespawned()
+        {
+            _pool = null;
+            _isReturned = true;
+            gameObject.SetActive(false);
         }
 
         private void Update()
@@ -61,7 +82,7 @@ namespace _Project.Mechanics.Combat
 
         private void UpdateScaleAndVelocity(float deltaTime)
         {
-            bool isMicro = _isMicroWorld != null && _isMicroWorld();
+            bool isMicro = IsMicroWorld();
             Vector3 microScale = _worldScaleConfig != null ? _worldScaleConfig.MicroPlayerScale : new Vector3(0.3f, 0.3f, 1f);
             Vector3 targetScale = isMicro ? microScale : Vector3.one;
             if (transform.localScale != targetScale)
@@ -99,9 +120,9 @@ namespace _Project.Mechanics.Combat
                 return;
 
             _isReturned = true;
-            if (_returnToPool != null)
+            if (_pool != null)
             {
-                _returnToPool.Invoke(this);
+                _pool.Despawn(this);
             }
             else
             {
@@ -112,6 +133,10 @@ namespace _Project.Mechanics.Combat
         private void OnDisable()
         {
             _isReturned = true;
+        }
+
+        public class Factory : PlaceholderFactory<Vector3, Vector3, int, Bullet>
+        {
         }
     }
 }

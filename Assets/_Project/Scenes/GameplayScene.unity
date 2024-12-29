@@ -359,8 +359,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: '{time}'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 94735ea2ee4f3d14db2ef36d7e97a877, type: 2}
-  m_sharedMaterial: {fileID: 7634511417053610303, guid: 94735ea2ee4f3d14db2ef36d7e97a877, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
+  m_sharedMaterial: {fileID: 2526377944852963832, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -543,8 +543,8 @@ MonoBehaviour:
 
     Choose your upgrade '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 94735ea2ee4f3d14db2ef36d7e97a877, type: 2}
-  m_sharedMaterial: {fileID: 7634511417053610303, guid: 94735ea2ee4f3d14db2ef36d7e97a877, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
+  m_sharedMaterial: {fileID: 2526377944852963832, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -836,8 +836,8 @@ MonoBehaviour:
 
     cells died: {cd}'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 94735ea2ee4f3d14db2ef36d7e97a877, type: 2}
-  m_sharedMaterial: {fileID: 7634511417053610303, guid: 94735ea2ee4f3d14db2ef36d7e97a877, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
+  m_sharedMaterial: {fileID: 2526377944852963832, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -973,8 +973,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Press 'E' to get out
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 94735ea2ee4f3d14db2ef36d7e97a877, type: 2}
-  m_sharedMaterial: {fileID: 7634511417053610303, guid: 94735ea2ee4f3d14db2ef36d7e97a877, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
+  m_sharedMaterial: {fileID: 2526377944852963832, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3046,8 +3046,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: YOU DIED
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 94735ea2ee4f3d14db2ef36d7e97a877, type: 2}
-  m_sharedMaterial: {fileID: 7634511417053610303, guid: 94735ea2ee4f3d14db2ef36d7e97a877, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
+  m_sharedMaterial: {fileID: 2526377944852963832, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3387,8 +3387,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Press 'E' to penetration
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
+  m_sharedMaterial: {fileID: 2526377944852963832, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3824,8 +3824,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: PRESS ANY KEY
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 94735ea2ee4f3d14db2ef36d7e97a877, type: 2}
-  m_sharedMaterial: {fileID: 7634511417053610303, guid: 94735ea2ee4f3d14db2ef36d7e97a877, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
+  m_sharedMaterial: {fileID: 2526377944852963832, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -4384,6 +4384,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d5c22d47487850ea2cd8936c6c3da561, type: 2}
   - {fileID: 11400000, guid: 98c921dcd1882fe38da09d3cac821772, type: 2}
   - {fileID: 11400000, guid: e1d09ba18ab9c5c8c40725cd6b177db9, type: 2}
+  _bulletPrefab: {fileID: -7428742030573401080, guid: 1f761797de14c9a49bbd3e5641999789, type: 3}
   _cellConfig: {fileID: 11400000, guid: 6421f115f1264b2cd9fd501ae511b7cf, type: 2}
   _macroVirusConfig: {fileID: 11400000, guid: f59d974784a1871b8e9a7e0433a2e966, type: 2}
   _waveScalingConfig: {fileID: 11400000, guid: c526b4c270a5ed59980fd1bd36c061eb, type: 2}
@@ -4477,8 +4478,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 1
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 94735ea2ee4f3d14db2ef36d7e97a877, type: 2}
-  m_sharedMaterial: {fileID: 7634511417053610303, guid: 94735ea2ee4f3d14db2ef36d7e97a877, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
+  m_sharedMaterial: {fileID: 2526377944852963832, guid: 04b6eb2d176c8494990a29dd8fda4c91, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -5883,7 +5884,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b5b38655aa7d3942b73d1b4a04b28d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _bulletPrefab: {fileID: -7428742030573401080, guid: 1f761797de14c9a49bbd3e5641999789, type: 3}
 --- !u!1 &2136286275
 GameObject:
   m_ObjectHideFlags: 0
@@ -6036,7 +6036,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cde5a769bb09e594e1093cfc0dc6cd1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _playerConfig: {fileID: 11400000, guid: 78e9e5a65a4dc9d40bfcf4ba901cb207, type: 2}
   _upgradeDefinitions:
   - {fileID: 11400000, guid: 5ea277fd40f05e7d04ccaa12ae6ec436, type: 2}
   - {fileID: 11400000, guid: 74b83fad47897c6e67d59bfe5ae499a9, type: 2}
@@ -6057,7 +6056,6 @@ MonoBehaviour:
   _pickupsConfig: {fileID: 11400000, guid: 0302e93c3aba3be4489a2201f9493ba0, type: 2}
   _medicalSpawner: {fileID: 124502040}
   _waveScalingConfig: {fileID: 11400000, guid: c526b4c270a5ed59980fd1bd36c061eb, type: 2}
-  _worldScaleConfig: {fileID: 11400000, guid: e73d57b41d53b054fde896015e439bb3, type: 2}
   _worldCamera: {fileID: 519420031}
   _cameraFollow: {fileID: 519420033}
   _playerVisualRoot: {fileID: 4435939539474040}

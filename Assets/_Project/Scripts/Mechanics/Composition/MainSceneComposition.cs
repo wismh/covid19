@@ -9,6 +9,7 @@ using Zenject;
 using _Project.Mechanics.AppFlow;
 using _Project.Mechanics.Audio;
 using _Project.Mechanics.Cells;
+using _Project.Mechanics.Combat;
 using _Project.Mechanics.Navigation;
 using _Project.Mechanics.Pickups;
 using _Project.Mechanics.Player;
@@ -71,7 +72,6 @@ namespace _Project.Mechanics.Composition
     public sealed class MainSceneComposition : MonoBehaviour
     {
         [Header("Player (Phase 2) - PlayerMovement/PlayerTurret/PlayerHealth already placed on the player GameObject")]
-        [SerializeField] private PlayerConfig _playerConfig;
         [SerializeField] private List<UpgradeDefinition> _upgradeDefinitions;
         [SerializeField] private PlayerMovement _playerMovement;
         [SerializeField] private PlayerTurret _playerTurret;
@@ -97,7 +97,6 @@ namespace _Project.Mechanics.Composition
         [SerializeField] private WaveScalingConfig _waveScalingConfig;
 
         [Header("World scale (Phase 4)")]
-        [SerializeField] private WorldScaleConfig _worldScaleConfig;
         [SerializeField] private UnityEngine.Camera _worldCamera;
         [SerializeField] private _Project.Mechanics.Camera.CameraFollow _cameraFollow;
         [SerializeField] private Transform _playerVisualRoot;
@@ -158,6 +157,11 @@ namespace _Project.Mechanics.Composition
         /// that were never `[Inject]`-tagged (`MedicalSpawner`, `BulletManager` - see their own Construct doc
         /// comments, deliberately not migrated).
         /// </summary>
+        // Bullet pooling migration (see Bullet/BulletManager/PlayerInstaller doc comments): BulletManager.Construct
+        // stays hand-composed (deliberately not [Inject]-tagged, see its own doc comment), so this class resolves
+        // the pool's Factory too and forwards it alongside the rest in ConstructSpawners().
+        private Bullet.Factory _bulletFactory;
+
         [Inject]
         public void Construct(
             IAudioSystem audioSystem,
@@ -169,7 +173,8 @@ namespace _Project.Mechanics.Composition
             WorldScaleController worldScaleController,
             GameAudioService gameAudioService,
             IPlayerTargetProvider playerTargetProvider,
-            IScreenManager screenManager)
+            IScreenManager screenManager,
+            Bullet.Factory bulletFactory)
         {
             _audioSystem = audioSystem;
             _gameSaveService = gameSaveService;
@@ -181,6 +186,7 @@ namespace _Project.Mechanics.Composition
             _gameAudioService = gameAudioService;
             _playerTargetProvider = playerTargetProvider;
             _screenManager = screenManager;
+            _bulletFactory = bulletFactory;
         }
 
         private void Awake()
@@ -438,7 +444,7 @@ namespace _Project.Mechanics.Composition
                 _medicalSpawner.Construct(_pickupsConfig, _playerStats, _playerTargetProvider);
 
             if (_bulletManager != null)
-                _bulletManager.Construct(_playerConfig, _playerStats, _worldScaleConfig, _worldScaleController);
+                _bulletManager.Construct(_playerStats, _bulletFactory);
 
             if (_playerTurret != null)
                 _playerTurret.SetProjectileSpawner(_bulletManager);

@@ -1,74 +1,31 @@
-using System;
 using UnityEngine;
-using UnityEngine.Pool;
 using _Project.Mechanics.Player;
-using _Project.Mechanics.WorldScale;
 
 namespace _Project.Mechanics.Combat
 {
     /// <summary>
-    /// Manages the player's bullet pool.
-    /// Replaces legacy GMTK.BulletManager (Assets/GMTK/Scripts/Behaviors/Bullet/BulletManager.cs).
-    /// Implements IProjectileSpawner for player firing, pulling effective damage from PlayerStatsService
-    /// and world scale from WorldScaleController.
+    /// Fires the player's bullets, pooled via a Zenject <see cref="Bullet.Factory"/> (bound by
+    /// PlayerInstaller.Install - see its own doc comment) instead of the previous hand-rolled
+    /// <see cref="UnityEngine.Pool.ObjectPool{T}"/>. Replaces legacy GMTK.BulletManager
+    /// (Assets/GMTK/Scripts/Behaviors/Bullet/BulletManager.cs). Implements IProjectileSpawner for player firing,
+    /// pulling effective damage from PlayerStatsService. World-scale-dependent speed/size now lives on
+    /// <see cref="Bullet"/> itself (it injects WorldScaleController directly) rather than being threaded through
+    /// here, since that concern belongs to the bullet's own flight, not to who fired it.
     /// </summary>
     public class BulletManager : MonoBehaviour, IProjectileSpawner
     {
-        private const int k_defaultPoolCapacity = 50;
-        private const int k_maxPoolSize = 100;
-
-        [SerializeField] private Bullet _bulletPrefab;
-
-        private IObjectPool<Bullet> _bulletPool;
-        private PlayerConfig _playerConfig;
         private PlayerStatsService _playerStats;
-        private WorldScaleConfig _worldScaleConfig;
-        private WorldScaleController _worldScaleController;
+        private Bullet.Factory _bulletFactory;
 
-        public void Construct(PlayerConfig playerConfig, PlayerStatsService playerStats, WorldScaleConfig worldScaleConfig, WorldScaleController worldScaleController)
+        /// <summary>
+        /// Deliberately not [Inject]-tagged - see MainSceneComposition's class doc comment ("deliberately not
+        /// migrated") and its Construct method, which now also resolves <paramref name="bulletFactory"/> and
+        /// forwards it here alongside the other hand-composed dependencies.
+        /// </summary>
+        public void Construct(PlayerStatsService playerStats, Bullet.Factory bulletFactory)
         {
-            _playerConfig = playerConfig;
             _playerStats = playerStats;
-            _worldScaleConfig = worldScaleConfig;
-            _worldScaleController = worldScaleController;
-        }
-
-        private void Awake()
-        {
-            InitializePool();
-        }
-
-        private void InitializePool()
-        {
-            if (_bulletPool != null)
-                return;
-
-            _bulletPool = new ObjectPool<Bullet>(
-                createFunc: CreateBullet,
-                actionOnGet: bullet => { },
-                actionOnRelease: bullet => bullet.gameObject.SetActive(false),
-                actionOnDestroy: bullet =>
-                {
-                    if (bullet != null)
-                        Destroy(bullet.gameObject);
-                },
-                collectionCheck: false,
-                defaultCapacity: k_defaultPoolCapacity,
-                maxSize: k_maxPoolSize
-            );
-        }
-
-        private Bullet CreateBullet()
-        {
-            Bullet bullet = Instantiate(_bulletPrefab, transform);
-            bullet.Init(DestroyBullet, IsMicroWorld, _worldScaleConfig, _playerConfig.BulletSpeed, _playerConfig.BulletLifetimeSeconds);
-            bullet.gameObject.SetActive(false);
-            return bullet;
-        }
-
-        private bool IsMicroWorld()
-        {
-            return _worldScaleController != null && _worldScaleController.CurrentScale == WorldScale.WorldScale.Micro;
+            _bulletFactory = bulletFactory;
         }
 
         public void SpawnProjectile(Vector3 position, Vector3 direction)
@@ -83,28 +40,8 @@ namespace _Project.Mechanics.Combat
 
         public void Fire(Vector3 position, Vector3 direction)
         {
-            if (_bulletPool == null)
-                InitializePool();
-
-            Bullet bullet = _bulletPool.Get();
             int damage = _playerStats != null ? _playerStats.EffectiveDamage : 1;
-            bullet.Fire(position, direction, damage);
-        }
-
-        public void DestroyBullet(Bullet bullet)
-        {
-            if (_bulletPool != null && bullet != null)
-            {
-                _bulletPool.Release(bullet);
-            }
-        }
-
-        public void DestroyBullet(Transform bulletTransform)
-        {
-            if (bulletTransform != null && bulletTransform.TryGetComponent(out Bullet bullet))
-            {
-                DestroyBullet(bullet);
-            }
+            _bulletFactory.Create(position, direction, damage);
         }
     }
 }

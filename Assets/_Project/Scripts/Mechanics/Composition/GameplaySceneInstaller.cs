@@ -3,6 +3,7 @@ using UnityEngine;
 using Zenject;
 using _Project.Mechanics.Audio;
 using _Project.Mechanics.Cells;
+using _Project.Mechanics.Combat;
 using _Project.Mechanics.Player;
 using _Project.Mechanics.Viruses.Micro;
 using _Project.Mechanics.Viruses.Macro;
@@ -23,6 +24,7 @@ namespace _Project.Mechanics.Composition
         [Header("Player")]
         [SerializeField] private PlayerConfig _playerConfig;
         [SerializeField] private List<UpgradeDefinition> _upgradeDefinitions;
+        [SerializeField] private Bullet _bulletPrefab;
 
         [Header("Cells")]
         [SerializeField] private CellConfig _cellConfig;
@@ -41,7 +43,7 @@ namespace _Project.Mechanics.Composition
 
         public override void InstallBindings()
         {
-            PlayerInstaller.Install(Container, _playerConfig, _upgradeDefinitions);
+            PlayerInstaller.Install(Container, _playerConfig, _upgradeDefinitions, _bulletPrefab);
             CellsInstaller.Install(Container, _cellConfig);
             VirusesInstaller.Install(Container, _macroVirusConfig, _waveScalingConfig);
             WorldScaleInstaller.Install(Container, _worldScaleConfig);
