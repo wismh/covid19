@@ -37,6 +37,8 @@ namespace _Project.Mechanics.Composition
 
         [Header("Macro viruses")]
         [SerializeField] private MacroVirusConfig _macroVirusConfig;
+        [SerializeField] private MacroVirusController _macroVirusPrefab;
+        [SerializeField] private MacroVirusController _macroGlistPrefab;
 
         [Header("Waves - shared by MacroVirusSpawner and CellSpawner")]
         [SerializeField] private WaveScalingConfig _waveScalingConfig;
@@ -52,7 +54,7 @@ namespace _Project.Mechanics.Composition
             PlayerInstaller.Install(Container, _playerConfig, _upgradeDefinitions, _bulletPrefab);
             CellsInstaller.Install(Container, _cellConfig);
             MicroVirusesInstaller.Install(Container, _orangeVirusPrefab, _cucumberVirusPrefab, _spinerVirusPrefab, _virusBulletPrefab);
-            VirusesInstaller.Install(Container, _macroVirusConfig, _waveScalingConfig);
+            VirusesInstaller.Install(Container, _macroVirusConfig, _waveScalingConfig, _macroVirusPrefab, _macroGlistPrefab);
             WorldScaleInstaller.Install(Container, _worldScaleConfig);
 
             // IPlayerTargetProvider wraps PlayerMovement.transform - needs PlayerMovement already bound above.

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -61,10 +62,6 @@ namespace _Project.Mechanics.Viruses.Macro
     /// </summary>
     public sealed class MacroVirusSpawner : MonoBehaviour
     {
-        [Header("Prefabs - assigned by a later stage (prefab/scene surgery), see class doc comment")]
-        [SerializeField] private MacroVirusController _virusPrefab;
-        [SerializeField] private MacroVirusController _glistPrefab;
-
         // Wave sizing/placement now live on WaveScalingConfig (InitialWaveSize/DistanceFromCenter) instead of
         // local [SerializeField]s - see WaveScalingConfig's own doc comment.
         private float _waveSize;
@@ -74,6 +71,10 @@ namespace _Project.Mechanics.Viruses.Macro
         private MacroVirusRegistry _registry;
         private WaveScalingConfig _waveScalingConfig;
 
+        // Pooling migration: replaces the _virusPrefab/_glistPrefab [SerializeField]s - each variant's pool is
+        // bound by VirusesInstaller and keyed by MacroVirusVariant (mirrors MicroVirusSpawner's own dictionary).
+        private IReadOnlyDictionary<MacroVirusVariant, IFactory<Vector3, Quaternion, MacroVirusController>> _factories;
+
         private bool _isPaused;
         private CancellationTokenSource _lifetimeCts;
 
@@ -81,12 +82,13 @@ namespace _Project.Mechanics.Viruses.Macro
         private float ElapsedSeconds => Time.timeSinceLevelLoad;
 
         [Inject]
-        public void Construct(MacroVirusConfig config, CellRegistry cellRegistry, MacroVirusRegistry registry, WaveScalingConfig waveScalingConfig)
+        public void Construct(MacroVirusConfig config, CellRegistry cellRegistry, MacroVirusRegistry registry, WaveScalingConfig waveScalingConfig, IReadOnlyDictionary<MacroVirusVariant, IFactory<Vector3, Quaternion, MacroVirusController>> factories)
         {
             _config = config;
             _cellRegistry = cellRegistry;
             _registry = registry;
             _waveScalingConfig = waveScalingConfig;
+            _factories = factories;
 
             // Seeded here rather than Awake() - CellSpawner's own Construct/Start doc comment explains why
             // Awake() can't be trusted to run after Construct() (Zenject guarantees injection before Start(),
@@ -138,22 +140,28 @@ namespace _Project.Mechanics.Viruses.Macro
         /// once WaveScalingConfig.GlistUnlockTimeSeconds has elapsed, matching old `_playerStats.Time &gt;= 80`.</summary>
         public void SpawnVirus(Vector3 position)
         {
-            if (_virusPrefab == null || _config == null || _registry == null)
+            if (_factories == null || _factories.Count == 0 || _config == null || _registry == null)
             {
-                Debug.LogWarning($"{nameof(MacroVirusSpawner)}.{nameof(SpawnVirus)} called before prefabs/config/registry were assigned - no-op. See class doc comment's prefab seam.", this);
+                Debug.LogWarning($"{nameof(MacroVirusSpawner)}.{nameof(SpawnVirus)} called before pools/config/registry were bound - no-op. See class doc comment's prefab seam.", this);
                 return;
             }
 
-            bool glistUnlocked = _glistPrefab != null
+            bool glistUnlocked = _factories.ContainsKey(MacroVirusVariant.Glist)
                 && _waveScalingConfig != null
                 && ElapsedSeconds >= _waveScalingConfig.GlistUnlockTimeSeconds;
 
-            MacroVirusController prefab = glistUnlocked && UnityEngine.Random.value < _waveScalingConfig.EliteSpawnChance ? _glistPrefab : _virusPrefab;
+            MacroVirusVariant variant = glistUnlocked && UnityEngine.Random.value < _waveScalingConfig.EliteSpawnChance ? MacroVirusVariant.Glist : MacroVirusVariant.Virus;
 
-            MacroVirusController virus = Instantiate(prefab, transform);
-            virus.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, 0f, UnityEngine.Random.Range(0, 360)));
+            // Construct(config, cellRegistry) is no longer called here - it's [Inject]-tagged (see
+            // MacroVirusController's own Construct doc comment context), and pooling now routes instantiation
+            // through the real Zenject container (container.InstantiatePrefab under FromComponentInNewPrefab),
+            // which calls it automatically at the pooled instance's one-time real creation. The old bare
+            // Instantiate() call here never went through Zenject at all, which is why that manual call used to be
+            // load-bearing; it would now just redundantly re-assign the same stable values on every spawn.
+            Quaternion rotation = Quaternion.Euler(0f, 0f, UnityEngine.Random.Range(0, 360));
+            MacroVirusController virus = _factories[variant].Create(position, rotation);
+            virus.transform.SetParent(transform, worldPositionStays: true);
 
-            virus.Construct(_config, _cellRegistry);
             _registry.Register(virus);
 
             virus.OnKilled += () => HandleVirusRemoved(virus);
@@ -165,7 +173,7 @@ namespace _Project.Mechanics.Viruses.Macro
             _registry.Unregister(virus);
 
             if (virus != null)
-                Destroy(virus.gameObject);
+                virus.Despawn();
         }
 
         /// <summary>

@@ -4391,6 +4391,8 @@ MonoBehaviour:
   _spinerVirusPrefab: {fileID: 4837261950482716, guid: b391c0c2e026c044a852aa29b551e53e, type: 3}
   _virusBulletPrefab: {fileID: 3378580695869955511, guid: 742ffad2e6451c743a0d152148c2d7f7, type: 3}
   _macroVirusConfig: {fileID: 11400000, guid: f59d974784a1871b8e9a7e0433a2e966, type: 2}
+  _macroVirusPrefab: {fileID: 8412739502618374, guid: b866b8fd8c81b3e4083ff6f07b0a6617, type: 3}
+  _macroGlistPrefab: {fileID: 9273841650918273, guid: f16281b56c1f2c14485b5d991aeb30d2, type: 3}
   _waveScalingConfig: {fileID: 11400000, guid: c526b4c270a5ed59980fd1bd36c061eb, type: 2}
   _worldScaleConfig: {fileID: 11400000, guid: e73d57b41d53b054fde896015e439bb3, type: 2}
   _gameAudioCatalog: {fileID: 11400000, guid: 6a6ed9b10a11e75477ad69ca586ecfc5, type: 2}
@@ -6026,8 +6028,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be9aa27d3df861ecf8f12699504ff9d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _virusPrefab: {fileID: 8412739502618374, guid: b866b8fd8c81b3e4083ff6f07b0a6617, type: 3}
-  _glistPrefab: {fileID: 9273841650918273, guid: f16281b56c1f2c14485b5d991aeb30d2, type: 3}
 --- !u!114 &6531579475014130
 MonoBehaviour:
   m_ObjectHideFlags: 0

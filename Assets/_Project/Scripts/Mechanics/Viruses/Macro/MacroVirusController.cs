@@ -53,8 +53,15 @@ namespace _Project.Mechanics.Viruses.Macro
     /// class reproduces that same ~0.8s visible window the only way an event-driven single lifecycle owner can:
     /// waiting for it before raising the event that triggers destruction, rather than destroying and animating
     /// as two independent timers like old code did.
+    ///
+    /// --- Pooling migration ---
+    /// Now spawned via a Zenject <see cref="IMemoryPool"/> keyed by <see cref="MacroVirusVariant"/> (bound by
+    /// VirusesInstaller) instead of bare Instantiate/Destroy - see MicroVirusController's own "Pooling migration"
+    /// doc comment for the same reasoning (<see cref="Start"/> runs once per GameObject, not once per spawn, so
+    /// per-life reset now happens in <see cref="OnSpawned"/>) and the same `_isAlive` field-initializer trap it
+    /// found live (a never-yet-spawned pool reservist must default to not-alive, not true).
     /// </summary>
-    public sealed class MacroVirusController : MonoBehaviour, IDamageable, IDriftBody
+    public sealed class MacroVirusController : MonoBehaviour, IDamageable, IDriftBody, IPoolable<Vector3, Quaternion, IMemoryPool>
     {
         // Old: VirusController._maxHealth (serialized per-prefab-instance, not a shared config value -
         // BigBob.prefab: 3, PinkGlist.prefab: 4). Kept as a per-instance field here for the same reason: the two
@@ -83,9 +90,15 @@ namespace _Project.Mechanics.Viruses.Macro
 
         private IMacroVirusBehavior _behavior;
         private int _health;
-        private bool _isAlive = true;
+
+        // Deliberately NOT initialized to true - see class doc comment's "Pooling migration" section
+        // (MicroVirusController hit this exact bug live: a never-yet-spawned pool reservist must read as
+        // not-alive). OnSpawned sets this true on every real spawn instead.
+        private bool _isAlive;
 
         private CancellationTokenSource _lifetimeCts;
+        private IMemoryPool _pool;
+        private bool _componentsResolved;
 
         // Old: VirusController._audioSources = GetComponents<AudioSource>() (root-only, matching Animator/
         // AudioSource layout on BigBob.prefab/PinkGlist.prefab); [0].Play() on every hit (AnimationOnDamage),
@@ -110,24 +123,53 @@ namespace _Project.Mechanics.Viruses.Macro
             _cellTargetProvider = cellTargetProvider;
         }
 
-        private void Awake()
+        /// <summary>
+        /// Runs on every (re)spawn from the pool, not just the first one - see class doc comment's "Pooling
+        /// migration" section. Folds together what used to be split across Awake()/Start(), since Start() never
+        /// re-runs on pool reactivation.
+        /// </summary>
+        public void OnSpawned(Vector3 position, Quaternion rotation, IMemoryPool pool)
         {
-            _lifetimeCts = new CancellationTokenSource();
-            _audioSources = GetComponents<AudioSource>();
-        }
+            _pool = pool;
 
-        private void Start()
-        {
+            if (!_componentsResolved)
+            {
+                _audioSources = GetComponents<AudioSource>();
+                _componentsResolved = true;
+            }
+
+            transform.SetPositionAndRotation(position, rotation);
+
+            _lifetimeCts = new CancellationTokenSource();
+            _isAlive = true;
             _health = _maxHealth;
+            _velocity = Vector3.zero;
+            _angularVelocity = 0f;
+
+            if (_collider != null)
+                _collider.enabled = true;
+
+            if (_spriteRenderer != null)
+                _spriteRenderer.material = _spriteRenderer.sharedMaterial;
 
             // Old: VirusController.Start() -> `ChangeBehavior(new MoveToCell());`
             SwitchBehavior(new MoveToCellBehavior(_cellTargetProvider, this, _config));
         }
 
-        private void OnDestroy()
+        public void OnDespawned()
         {
+            _pool = null;
+            _isAlive = false;
+
             _lifetimeCts?.Cancel();
             _lifetimeCts?.Dispose();
+            _lifetimeCts = null;
+        }
+
+        /// <summary>Replaces <c>Destroy(gameObject)</c> for this pooled type - see MacroVirusSpawner.HandleVirusRemoved.</summary>
+        public void Despawn()
+        {
+            _pool?.Despawn(this);
         }
 
         private void Update()
@@ -305,6 +347,10 @@ namespace _Project.Mechanics.Viruses.Macro
         public void Impulse(Vector3 impulse)
         {
             _velocity += impulse;
+        }
+
+        public class Factory : PlaceholderFactory<Vector3, Quaternion, MacroVirusController>
+        {
         }
     }
 }
