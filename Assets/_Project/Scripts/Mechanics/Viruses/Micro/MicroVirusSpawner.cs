@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 using _Project.Mechanics.Cells;
@@ -78,11 +79,6 @@ namespace _Project.Mechanics.Viruses.Micro
         /// </summary>
         [SerializeField] private Transform _virusContainer;
 
-        [Header("Prefabs - assigned by a later stage (prefab/scene surgery), see class doc comment")]
-        [SerializeField] private MicroVirusController _orangePrefab;
-        [SerializeField] private MicroVirusController _cucumberPrefab;
-        [SerializeField] private MicroVirusController _spinerPrefab;
-
         // Spawn-area bounds now live on CellConfig.MicroVirusSpawnBounds instead of a local [SerializeField] -
         // see CellConfig's own doc comment.
         private readonly MicroVirusRegistry _registry = new();
@@ -90,6 +86,11 @@ namespace _Project.Mechanics.Viruses.Micro
         private CellConfig _cellConfig;
         private IPlayerTargetProvider _playerTargetProvider;
         private WaveScalingConfig _waveScalingConfig;
+
+        // Pooling migration: replaces the 3 [SerializeField] prefab fields (Orange/Cucumber/Spiner) - each
+        // variant's pool is bound by MicroVirusesInstaller and keyed by MicroVirusVariant (mirrors
+        // ParticleFxPoolsInstaller<TId>'s Dictionary<TId, IFactory<...>> shape).
+        private IReadOnlyDictionary<MicroVirusVariant, IFactory<MicroVirusController>> _factories;
 
         /// <summary>
         /// Phase 8 testing fix (2026-09-11): old InCellVirus.Damage()'s death branch called
@@ -110,11 +111,12 @@ namespace _Project.Mechanics.Viruses.Micro
         private float ElapsedSeconds => Time.timeSinceLevelLoad;
 
         [Inject]
-        public void Construct(CellConfig cellConfig, IPlayerTargetProvider playerTargetProvider, WaveScalingConfig waveScalingConfig)
+        public void Construct(CellConfig cellConfig, IPlayerTargetProvider playerTargetProvider, WaveScalingConfig waveScalingConfig, IReadOnlyDictionary<MicroVirusVariant, IFactory<MicroVirusController>> factories)
         {
             _cellConfig = cellConfig;
             _playerTargetProvider = playerTargetProvider;
             _waveScalingConfig = waveScalingConfig;
+            _factories = factories;
         }
 
         /// <summary>Old: InCellViruses.SetVirusesCount(int) - see class doc comment's "SetVirusesCount" section.</summary>
@@ -132,17 +134,17 @@ namespace _Project.Mechanics.Viruses.Micro
         /// WaveScalingConfig.CucumberUnlockTimeSeconds/SpinerUnlockTimeSeconds).</summary>
         private void SpawnVirus()
         {
-            if (_orangePrefab == null)
+            if (_factories == null || _factories.Count == 0)
             {
-                Debug.LogWarning($"{nameof(MicroVirusSpawner)}.{nameof(SpawnVirus)} called before prefabs were assigned - no-op. See class doc comment's prefab seam.", this);
+                Debug.LogWarning($"{nameof(MicroVirusSpawner)}.{nameof(SpawnVirus)} called before pools were bound - no-op. See class doc comment's prefab seam.", this);
                 return;
             }
 
-            MicroVirusController prefab = ChoosePrefab();
+            MicroVirusVariant variant = ChooseVariant();
 
             Transform container = _virusContainer != null ? _virusContainer : transform;
-            MicroVirusController virus = Instantiate(prefab, container);
-            virus.Construct(_playerTargetProvider);
+            MicroVirusController virus = _factories[variant].Create();
+            virus.transform.SetParent(container, worldPositionStays: false);
 
             // Old: InCellViruses.SpawnVirus() -> `Instantiate(prefabs[...], transform);` (no explicit position -
             // SetVirusesCount's SetRandomPosition pass, run right after this loop, places every registered virus
@@ -153,13 +155,13 @@ namespace _Project.Mechanics.Viruses.Micro
             virus.OnKilled += () => HandleVirusKilled(virus);
         }
 
-        private MicroVirusController ChoosePrefab()
+        private MicroVirusVariant ChooseVariant()
         {
             // Old: `prefabs = [_orangePrefab]; if (Time >= 50) prefabs.Add(_cucumberPrefab); if (Time >= 100)
             // prefabs.Add(_spinerPrefab); Instantiate(prefabs[Random.Range(0, prefabs.Count)]);`
             int available = 1;
-            bool cucumberUnlocked = _cucumberPrefab != null && _waveScalingConfig != null && ElapsedSeconds >= _waveScalingConfig.CucumberUnlockTimeSeconds;
-            bool spinerUnlocked = _spinerPrefab != null && _waveScalingConfig != null && ElapsedSeconds >= _waveScalingConfig.SpinerUnlockTimeSeconds;
+            bool cucumberUnlocked = _factories.ContainsKey(MicroVirusVariant.Cucumber) && _waveScalingConfig != null && ElapsedSeconds >= _waveScalingConfig.CucumberUnlockTimeSeconds;
+            bool spinerUnlocked = _factories.ContainsKey(MicroVirusVariant.Spiner) && _waveScalingConfig != null && ElapsedSeconds >= _waveScalingConfig.SpinerUnlockTimeSeconds;
 
             if (cucumberUnlocked)
                 available++;
@@ -168,10 +170,10 @@ namespace _Project.Mechanics.Viruses.Micro
 
             int choice = UnityEngine.Random.Range(0, available);
             if (choice == 0)
-                return _orangePrefab;
+                return MicroVirusVariant.Orange;
             if (choice == 1)
-                return cucumberUnlocked ? _cucumberPrefab : _spinerPrefab;
-            return _spinerPrefab;
+                return cucumberUnlocked ? MicroVirusVariant.Cucumber : MicroVirusVariant.Spiner;
+            return MicroVirusVariant.Spiner;
         }
 
         private void SetRandomPosition(Transform virusTransform)
@@ -199,7 +201,7 @@ namespace _Project.Mechanics.Viruses.Micro
             OnVirusKilled?.Invoke();
 
             if (virus != null)
-                Destroy(virus.gameObject);
+                virus.Despawn();
         }
     }
 }

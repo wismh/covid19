@@ -29,6 +29,12 @@ namespace _Project.Mechanics.Composition
         [Header("Cells")]
         [SerializeField] private CellConfig _cellConfig;
 
+        [Header("Micro viruses (in-cell) - pooled prefabs, see MicroVirusesInstaller")]
+        [SerializeField] private MicroVirusController _orangeVirusPrefab;
+        [SerializeField] private MicroVirusController _cucumberVirusPrefab;
+        [SerializeField] private MicroVirusController _spinerVirusPrefab;
+        [SerializeField] private VirusBullet _virusBulletPrefab;
+
         [Header("Macro viruses")]
         [SerializeField] private MacroVirusConfig _macroVirusConfig;
 
@@ -45,6 +51,7 @@ namespace _Project.Mechanics.Composition
         {
             PlayerInstaller.Install(Container, _playerConfig, _upgradeDefinitions, _bulletPrefab);
             CellsInstaller.Install(Container, _cellConfig);
+            MicroVirusesInstaller.Install(Container, _orangeVirusPrefab, _cucumberVirusPrefab, _spinerVirusPrefab, _virusBulletPrefab);
             VirusesInstaller.Install(Container, _macroVirusConfig, _waveScalingConfig);
             WorldScaleInstaller.Install(Container, _worldScaleConfig);
 

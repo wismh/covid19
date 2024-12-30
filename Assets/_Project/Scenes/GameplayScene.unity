@@ -4386,6 +4386,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e1d09ba18ab9c5c8c40725cd6b177db9, type: 2}
   _bulletPrefab: {fileID: -7428742030573401080, guid: 1f761797de14c9a49bbd3e5641999789, type: 3}
   _cellConfig: {fileID: 11400000, guid: 6421f115f1264b2cd9fd501ae511b7cf, type: 2}
+  _orangeVirusPrefab: {fileID: 5719283746102938, guid: 0183e584c89852141b0e344f8190177e, type: 3}
+  _cucumberVirusPrefab: {fileID: 6183920475610283, guid: e788e810ecf524e428d803df54c730d0, type: 3}
+  _spinerVirusPrefab: {fileID: 4837261950482716, guid: b391c0c2e026c044a852aa29b551e53e, type: 3}
+  _virusBulletPrefab: {fileID: 3378580695869955511, guid: 742ffad2e6451c743a0d152148c2d7f7, type: 3}
   _macroVirusConfig: {fileID: 11400000, guid: f59d974784a1871b8e9a7e0433a2e966, type: 2}
   _waveScalingConfig: {fileID: 11400000, guid: c526b4c270a5ed59980fd1bd36c061eb, type: 2}
   _worldScaleConfig: {fileID: 11400000, guid: e73d57b41d53b054fde896015e439bb3, type: 2}

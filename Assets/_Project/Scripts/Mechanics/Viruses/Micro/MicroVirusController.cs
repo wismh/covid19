@@ -47,10 +47,21 @@ namespace _Project.Mechanics.Viruses.Micro
     ///
     /// See MacroVirusController's own "Why HandleDeathAsync waits again" doc comment for why
     /// <see cref="HandleDeathAsync"/> waits an extra beat after triggering the animation/audio before raising
-    /// <see cref="OnKilled"/> - identical reasoning, MicroVirusSpawner.HandleVirusKilled destroys the
-    /// GameObject synchronously the instant OnKilled fires, same as MacroVirusSpawner.HandleVirusRemoved.
+    /// <see cref="OnKilled"/> - identical reasoning, MicroVirusSpawner.HandleVirusKilled now despawns back into
+    /// the pool the instant OnKilled fires (previously destroyed the GameObject), same as
+    /// MacroVirusSpawner.HandleVirusRemoved.
+    ///
+    /// --- Pooling migration ---
+    /// Now spawned via a Zenject <see cref="IMemoryPool"/> keyed by <see cref="MicroVirusVariant"/> (bound by
+    /// MicroVirusesInstaller) instead of bare Instantiate/Destroy - see MicroVirusSpawner's own doc comment.
+    /// Critically, <see cref="Start"/> only ever runs ONCE per GameObject's lifetime in Unity, even though this
+    /// component gets reactivated many times from the pool - so every per-life reset (health, aliveness, the
+    /// CancellationTokenSource, collider/material state, and (re)building <see cref="_behavior"/>) now happens in
+    /// <see cref="OnSpawned"/> instead, which the pool calls on every spawn. <see cref="Construct"/> stays a
+    /// separate, real `[Inject]`-tagged method - IPlayerTargetProvider is a stable container singleton that
+    /// doesn't vary per spawn, so it's still wired once at real GameObject creation, not re-passed each time.
     /// </summary>
-    public sealed class MicroVirusController : MonoBehaviour, IDamageable
+    public sealed class MicroVirusController : MonoBehaviour, IDamageable, IPoolable<IMemoryPool>
     {
         [SerializeField] private MicroVirusConfig _config;
         [SerializeField] private Collider2D _collider;
@@ -74,10 +85,18 @@ namespace _Project.Mechanics.Viruses.Micro
         private Animator _animator;
 
         private int _health;
-        private bool _isAlive = true;
+
+        // Deliberately NOT initialized to true: this field initializer only ever runs once, at the pooled
+        // instance's real construction (see class doc comment's "Pooling migration" section) - a never-yet-spawned
+        // pool reservist must read as not-alive, or IDamageable.Damage's `if (!_isAlive) return;` guard would let
+        // damage land on inert pool stock (confirmed live: threw a NullReferenceException off a null
+        // _lifetimeCts). OnSpawned sets this true on every real spawn instead.
+        private bool _isAlive;
         private float _lastCollisionDamageTime = float.NegativeInfinity;
 
         private CancellationTokenSource _lifetimeCts;
+        private IMemoryPool _pool;
+        private bool _componentsResolved;
 
         public bool IsAlive => _isAlive;
 
@@ -90,37 +109,57 @@ namespace _Project.Mechanics.Viruses.Micro
             _playerTargetProvider = playerTargetProvider;
         }
 
-        private void Awake()
+        /// <summary>
+        /// Runs on every (re)spawn from the pool, not just the first one - see class doc comment's "Pooling
+        /// migration" section. Folds together what used to be split across Awake()/OnEnable()/Start(), since none
+        /// of those Unity callbacks re-run on pool reactivation the way this method does.
+        /// </summary>
+        public void OnSpawned(IMemoryPool pool)
         {
+            _pool = pool;
+
+            if (!_componentsResolved)
+            {
+                // See class doc comment's "Damage/death audio + death animation" section - resolved once, not
+                // per-spawn, since GetComponent(s) results never change across a pooled instance's lifetime.
+                _audioSources = GetComponents<AudioSource>();
+                _animator = GetComponent<Animator>();
+                _componentsResolved = true;
+            }
+
             _lifetimeCts = new CancellationTokenSource();
+            _isAlive = true;
+            _lastCollisionDamageTime = float.NegativeInfinity;
 
             // Old: InCellVirus.Awake() -> `_health = _maxHealth;`
             _health = _config.MaxHealth;
 
-            // See class doc comment's "Damage/death audio + death animation" section.
-            _audioSources = GetComponents<AudioSource>();
-            _animator = GetComponent<Animator>();
-        }
+            if (_collider != null)
+                _collider.enabled = true;
 
-        private void OnEnable()
-        {
-            // Old: InCellVirus.OnEnable() -> `_virusBehavior.OnEnable();` - see class doc comment for the
-            // Awake/OnEnable/Start ordering note.
-            _behavior?.OnEnable();
-        }
+            if (_spriteRenderer != null)
+                _spriteRenderer.material = _spriteRenderer.sharedMaterial;
 
-        private void Start()
-        {
             _playerTransform = _playerTargetProvider?.PlayerTransform;
             _behavior = BuildBehavior(_playerTransform);
             _behavior.Init(transform);
             _behavior.OnEnable();
         }
 
-        private void OnDestroy()
+        public void OnDespawned()
         {
+            _pool = null;
+            _isAlive = false;
+
             _lifetimeCts?.Cancel();
             _lifetimeCts?.Dispose();
+            _lifetimeCts = null;
+        }
+
+        /// <summary>Replaces <c>Destroy(gameObject)</c> for this pooled type - see MicroVirusSpawner.HandleVirusKilled.</summary>
+        public void Despawn()
+        {
+            _pool?.Despawn(this);
         }
 
         private void Update()
@@ -244,8 +283,8 @@ namespace _Project.Mechanics.Viruses.Micro
             PlayAudioIfAvailable(1);
 
             // See class doc comment's "Damage/death audio + death animation" section - gives the death
-            // animation/audio time to actually be seen/heard before OnKilled triggers GameObject destruction
-            // (MicroVirusSpawner.HandleVirusKilled destroys synchronously the instant OnKilled fires).
+            // animation/audio time to actually be seen/heard before OnKilled triggers the despawn back into the
+            // pool (MicroVirusSpawner.HandleVirusKilled despawns synchronously the instant OnKilled fires).
             try
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(_config.DeathToKillDelaySeconds), cancellationToken: _lifetimeCts.Token);
@@ -277,6 +316,10 @@ namespace _Project.Mechanics.Viruses.Micro
             }
 
             _spriteRenderer.material = original;
+        }
+
+        public class Factory : PlaceholderFactory<MicroVirusController>
+        {
         }
     }
 }

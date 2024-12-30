@@ -61,6 +61,7 @@ namespace _Project.Mechanics.Cells
         private CellRegistry _registry;
         private IPlayerTargetProvider _playerTargetProvider;
         private WaveScalingConfig _waveScalingConfig;
+        private IReadOnlyDictionary<MicroVirusVariant, IFactory<MicroVirusController>> _microVirusFactories;
 
         private readonly List<Vector3> _spawnedPositions = new();
         private CancellationTokenSource _lifetimeCts;
@@ -82,12 +83,13 @@ namespace _Project.Mechanics.Cells
         /// own comment for why SetVirusesCount is deliberately NOT called/wired from here.
         /// </summary>
         [Inject]
-        public void Construct(CellConfig cellConfig, CellRegistry registry, IPlayerTargetProvider playerTargetProvider, WaveScalingConfig waveScalingConfig)
+        public void Construct(CellConfig cellConfig, CellRegistry registry, IPlayerTargetProvider playerTargetProvider, WaveScalingConfig waveScalingConfig, IReadOnlyDictionary<MicroVirusVariant, IFactory<MicroVirusController>> microVirusFactories)
         {
             _cellConfig = cellConfig;
             _registry = registry;
             _playerTargetProvider = playerTargetProvider;
             _waveScalingConfig = waveScalingConfig;
+            _microVirusFactories = microVirusFactories;
         }
 
         private void Awake()
@@ -160,7 +162,7 @@ namespace _Project.Mechanics.Cells
             // WorldScaleTransitionContext the same way it already does CellVisuals/CellRigidbody2D/CellAnimator.
             if (instance.TryGetComponent(out MicroVirusSpawner inCellVirusSpawner))
             {
-                inCellVirusSpawner.Construct(_cellConfig, _playerTargetProvider, _waveScalingConfig);
+                inCellVirusSpawner.Construct(_cellConfig, _playerTargetProvider, _waveScalingConfig, _microVirusFactories);
                 OnMicroVirusSpawnerCreated?.Invoke(inCellVirusSpawner);
             }
         }
