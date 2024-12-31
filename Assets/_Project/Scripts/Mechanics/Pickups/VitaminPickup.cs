@@ -141,7 +141,26 @@ namespace _Project.Mechanics.Pickups
             PlayCollectSound();
 
             _onCollected?.Invoke();
-            Destroy(gameObject);
+
+            // Deactivated, not destroyed - see MedicalPickup's own class doc comment ("Pooling migration"): a
+            // VitaminPickup is a permanent baked-in child of the pooled MedicalPickup prefab, so destroying it
+            // here would leave that slot permanently empty the next time the parent is respawned from the pool.
+            // MedicalPickup.OnSpawned reactivates and repositions every vitamin via ResetForPool.
+            gameObject.SetActive(false);
+        }
+
+        /// <summary>Reactivates this vitamin at <paramref name="localPosition"/> (its original, prefab-authored
+        /// slot) and clears the flight/collected state Collect() left behind - called by MedicalPickup.OnSpawned
+        /// on every respawn, see that method's own doc comment.</summary>
+        public void ResetForPool(Vector3 localPosition)
+        {
+            transform.localPosition = localPosition;
+            gameObject.SetActive(true);
+
+            _isCollected = false;
+            _isFlying = false;
+            _impulseTimer = 0f;
+            _currentSpeed = 0f;
         }
 
         private void PlayCollectSound()

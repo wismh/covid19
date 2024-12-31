@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Zenject;
 using _Project.Mechanics.Combat;
 using _Project.Mechanics.Player;
 using _Project.Mechanics.Viruses.Micro;
@@ -15,14 +16,27 @@ namespace _Project.Mechanics.Pickups
     /// Awards one XP via PlayerStatsService when the pill finishes (all vitamins collected, or the
     /// safety-timeout fallback), matching the original GMTK.Medical's "+1 XP per pill" behavior.
     /// Passes player target dependencies down to vitamins.
+    ///
+    /// --- Pooling migration ---
+    /// Now spawned via a Zenject <see cref="IMemoryPool"/> (bound by PickupsInstaller) instead of bare
+    /// Instantiate/Destroy - see <see cref="OnSpawned"/>. The trickiest part: each <see cref="VitaminPickup"/>
+    /// child is a permanent, prefab-baked part of THIS instance (not separately spawned/pooled), and used to
+    /// destroy itself on collection - which would permanently empty that slot the next time this same pooled
+    /// instance respawns. VitaminPickup.Collect() now deactivates instead (see its own doc comment), and
+    /// OnSpawned reactivates + repositions every vitamin back to its original, cached local position via
+    /// VitaminPickup.ResetForPool. <see cref="Construct"/> is now real `[Inject]`-tagged DI (called once, at this
+    /// pooled instance's one-time real construction) - the old second, <c>Transform playerTransform</c> overload
+    /// was a manual/test fallback per its own prior doc comment, now dead now that IPlayerTargetProvider is
+    /// always available from the container, so it (and the <c>_playerTransform</c> field) is removed.
     /// </summary>
-    public class MedicalPickup : MonoBehaviour, IDamageable
+    public class MedicalPickup : MonoBehaviour, IDamageable, IPoolable<Vector3, Quaternion, IMemoryPool>
     {
         [Header("Components")]
         [SerializeField] private Animator _animator;
         [SerializeField] private Collider2D _boxCollider;
         [SerializeField] private AudioSource _openAudioSource;
         [SerializeField] private AudioSource _collectAudioSource;
+        [SerializeField] private SpriteRenderer _spriteRenderer;
         [SerializeField] private List<VitaminPickup> _vitamins;
 
         // Health/timing tunables now live on PickupsConfig instead of local [SerializeField]s.
@@ -30,38 +44,74 @@ namespace _Project.Mechanics.Pickups
         private int _health;
         private PlayerStatsService _playerStatsService;
         private IPlayerTargetProvider _targetProvider;
-        private Transform _playerTransform;
 
         private bool _isBroken;
         private int _remainingVitamins;
+        private bool _componentsResolved;
+        private readonly List<Vector3> _vitaminLocalPositions = new();
+        private IMemoryPool _pool;
 
         public event Action<MedicalPickup> OnDestroyed;
 
+        [Inject]
         public void Construct(PickupsConfig config, PlayerStatsService playerStatsService, IPlayerTargetProvider targetProvider)
         {
             _config = config;
-            _health = config.MedicalHealth;
             _playerStatsService = playerStatsService;
             _targetProvider = targetProvider;
+        }
 
-            ResolveComponents();
+        /// <summary>Runs on every (re)spawn from the pool, not just the first one - see class doc comment's
+        /// "Pooling migration" section.</summary>
+        public void OnSpawned(Vector3 position, Quaternion rotation, IMemoryPool pool)
+        {
+            _pool = pool;
+
+            if (!_componentsResolved)
+            {
+                ResolveComponents();
+                CacheVitaminLocalPositions();
+                _componentsResolved = true;
+            }
+
+            transform.SetPositionAndRotation(position, rotation);
+
+            StopAllCoroutines();
+            CancelInvoke();
+
+            _health = _config.MedicalHealth;
+            _isBroken = false;
+            _remainingVitamins = 0;
+
+            if (_boxCollider != null)
+                _boxCollider.enabled = true;
+
+            if (_animator != null)
+            {
+                _animator.enabled = true;
+
+                // "Appearance" is this controller's default/idle state (confirmed via its serialized
+                // m_DefaultState) - resets a respawned pill back to its resting look after Break()'s "Explosion".
+                _animator.Play("Base Layer.Appearance");
+            }
+
+            if (_spriteRenderer != null)
+                _spriteRenderer.enabled = true;
+
+            ResetVitamins();
             PropagateDependenciesToVitamins();
         }
 
-        public void Construct(PickupsConfig config, PlayerStatsService playerStatsService, Transform playerTransform)
+        public void OnDespawned()
         {
-            _config = config;
-            _health = config.MedicalHealth;
-            _playerStatsService = playerStatsService;
-            _playerTransform = playerTransform;
-
-            ResolveComponents();
-            PropagateDependenciesToVitamins();
+            _pool = null;
+            OnDestroyed?.Invoke(this);
         }
 
-        private void Awake()
+        /// <summary>Replaces <c>Destroy(gameObject)</c> for this pooled type - see MedicalSpawner.SpawnMedical/HandleMedicalDestroyed.</summary>
+        public void Despawn()
         {
-            ResolveComponents();
+            _pool?.Despawn(this);
         }
 
         private void ResolveComponents()
@@ -71,6 +121,9 @@ namespace _Project.Mechanics.Pickups
 
             if (_boxCollider == null)
                 _boxCollider = GetComponent<BoxCollider2D>();
+
+            if (_spriteRenderer == null)
+                _spriteRenderer = GetComponent<SpriteRenderer>();
 
             var audioSources = GetComponents<AudioSource>();
             if (audioSources.Length > 0 && _openAudioSource == null)
@@ -84,6 +137,25 @@ namespace _Project.Mechanics.Pickups
             }
         }
 
+        /// <summary>Captured once, at real construction - a pooled vitamin's transform.localPosition drifts away
+        /// from its prefab-authored slot every time it flies toward the player, so OnSpawned needs the original
+        /// value to restore it to (see ResetVitamins).</summary>
+        private void CacheVitaminLocalPositions()
+        {
+            _vitaminLocalPositions.Clear();
+            foreach (var vitamin in _vitamins)
+                _vitaminLocalPositions.Add(vitamin != null ? vitamin.transform.localPosition : Vector3.zero);
+        }
+
+        private void ResetVitamins()
+        {
+            for (int i = 0; i < _vitamins.Count; i++)
+            {
+                if (_vitamins[i] != null)
+                    _vitamins[i].ResetForPool(_vitaminLocalPositions[i]);
+            }
+        }
+
         private void PropagateDependenciesToVitamins()
         {
             if (_vitamins == null)
@@ -91,17 +163,8 @@ namespace _Project.Mechanics.Pickups
 
             foreach (var vitamin in _vitamins)
             {
-                if (vitamin == null)
-                    continue;
-
-                if (_targetProvider != null)
-                {
+                if (vitamin != null)
                     vitamin.Construct(_config, _targetProvider, _collectAudioSource, null, HandleVitaminCollected);
-                }
-                else
-                {
-                    vitamin.Construct(_config, _playerTransform, _collectAudioSource, null, HandleVitaminCollected);
-                }
             }
         }
 
@@ -161,10 +224,7 @@ namespace _Project.Mechanics.Pickups
                     continue;
                 }
 
-                if (_targetProvider != null)
-                    vitamin.Construct(_config, _targetProvider, _collectAudioSource, null, HandleVitaminCollected);
-                else
-                    vitamin.Construct(_config, _playerTransform, _collectAudioSource, null, HandleVitaminCollected);
+                vitamin.Construct(_config, _targetProvider, _collectAudioSource, null, HandleVitaminCollected);
 
                 Vector2 outwardDir = (vitamin.transform.position - transform.position);
                 Vector2 dir = outwardDir.sqrMagnitude > 0.001f ? outwardDir.normalized : UnityEngine.Random.insideUnitCircle.normalized;
@@ -199,20 +259,20 @@ namespace _Project.Mechanics.Pickups
             _playerStatsService?.AddExperience();
 
             // Hide sprite renderer while audio finishes playing
-            var sr = GetComponent<SpriteRenderer>();
-            if (sr != null)
-                sr.enabled = false;
+            if (_spriteRenderer != null)
+                _spriteRenderer.enabled = false;
 
-            // If collect audio is playing, give it a moment to finish before destroying the GameObject
+            // If collect audio is playing, give it a moment to finish before despawning back into the pool.
+            // Invoke, not Destroy(gameObject, delay) - see class doc comment's "Pooling migration" section; a
+            // real Destroy would permanently remove this pooled instance instead of recycling it.
             float destroyDelay = (_collectAudioSource != null && _collectAudioSource.isPlaying)
                 ? _config.DestroyDelayWithAudioSeconds
                 : _config.DestroyDelayWithoutAudioSeconds;
-            Destroy(gameObject, destroyDelay);
+            Invoke(nameof(Despawn), destroyDelay);
         }
 
-        private void OnDestroy()
+        public class Factory : PlaceholderFactory<Vector3, Quaternion, MedicalPickup>
         {
-            OnDestroyed?.Invoke(this);
         }
     }
 }

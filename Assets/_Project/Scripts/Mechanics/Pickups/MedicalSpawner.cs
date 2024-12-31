@@ -1,7 +1,7 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Zenject;
 using _Project.Mechanics.Player;
 using _Project.Mechanics.Viruses.Micro;
 
@@ -10,18 +10,18 @@ namespace _Project.Mechanics.Pickups
     /// <summary>
     /// Stage 4: Spawner for MedicalPickup pills. Replaces legacy GMTK.MedicalSpawner (Assets/GMTK/Scripts/Behaviors/Medicals/MedicalSpawner.cs).
     /// Spawns MedicalPickup pills at regular intervals within specified bounds, enforcing a maximum concurrent pill limit.
-    /// Injected with PlayerStatsService and IPlayerTargetProvider via Construct().
+    /// Injected with PlayerStatsService and IPlayerTargetProvider via Construct(). Pools MedicalPickup instances
+    /// via <see cref="MedicalPickup.Factory"/> (bound by PickupsInstaller) instead of a [SerializeField] prefab +
+    /// Instantiate - see that class's own "Pooling migration" doc comment. Now [Inject]-tagged (was hand-composed
+    /// by MainSceneComposition before pooling needed a real container-bound Factory anyway).
     /// </summary>
     public class MedicalSpawner : MonoBehaviour
     {
-        [Header("Prefab")]
-        [SerializeField] private MedicalPickup _medicalPrefab;
-
         // Spawn bounds/interval/count tunables now live on PickupsConfig instead of local [SerializeField]s.
         private PickupsConfig _config;
         private PlayerStatsService _playerStatsService;
         private IPlayerTargetProvider _targetProvider;
-        private Transform _playerTransform;
+        private MedicalPickup.Factory _medicalFactory;
 
         private readonly List<MedicalPickup> _activeMedicals = new();
         private bool _isPaused;
@@ -29,18 +29,13 @@ namespace _Project.Mechanics.Pickups
 
         public int ActiveCount => CleanAndCount();
 
-        public void Construct(PickupsConfig config, PlayerStatsService playerStatsService, IPlayerTargetProvider targetProvider)
+        [Inject]
+        public void Construct(PickupsConfig config, PlayerStatsService playerStatsService, IPlayerTargetProvider targetProvider, MedicalPickup.Factory medicalFactory)
         {
             _config = config;
             _playerStatsService = playerStatsService;
             _targetProvider = targetProvider;
-        }
-
-        public void Construct(PickupsConfig config, PlayerStatsService playerStatsService, Transform playerTransform)
-        {
-            _config = config;
-            _playerStatsService = playerStatsService;
-            _playerTransform = playerTransform;
+            _medicalFactory = medicalFactory;
         }
 
         public void SetPaused(bool isPaused)
@@ -65,7 +60,7 @@ namespace _Project.Mechanics.Pickups
             {
                 yield return new WaitForSeconds(_config.SpawnIntervalSeconds);
 
-                if (_isPaused || _medicalPrefab == null)
+                if (_isPaused)
                     continue;
 
                 int activeCount = CleanAndCount();
@@ -81,9 +76,6 @@ namespace _Project.Mechanics.Pickups
 
         private void SpawnMedical()
         {
-            if (_medicalPrefab == null)
-                return;
-
             Bounds spawnBounds = _config.SpawnBounds;
             Vector3 position = new Vector3(
                 UnityEngine.Random.Range(spawnBounds.min.x, spawnBounds.max.x),
@@ -92,12 +84,8 @@ namespace _Project.Mechanics.Pickups
             );
 
             Quaternion rotation = Quaternion.Euler(0f, 0f, UnityEngine.Random.Range(0f, 360f));
-            MedicalPickup medical = Instantiate(_medicalPrefab, position, rotation, transform);
-
-            if (_targetProvider != null)
-                medical.Construct(_config, _playerStatsService, _targetProvider);
-            else if (_playerTransform != null)
-                medical.Construct(_config, _playerStatsService, _playerTransform);
+            MedicalPickup medical = _medicalFactory.Create(position, rotation);
+            medical.transform.SetParent(transform, worldPositionStays: true);
 
             medical.OnDestroyed += HandleMedicalDestroyed;
             _activeMedicals.Add(medical);

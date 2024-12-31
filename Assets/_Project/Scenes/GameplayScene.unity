@@ -481,7 +481,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e2207bcda481154ca2be7a28bf33c66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _medicalPrefab: {fileID: -277016288498846649, guid: c9b8456fce40abd4eb1a023355e61296, type: 3}
 --- !u!1 &149748049
 GameObject:
   m_ObjectHideFlags: 0
@@ -4393,6 +4392,8 @@ MonoBehaviour:
   _macroVirusConfig: {fileID: 11400000, guid: f59d974784a1871b8e9a7e0433a2e966, type: 2}
   _macroVirusPrefab: {fileID: 8412739502618374, guid: b866b8fd8c81b3e4083ff6f07b0a6617, type: 3}
   _macroGlistPrefab: {fileID: 9273841650918273, guid: f16281b56c1f2c14485b5d991aeb30d2, type: 3}
+  _pickupsConfig: {fileID: 11400000, guid: 0302e93c3aba3be4489a2201f9493ba0, type: 2}
+  _medicalPrefab: {fileID: -277016288498846649, guid: c9b8456fce40abd4eb1a023355e61296, type: 3}
   _waveScalingConfig: {fileID: 11400000, guid: c526b4c270a5ed59980fd1bd36c061eb, type: 2}
   _worldScaleConfig: {fileID: 11400000, guid: e73d57b41d53b054fde896015e439bb3, type: 2}
   _gameAudioCatalog: {fileID: 11400000, guid: 6a6ed9b10a11e75477ad69ca586ecfc5, type: 2}
@@ -6057,8 +6058,6 @@ MonoBehaviour:
   _cellSpawner: {fileID: 7016120388211641}
   _macroVirusConfig: {fileID: 11400000, guid: f59d974784a1871b8e9a7e0433a2e966, type: 2}
   _macroVirusSpawner: {fileID: 5832045637886502}
-  _pickupsConfig: {fileID: 11400000, guid: 0302e93c3aba3be4489a2201f9493ba0, type: 2}
-  _medicalSpawner: {fileID: 124502040}
   _waveScalingConfig: {fileID: 11400000, guid: c526b4c270a5ed59980fd1bd36c061eb, type: 2}
   _worldCamera: {fileID: 519420031}
   _cameraFollow: {fileID: 519420033}

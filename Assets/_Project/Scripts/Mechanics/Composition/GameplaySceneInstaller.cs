@@ -4,6 +4,7 @@ using Zenject;
 using _Project.Mechanics.Audio;
 using _Project.Mechanics.Cells;
 using _Project.Mechanics.Combat;
+using _Project.Mechanics.Pickups;
 using _Project.Mechanics.Player;
 using _Project.Mechanics.Viruses.Micro;
 using _Project.Mechanics.Viruses.Macro;
@@ -40,6 +41,10 @@ namespace _Project.Mechanics.Composition
         [SerializeField] private MacroVirusController _macroVirusPrefab;
         [SerializeField] private MacroVirusController _macroGlistPrefab;
 
+        [Header("Pickups (medical pills) - pooled prefab, see PickupsInstaller")]
+        [SerializeField] private PickupsConfig _pickupsConfig;
+        [SerializeField] private MedicalPickup _medicalPrefab;
+
         [Header("Waves - shared by MacroVirusSpawner and CellSpawner")]
         [SerializeField] private WaveScalingConfig _waveScalingConfig;
 
@@ -56,6 +61,7 @@ namespace _Project.Mechanics.Composition
             MicroVirusesInstaller.Install(Container, _orangeVirusPrefab, _cucumberVirusPrefab, _spinerVirusPrefab, _virusBulletPrefab);
             VirusesInstaller.Install(Container, _macroVirusConfig, _waveScalingConfig, _macroVirusPrefab, _macroGlistPrefab);
             WorldScaleInstaller.Install(Container, _worldScaleConfig);
+            PickupsInstaller.Install(Container, _pickupsConfig, _medicalPrefab);
 
             // IPlayerTargetProvider wraps PlayerMovement.transform - needs PlayerMovement already bound above.
             Container.Bind<IPlayerTargetProvider>()

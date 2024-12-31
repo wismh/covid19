@@ -11,7 +11,6 @@ using _Project.Mechanics.Audio;
 using _Project.Mechanics.Cells;
 using _Project.Mechanics.Combat;
 using _Project.Mechanics.Navigation;
-using _Project.Mechanics.Pickups;
 using _Project.Mechanics.Player;
 using _Project.Mechanics.Viruses.Micro;
 using _Project.Mechanics.Viruses.Macro;
@@ -55,9 +54,10 @@ namespace _Project.Mechanics.Composition
     /// Most `[SerializeField]` config assets below (PlayerConfig, CellConfig, etc.) are ALSO now bound in the
     /// SceneContext container by GameplaySceneInstaller, so the statically-placed spawner/screen MonoBehaviours
     /// can resolve their own `[Inject] Construct` directly - this class keeps its own copies too, only where
-    /// still needed for `BuildWorldScaleTransitionContext`/the two spawner Construct calls that were never
-    /// `[Inject]`-tagged (`MedicalSpawner`, `BulletManager`). See `Construct`'s own doc comment for the full
-    /// list of what's now `[Inject]`-resolved on this class itself.
+    /// still needed for `BuildWorldScaleTransitionContext`/`BulletManager`'s Construct call, the one spawner
+    /// Construct that's still never `[Inject]`-tagged (MedicalSpawner moved to real `[Inject] Construct` once
+    /// pooling required a container-bound `MedicalPickup.Factory` anyway). See `Construct`'s own doc comment for
+    /// the full list of what's now `[Inject]`-resolved on this class itself.
     ///
     /// --- Execution order: everything happens in Awake(), not Start() ---
     /// CellSpawner.Start() spawns 20 cells immediately (see its own doc comment: "Deferred to Start() ... so
@@ -87,10 +87,6 @@ namespace _Project.Mechanics.Composition
         [Header("Macro viruses (Phase 3 components + Phase 7 Stage 1 registry/spawner)")]
         [SerializeField] private MacroVirusConfig _macroVirusConfig;
         [SerializeField] private MacroVirusSpawner _macroVirusSpawner;
-
-        [Header("Medicals / Pickups (Stage 4)")]
-        [SerializeField] private PickupsConfig _pickupsConfig;
-        [SerializeField] private MedicalSpawner _medicalSpawner;
 
         [Header("Waves (Phase 3) - shared by MacroVirusSpawner today; MicroVirusSpawner will need it too once " +
                 "Stage 3 attaches one per cell, see class doc comment's per-cell virus seam")]
@@ -153,9 +149,9 @@ namespace _Project.Mechanics.Composition
         /// still reference directly via `[SerializeField]` (PlayerConfig, CellConfig, etc.) is ALSO now bound in
         /// the container (so the statically-placed Player/CellSpawner/MacroVirusSpawner/UI-screen MonoBehaviours
         /// can resolve their own `[Inject] Construct(...)` automatically) - this class keeps its own
-        /// `[SerializeField]` copies too, only where still needed for `WorldScaleTransitionContext`/spawner calls
-        /// that were never `[Inject]`-tagged (`MedicalSpawner`, `BulletManager` - see their own Construct doc
-        /// comments, deliberately not migrated).
+        /// `[SerializeField]` copies too, only where still needed for `WorldScaleTransitionContext`/
+        /// `BulletManager`'s Construct call, the one spawner Construct still never `[Inject]`-tagged (deliberately
+        /// not migrated - see its own doc comment).
         /// </summary>
         // Bullet pooling migration (see Bullet/BulletManager/PlayerInstaller doc comments): BulletManager.Construct
         // stays hand-composed (deliberately not [Inject]-tagged, see its own doc comment), so this class resolves
@@ -433,16 +429,13 @@ namespace _Project.Mechanics.Composition
         // PlayerHealth/PlayerParticlesController/ArrowController all have [Inject]-tagged Construct methods and
         // are statically placed in GameplayScene, so SceneContext now calls their Construct automatically (see
         // GameplaySceneInstaller/PlayerInstaller/CellsInstaller/VirusesInstaller/WorldScaleInstaller). Only
-        // MedicalSpawner/BulletManager remain here - their Construct methods were never [Inject]-tagged (see
-        // their own doc comments) and stay hand-composed, using the same injected _playerStats/
-        // _worldScaleController/_playerTargetProvider this class now receives via Construct instead of `new`-ing
-        // a second, separate IPlayerTargetProvider instance.
+        // BulletManager remains here - its Construct method was never [Inject]-tagged (see its own doc comment)
+        // and stays hand-composed, using the same injected _playerStats this class now receives via Construct.
+        // MedicalSpawner moved to real [Inject] Construct once pooling required a container-bound
+        // MedicalPickup.Factory anyway - see its own class doc comment.
 
         private void ConstructSpawners()
         {
-            if (_medicalSpawner != null)
-                _medicalSpawner.Construct(_pickupsConfig, _playerStats, _playerTargetProvider);
-
             if (_bulletManager != null)
                 _bulletManager.Construct(_playerStats, _bulletFactory);
 
