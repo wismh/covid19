@@ -299,7 +299,9 @@ namespace Project.Core.AudioSystem
 
             if (!IsMusicPlaying || crossfadeDuration <= 0f)
             {
-                PlayMusicImmediate(sound, loop);
+                // Nothing to crossfade FROM - fade up from silence instead, using the same duration, rather
+                // than discarding it and snapping straight to full volume.
+                PlayMusicImmediate(sound, loop, crossfadeDuration);
                 return;
             }
 
@@ -315,7 +317,7 @@ namespace Project.Core.AudioSystem
 
             if (duration <= 0f || !IsMusicPlaying)
             {
-                PlayMusicImmediate(sound, loop);
+                PlayMusicImmediate(sound, loop, duration);
                 return;
             }
 
@@ -516,7 +518,7 @@ namespace Project.Core.AudioSystem
             ReturnSfxSourceWhenFinished(source).Forget();
         }
 
-        private void PlayMusicImmediate(SoundData sound, bool loop)
+        private void PlayMusicImmediate(SoundData sound, bool loop, float fadeInDuration = 0f)
         {
             AudioSource active = _musicSources[_activeMusicIndex];
             AudioSource inactive = _musicSources[1 - _activeMusicIndex];
@@ -526,9 +528,18 @@ namespace Project.Core.AudioSystem
 
             inactive.Stop();
             ConfigureMusicSource(active, sound, loop);
-            active.volume = sound.Volume;
             active.Play();
             _currentMusic = sound;
+
+            if (fadeInDuration > 0f)
+            {
+                active.volume = 0f;
+                active.DOFade(sound.Volume, fadeInDuration).SetUpdate(true);
+            }
+            else
+            {
+                active.volume = sound.Volume;
+            }
         }
 
         private void ConfigureMusicSource(AudioSource source, SoundData sound, bool loop)
