@@ -15,17 +15,14 @@ namespace _Project.UI.MainMenu
         [SerializeField] private PlayableDirector _cutscene;
         [SerializeField] private Image _fadeInPanel;
         [SerializeField] private AudioSource _audioSource;
-        [SerializeField] private Project.Core.AudioSystem.SoundData _menuMusic;
 
         private GlobalGameStateMachine _stateMachine;
-        private Project.Core.AudioSystem.IAudioSystem _audioSystem;
         private bool _isPlaying;
 
         [Inject]
-        public void Construct(GlobalGameStateMachine stateMachine, Project.Core.AudioSystem.IAudioSystem audioSystem = null)
+        public void Construct(GlobalGameStateMachine stateMachine)
         {
             _stateMachine = stateMachine;
-            _audioSystem = audioSystem;
         }
 
         private void Awake()
@@ -39,22 +36,12 @@ namespace _Project.UI.MainMenu
         private void Start()
         {
             PlayFadeIn();
-            PlayMusic();
         }
 
         public override void OnOpen()
         {
             base.OnOpen();
             PlayFadeIn();
-            PlayMusic();
-        }
-
-        private void PlayMusic()
-        {
-            if (_audioSystem != null && _menuMusic != null)
-            {
-                _audioSystem.PlayMusic(_menuMusic);
-            }
         }
 
         private void OnDestroy()

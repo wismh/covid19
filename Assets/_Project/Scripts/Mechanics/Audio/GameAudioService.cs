@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using Project.Core.AudioSystem;
 using _Project.Mechanics.WorldScale;
 
@@ -63,6 +65,7 @@ namespace _Project.Mechanics.Audio
         private readonly IAudioSystem _audioSystem;
         private readonly GameAudioCatalog _catalog;
         private readonly WorldScaleController _worldScaleController;
+        private CancellationTokenSource _gameplayMusicCts;
 
         /// <param name="audioSystem">Resolved from the Zenject container (bound by AudioSystemInstaller in
         /// Phase 1's ProjectContextInstaller) - passed in explicitly rather than [Inject]-ed onto this class
@@ -98,6 +101,9 @@ namespace _Project.Mechanics.Audio
         /// plain POCO's external event subscription instead of a MonoBehaviour lifecycle method).</summary>
         public void Dispose()
         {
+            _gameplayMusicCts?.Cancel();
+            _gameplayMusicCts?.Dispose();
+
             if (_worldScaleController == null)
                 return;
 
@@ -119,23 +125,45 @@ namespace _Project.Mechanics.Audio
         }
 
         /// <summary>
-        /// Old: the MENU-scene half of GMTK.AudioMixerController.TryInitialize()/Update() - playing
-        /// `_menuTrack` (`_audioSources[0]`) on scene load, and the pitch=0 pre-buffering dance that let
-        /// `_gameplayTrack` start silently underneath it so the eventual switch had no audible gap
-        /// (AudioMixerController.cs:47-63). That hand-rolled pre-buffer trick is NOT reproduced here - IAudioSystem
-        /// .PlayMusic already crossfades cleanly between two internal music AudioSources (see AudioSystem.cs's
-        /// CrossfadeMusic) whenever music is already playing, which is a strictly better replacement for the same
-        /// "no audible gap" goal, not a like-for-like port of the workaround itself.
-        /// </summary>
-        public void PlayMenuMusic() => _audioSystem.PlayMusic(_catalog.MenuMusic);
+        /// Plays intro-q24 once (non-looping), then hands off to q24 on loop as soon as the intro naturally
+        /// finishes. The main menu plays no music at all (explicit user request - see the removed MainMenuScreen
+        /// music field), so gameplay start is now the only place intro-q24 plays; it previously played nowhere
+        /// (GameAudioCatalog.MenuMusic/GameAudioService.PlayMenuMusic existed but nothing called PlayMenuMusic) and
+        /// GameplayScene jumped straight to the looping q24 track. See <see cref="PlayGameplayMusicAsync"/> for
+        /// the intro-&gt;loop handoff, which polls <see cref="IAudioSystem.IsMusicPlaying"/> rather than the clip's
+        /// nominal length so it reacts to the AudioSource's actual, real playback end.</summary>
+        public void PlayGameplayMusic()
+        {
+            _gameplayMusicCts?.Cancel();
+            _gameplayMusicCts?.Dispose();
+            _gameplayMusicCts = new CancellationTokenSource();
 
-        /// <summary>Old: the SampleScene half of the same AudioMixerController.TryInitialize() path
-        /// (`_gameplayTrack`, `_audioSources[1]`, `loop = false` initially per the old code's own comment-free
-        /// quirk - reproduced instead as a normal looping track here, since SoundData_GameplayMusic.asset's
-        /// `loop` behaviour is controlled by the `loop` parameter on IAudioSystem.PlayMusic, defaulting to true
-        /// like every other music track in this system; the old one-shot-then-implicitly-stop behaviour had no
-        /// discoverable gameplay purpose distinct from just looping the gameplay track normally).</summary>
-        public void PlayGameplayMusic() => _audioSystem.PlayMusic(_catalog.GameplayMusic);
+            PlayGameplayMusicAsync(_gameplayMusicCts.Token).Forget();
+        }
+
+        private async UniTaskVoid PlayGameplayMusicAsync(CancellationToken cancellationToken)
+        {
+            SoundData intro = _catalog.GameplayIntroMusic;
+
+            if (intro == null || intro.Clip == null)
+            {
+                _audioSystem.PlayMusic(_catalog.GameplayMusic);
+                return;
+            }
+
+            _audioSystem.PlayMusic(intro, loop: false);
+
+            try
+            {
+                await UniTask.WaitWhile(() => _audioSystem.IsMusicPlaying, cancellationToken: cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            _audioSystem.PlayMusic(_catalog.GameplayMusic, loop: true);
+        }
 
         /// <summary>Old: TransitionIntoMacroWorld's `_player.GetComponent&lt;AudioList&gt;().Play(0)` - see this
         /// class's own doc comment for what this does and does NOT reproduce (whoosh SFX only, no mixer swap).

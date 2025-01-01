@@ -66,7 +66,7 @@ namespace _Project.Mechanics.Audio
     /// | CucumberAttack.mp3     | 7e5a947e9b5d7dc46888acb75553253a | CucumberAttack                                |
     /// | BigVirusDie.mp3        | 6f7af499f2ef05243a1543743a65104f | BigVirusDied                                  |
     /// | Click.mp3              | d0d6c835ce66be845953aded6325fc5c | MenuStartClicked                              |
-    /// | intro-q24.mp3          | 18c640ef919c8514eb800858c7339c41 | MenuMusic (music, not a GameSfxCue)           |
+    /// | intro-q24.mp3          | 18c640ef919c8514eb800858c7339c41 | GameplayIntroMusic (music, not a GameSfxCue)  |
     /// | q24.mp3                | 4b479ed03c24e23b9a9e1528ead160fa | GameplayMusic (music, not a GameSfxCue)       |
     ///
     /// That is 14 distinct SFX clips (all of Assets/GMTK/Audio/*.mp3 except the 2 music tracks) covering the 15
@@ -83,7 +83,9 @@ namespace _Project.Mechanics.Audio
     /// plain serialized field on this ScriptableObject, avoiding 14 tiny one-clip sub-assets. Music playback
     /// (`PlayMusic`/`CrossfadeMusic`) only accepts a <see cref="Project.Core.AudioSystem.SoundData"/> ScriptableObject
     /// reference (no raw-AudioClip overload exists on IAudioSystem for music), so the two music tracks are real
-    /// SoundData assets instead: Configurations/Audio/SoundData_MenuMusic.asset and SoundData_GameplayMusic.asset.
+    /// SoundData assets instead: Configurations/Audio/SoundData_MenuMusic.asset (intro-q24, played once at
+    /// gameplay start - see <see cref="GameplayIntroMusic"/>'s own doc comment for why the asset name still says
+    /// "Menu" despite no longer being menu music) and SoundData_GameplayMusic.asset.
     /// </summary>
     [CreateAssetMenu(
         menuName = "Configurations/Audio/" + nameof(GameAudioCatalog),
@@ -93,12 +95,18 @@ namespace _Project.Mechanics.Audio
         [SerializeField] private GameSfxCueEntry[] _sfxCues = Array.Empty<GameSfxCueEntry>();
 
         [Header("Music (old: GMTK.AudioMixerController._menuTrack/_gameplayTrack)")]
-        [SerializeField] private SoundData _menuMusic;
+        [SerializeField] private SoundData _gameplayIntroMusic;
         [SerializeField] private SoundData _gameplayMusic;
 
         private Dictionary<GameSfxCue, GameSfxCueEntry> _sfxLookup;
 
-        public SoundData MenuMusic => _menuMusic;
+        /// <summary>intro-q24 - played once, non-looping, at the very start of gameplay, before
+        /// <see cref="GameplayMusic"/> (q24) takes over on loop. Renamed from the old "MenuMusic" field: the main
+        /// menu plays no music at all (per explicit user request), so this cue's only job now is the gameplay
+        /// intro. The underlying SoundData asset keeps its old filename (SoundData_MenuMusic.asset) - only the
+        /// field/property here were renamed, to avoid an Editor-only asset-rename risk with no live verification.
+        /// </summary>
+        public SoundData GameplayIntroMusic => _gameplayIntroMusic;
         public SoundData GameplayMusic => _gameplayMusic;
 
         public bool TryGetSfx(GameSfxCue cue, out GameSfxCueEntry entry)

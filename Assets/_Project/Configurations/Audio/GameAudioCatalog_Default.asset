@@ -73,5 +73,5 @@ MonoBehaviour:
     _clip: {fileID: 8300000, guid: d0d6c835ce66be845953aded6325fc5c, type: 3}
     _volume: 1
     _pitchRange: {x: 1, y: 1}
-  _menuMusic: {fileID: 11400000, guid: 989a045f325a274fe76aef38c86783d9, type: 2}
+  _gameplayIntroMusic: {fileID: 11400000, guid: 989a045f325a274fe76aef38c86783d9, type: 2}
   _gameplayMusic: {fileID: 11400000, guid: df2b92bc3dd55cdbcab67b4fcb16d7e3, type: 2}

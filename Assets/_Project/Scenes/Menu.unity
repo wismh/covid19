@@ -1123,7 +1123,6 @@ MonoBehaviour:
   _cutscene: {fileID: 59254647}
   _fadeInPanel: {fileID: 260997220}
   _audioSource: {fileID: 1800793704}
-  _menuMusic: {fileID: 11400000, guid: 989a045f325a274fe76aef38c86783d9, type: 2}
 --- !u!4 &1800793703
 Transform:
   m_ObjectHideFlags: 0
