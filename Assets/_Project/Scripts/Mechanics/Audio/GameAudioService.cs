@@ -1,8 +1,5 @@
 using System;
-using System.Threading;
-using Cysharp.Threading.Tasks;
 using Project.Core.AudioSystem;
-using UnityEngine;
 using _Project.Mechanics.WorldScale;
 
 namespace _Project.Mechanics.Audio
@@ -63,14 +60,13 @@ namespace _Project.Mechanics.Audio
     /// </summary>
     public sealed class GameAudioService : IDisposable
     {
-        /// <summary>How long intro-q24 takes to fade up from silence, and how long it overlaps/crossfades into
-        /// q24 at the handoff - see <see cref="PlayGameplayMusicAsync"/>.</summary>
+        /// <summary>How long q24 takes to fade up from silence at gameplay start - see
+        /// <see cref="PlayGameplayMusic"/>.</summary>
         private const float MusicTransitionDuration = 1f;
 
         private readonly IAudioSystem _audioSystem;
         private readonly GameAudioCatalog _catalog;
         private readonly WorldScaleController _worldScaleController;
-        private CancellationTokenSource _gameplayMusicCts;
 
         /// <param name="audioSystem">Resolved from the Zenject container (bound by AudioSystemInstaller in
         /// Phase 1's ProjectContextInstaller) - passed in explicitly rather than [Inject]-ed onto this class
@@ -106,9 +102,6 @@ namespace _Project.Mechanics.Audio
         /// plain POCO's external event subscription instead of a MonoBehaviour lifecycle method).</summary>
         public void Dispose()
         {
-            _gameplayMusicCts?.Cancel();
-            _gameplayMusicCts?.Dispose();
-
             if (_worldScaleController == null)
                 return;
 
@@ -130,53 +123,15 @@ namespace _Project.Mechanics.Audio
         }
 
         /// <summary>
-        /// Plays intro-q24 once (non-looping, fading up from silence over <see cref="MusicTransitionDuration"/>),
-        /// then hands off to q24 on loop with a gapless crossfade. The main menu plays no music at all (explicit
-        /// user request - see the removed MainMenuScreen music field), so gameplay start is now the only place
-        /// intro-q24 plays; it previously played nowhere (GameAudioCatalog.MenuMusic/GameAudioService.
-        /// PlayMenuMusic existed but nothing called PlayMenuMusic) and GameplayScene jumped straight to the
-        /// looping q24 track. See <see cref="PlayGameplayMusicAsync"/> for the handoff timing.</summary>
-        public void PlayGameplayMusic()
-        {
-            _gameplayMusicCts?.Cancel();
-            _gameplayMusicCts?.Dispose();
-            _gameplayMusicCts = new CancellationTokenSource();
-
-            PlayGameplayMusicAsync(_gameplayMusicCts.Token).Forget();
-        }
-
-        /// <summary>Schedules the q24 crossfade to start <see cref="MusicTransitionDuration"/> seconds BEFORE
-        /// intro-q24's own known clip length ends, rather than waiting for <see cref="IAudioSystem.IsMusicPlaying"/>
-        /// to go false (the earlier approach - that only fires once intro has already gone fully silent, so the
-        /// crossfade had nothing left to overlap with and both the wait-detection latency and the crossfade's own
-        /// fade-in were audible as a gap). Starting the crossfade while intro is still playing means its last
-        /// <see cref="MusicTransitionDuration"/> seconds blend directly into q24's fade-in - no silence, no click.
-        /// </summary>
-        private async UniTaskVoid PlayGameplayMusicAsync(CancellationToken cancellationToken)
-        {
-            SoundData intro = _catalog.GameplayIntroMusic;
-
-            if (intro == null || intro.Clip == null)
-            {
-                _audioSystem.PlayMusic(_catalog.GameplayMusic);
-                return;
-            }
-
-            _audioSystem.PlayMusic(intro, MusicTransitionDuration, loop: false);
-
-            float crossfadeDelay = Mathf.Max(0f, intro.Clip.length - MusicTransitionDuration);
-
-            try
-            {
-                await UniTask.Delay(TimeSpan.FromSeconds(crossfadeDelay), cancellationToken: cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-
-            _audioSystem.CrossfadeMusic(_catalog.GameplayMusic, MusicTransitionDuration, loop: true);
-        }
+        /// Plays q24 on loop, fading up from silence over <see cref="MusicTransitionDuration"/>. The main menu
+        /// plays no music at all (explicit user request - see the removed MainMenuScreen music field).
+        /// intro-q24 (<see cref="GameAudioCatalog.GameplayIntroMusic"/>) is temporarily out of the gameplay-start
+        /// sequence per a follow-up request ("поки приберемо intro-q24 і залишимо тільки q24") - the catalog slot
+        /// and its SoundData asset are left wired, just unused here, so restoring the intro-&gt;loop handoff later
+        /// (see git history for the crossfade-based version this replaced) is a small, localized change rather
+        /// than re-plumbing the catalog from scratch.</summary>
+        public void PlayGameplayMusic() =>
+            _audioSystem.PlayMusic(_catalog.GameplayMusic, MusicTransitionDuration, loop: true);
 
         /// <summary>Old: TransitionIntoMacroWorld's `_player.GetComponent&lt;AudioList&gt;().Play(0)` - see this
         /// class's own doc comment for what this does and does NOT reproduce (whoosh SFX only, no mixer swap).
