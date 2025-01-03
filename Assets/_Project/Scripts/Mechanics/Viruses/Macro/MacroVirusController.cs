@@ -100,6 +100,10 @@ namespace _Project.Mechanics.Viruses.Macro
         private IMemoryPool _pool;
         private bool _componentsResolved;
 
+        // Captured once, at real construction (before PenetrationIntoCellBehavior ever gets a chance to shrink
+        // this transform) - see OnSpawned's own comment for why this needs restoring every respawn.
+        private Vector3 _originalScale;
+
         // Old: VirusController._audioSources = GetComponents<AudioSource>() (root-only, matching Animator/
         // AudioSource layout on BigBob.prefab/PinkGlist.prefab); [0].Play() on every hit (AnimationOnDamage),
         // [1].Play() on death (AnimationOnDied). Neither prefab's AudioSource count changed since old
@@ -135,10 +139,20 @@ namespace _Project.Mechanics.Viruses.Macro
             if (!_componentsResolved)
             {
                 _audioSources = GetComponents<AudioSource>();
+                _originalScale = transform.localScale;
                 _componentsResolved = true;
             }
 
             transform.SetPositionAndRotation(position, rotation);
+
+            // PenetrationIntoCellBehavior.Init() permanently DOScales this transform down to
+            // originalScale * PenetrationScaleFactor as the "climbing into the cell" animation - before pooling,
+            // the GameObject was destroyed right after penetrating, so the shrunk scale never mattered. Now the
+            // same instance gets reused, so a virus that ever penetrated a cell would otherwise spawn back in
+            // permanently shrunk (and shrink further with every subsequent penetration) - user-reported "viruses
+            // sometimes spawn small" after the pooling migration. Restoring the cached original scale here, every
+            // respawn, undoes whatever the previous life's penetration animation left behind.
+            transform.localScale = _originalScale;
 
             _lifetimeCts = new CancellationTokenSource();
             _isAlive = true;
