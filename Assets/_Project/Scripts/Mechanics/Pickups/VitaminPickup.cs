@@ -57,11 +57,14 @@ namespace _Project.Mechanics.Pickups
         }
 
         /// <summary>
-        /// Initiates the vitamin's impulse and flight towards the player.
+        /// Initiates the vitamin's impulse and flight towards the player. Reactivates the GameObject - see
+        /// ResetForPool's doc comment for why vitamins now start hidden and only become visible here.
         /// </summary>
         /// <param name="impulseDirection">Direction of initial outward scatter. If zero, calculates from parent center or random.</param>
         public void Launch(Vector2 impulseDirection = default)
         {
+            gameObject.SetActive(true);
+
             if (impulseDirection == default)
             {
                 if (transform.parent != null)
@@ -149,13 +152,19 @@ namespace _Project.Mechanics.Pickups
             gameObject.SetActive(false);
         }
 
-        /// <summary>Reactivates this vitamin at <paramref name="localPosition"/> (its original, prefab-authored
+        /// <summary>Repositions this vitamin to <paramref name="localPosition"/> (its original, prefab-authored
         /// slot) and clears the flight/collected state Collect() left behind - called by MedicalPickup.OnSpawned
-        /// on every respawn, see that method's own doc comment.</summary>
+        /// on every respawn, see that method's own doc comment. Deactivates rather than reactivates - the pill
+        /// hasn't broken yet at spawn time, so its vitamins should stay hidden until <see cref="Launch"/>
+        /// actually releases them (user-reported bug: with the pooled instance always reactivating all 4
+        /// vitamins immediately on spawn, an interrupted/edge-case life could leave one visibly detached-looking
+        /// near an otherwise-intact, unbroken pill - "Medicals_N" siblings sitting outside any "Medical" parent
+        /// in the Hierarchy). Reactivation now happens in Launch() instead, at the one moment a vitamin is
+        /// actually meant to be seen.</summary>
         public void ResetForPool(Vector3 localPosition)
         {
             transform.localPosition = localPosition;
-            gameObject.SetActive(true);
+            gameObject.SetActive(false);
 
             _isCollected = false;
             _isFlying = false;
