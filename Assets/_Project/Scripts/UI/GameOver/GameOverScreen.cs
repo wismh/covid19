@@ -2,7 +2,9 @@ using Cysharp.Threading.Tasks;
 using Lumenwake.UIModule;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Zenject;
+using _Project.Input;
 using _Project.Mechanics.AppFlow;
 
 namespace _Project.UI.GameOver
@@ -31,10 +33,13 @@ namespace _Project.UI.GameOver
     /// Old: `HUD.AnyKeyHandle` (bound to InputAction "GameOver.AnyKey") -&gt; `ServiceLocator.Instance.
     /// Get&lt;FadeManager&gt;().FadeIn(() =&gt; SceneManager.LoadScene("Menu"))`. The raw scene load is replaced
     /// with the Phase-1 app-flow state machine, per the phase brief: `GlobalGameStateMachine.Enter&lt;MenuState&gt;()`
-    /// (MenuState itself loads the Menu scene via ISceneLoaderService - see MenuState.cs). The old "any key"
-    /// input binding and fade transition are not reproduced - this exposes a plain <see cref="Restart"/> method
-    /// for a UI Button.onClick a human wires up later (same "expose for whatever UI will be wired later" shape as
-    /// UpgradeScreen.SelectUpgrade), rather than this pure-C#-only phase inventing new InputAction/fade wiring.
+    /// (MenuState itself loads the Menu scene via ISceneLoaderService - see MenuState.cs). The fade transition is
+    /// still not reproduced (out of scope here), but the "any key" input binding IS now wired: the ported-but-
+    /// previously-orphaned "GameOver/AnyKey" InputAction (Actions.inputactions) is enabled in <see cref="OnOpen"/>
+    /// and disabled in <see cref="OnClose"/>, calling <see cref="Restart"/> on `performed` - same
+    /// new-`Actions()`-in-`Awake`/`Enable`-`Disable`-by-map pattern as PlayerMovement/PlayerTurret. Testing round
+    /// (2026-09-20): user reported the "press any key" prompt did nothing at all - this class had no input
+    /// handling whatsoever, `Restart()` was a documented-as-unwired dead end.
     /// </summary>
     public class GameOverScreen : BaseScreen
     {
@@ -48,6 +53,8 @@ namespace _Project.UI.GameOver
         private GlobalGameStateMachine _stateMachine;
         private bool _allCellsDied;
 
+        private Actions _inputActions;
+
         /// <summary>GlobalGameStateMachine IS a real Zenject binding (ProjectContextInstaller) and resolves today,
         /// unlike the Mechanics/* POCOs other screens in this phase depend on.</summary>
         [Inject]
@@ -56,20 +63,38 @@ namespace _Project.UI.GameOver
             _stateMachine = stateMachine;
         }
 
+        private void Awake()
+        {
+            _inputActions = new Actions();
+        }
+
+        private void OnDestroy()
+        {
+            _inputActions?.Dispose();
+        }
+
         public override void OnOpen()
         {
             if (_messageText != null)
                 _messageText.text = _allCellsDied ? _allCellsDiedMessage : _playerDiedMessage;
+
+            _inputActions.GameOver.Enable();
+            _inputActions.GameOver.AnyKey.performed += OnAnyKeyPerformed;
         }
 
         public override UniTask OnClose()
         {
+            _inputActions.GameOver.AnyKey.performed -= OnAnyKeyPerformed;
+            _inputActions.GameOver.Disable();
+
             // Reset to the default (player-died) variant so a later plain OpenScreen<GameOverScreen>() call
             // (e.g. from HudScreen's OnDied handler) doesn't accidentally show a stale "All Cells Have Died"
             // from a previous session's SetAllCellsDied(true) call.
             _allCellsDied = false;
             return base.OnClose();
         }
+
+        private void OnAnyKeyPerformed(InputAction.CallbackContext context) => Restart();
 
         /// <summary>Documented gap - see class doc comment's "Two ways the old code showed this panel" section.
         /// A future cell-registry composition root calls this (then opens this screen itself) when the last
