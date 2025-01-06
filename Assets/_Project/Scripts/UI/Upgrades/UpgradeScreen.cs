@@ -102,6 +102,18 @@ namespace _Project.UI.Upgrades
         {
             RegenerateOfferedUpgrades();
             RefreshCards();
+            Time.timeScale = 0f;
+        }
+
+        /// <summary>Resumes gameplay when the player picks a card (see <see cref="SelectUpgrade"/>) or the
+        /// screen is otherwise closed. Paired with the pause in <see cref="OnOpen"/> - this screen didn't
+        /// pause the game in the original GMTK build (old UpgradesHUD had no Time.timeScale logic at all),
+        /// this is a new addition so players get real think time on the pick instead of the fight continuing
+        /// behind the cards.</summary>
+        public override UniTask OnClose()
+        {
+            Time.timeScale = 1f;
+            return base.OnClose();
         }
 
         /// <summary>Old: GMTK.UI.UpgradesHUD.OnEnable()'s `_images[i].sprite = ...; _texts[i].text = ...;`

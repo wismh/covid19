@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using Project.Core.SceneLoaderServiceModule;
 using Project.Core.StateMachineModule;
 using Project.Generated;
+using UnityEngine;
 
 namespace _Project.Mechanics.AppFlow
 {
@@ -16,6 +17,8 @@ namespace _Project.Mechanics.AppFlow
 
         public override async UniTask Enter()
         {
+            // See GameplayState.Enter() - same stuck-pause guard for UpgradeScreen's Time.timeScale = 0.
+            Time.timeScale = 1f;
             await _sceneLoaderService.LoadSceneAsync(SceneInBuild.Menu, unloadRedundant: true);
         }
 
