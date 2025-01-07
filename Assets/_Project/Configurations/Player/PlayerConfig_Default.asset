@@ -33,7 +33,7 @@ MonoBehaviour:
   _baseDamage: 1
   _baseReloadTime: 1.75
   _reloadTimeReductionPerUpgradeLevel: 0.25
-  _minReloadTime: 0.25
+  _minReloadTime: 0.05
   _bulletSpeed: 10
   _bulletLifetimeSeconds: 2
   _startingMaxExperience: 3

@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_Project.Mechanics.Player.UpgradeDefinition
   _stat: 2
   _displayName: Attack Speed
-  _effectPerLevel: 0.25
+  _effectPerLevel: 0.2

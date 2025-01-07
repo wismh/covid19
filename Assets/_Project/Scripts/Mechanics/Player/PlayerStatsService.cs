@@ -120,14 +120,18 @@ namespace _Project.Mechanics.Player
         public float EffectiveTurnRate =>
             _config.BaseMobility + EffectPerLevel(UpgradeStat.Mobility) * (GetUpgradeLevel(UpgradeStat.Mobility) - 1);
 
-        /// <summary>Old: `_baseReloadTime - GetLevelUpgrade(PLAYER_ATTACK_SPEED) * _scaleByLevelUpgrade`, floored to 0.25s.</summary>
+        /// <summary>
+        /// Compounding formula: each AttackSpeed level multiplies fire rate by (1 + EffectPerLevel) over the
+        /// previous level, i.e. reload = BaseReloadTime / (1 + EffectPerLevel)^level, floored at MinReloadTime.
+        /// EffectPerLevel is a fraction (0.2 = +20% fire rate per level), not a flat seconds-per-level value.
+        /// </summary>
         public float EffectiveReloadTime
         {
             get
             {
                 int level = GetUpgradeLevel(UpgradeStat.AttackSpeed);
-                float reload = _config.BaseReloadTime - EffectPerLevel(UpgradeStat.AttackSpeed) * level;
-                return reload <= 0f ? _config.MinReloadTime : reload;
+                float reload = _config.BaseReloadTime / Mathf.Pow(1f + EffectPerLevel(UpgradeStat.AttackSpeed), level);
+                return Mathf.Max(reload, _config.MinReloadTime);
             }
         }
 

@@ -75,7 +75,7 @@ namespace _Project.Mechanics.Player
         // two independently-authored assets needing to be kept in perfect sync to stay meaningful individually.
         [SerializeField] private float _reloadTimeReductionPerUpgradeLevel = 0.25f;
 
-        [SerializeField] private float _minReloadTime = 0.25f;
+        [SerializeField] private float _minReloadTime = 0.05f;
 
         // Old: GMTK.Bullet's own [SerializeField] defaults (speed 10f, lifetime 2f) - previously a prefab-only
         // value with no config backing at all (2026-09-19 hardcode audit).
