@@ -11,10 +11,10 @@ namespace _Project.Mechanics.Player
     /// with the AttackSpeed upgrade. No ServiceLocator, no transform.Find - direct [SerializeField] references
     /// and Zenject method injection instead.
     ///
-    /// Firing seam: projectile spawning goes through <see cref="IProjectileSpawner"/> rather than a new
-    /// pooling system (out of scope for this phase) - see GmtkBulletManagerProjectileSpawner for the concrete
-    /// bridge to the existing GMTK.BulletManager, and its doc comment for where damage calculation currently
-    /// still runs through old GMTK code instead of PlayerStatsService.EffectiveDamage.
+    /// Firing seam: projectile spawning goes through <see cref="IProjectileSpawner"/>, implemented by
+    /// <see cref="_Project.Mechanics.Combat.BulletManager"/> (a Zenject-pooled native port, GMTK.BulletManager's
+    /// replacement - see that class's own doc comment) which pulls damage from
+    /// <see cref="PlayerStatsService.EffectiveDamage"/> directly.
     ///
     /// UI seam: the old controller drove a DOTween-animated Image directly (`_filledReloadImage.fillAmount`).
     /// Mechanics shouldn't own presentation, so this exposes <see cref="ReloadProgress01"/> instead for a future
