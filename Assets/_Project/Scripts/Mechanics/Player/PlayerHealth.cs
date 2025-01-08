@@ -64,6 +64,10 @@ namespace _Project.Mechanics.Player
 
         private CancellationTokenSource _lifetimeCts;
 
+        // Cached once in Awake() (not re-captured inside PlayDamageFlashAsync) - see that method's doc comment
+        // for the overlapping-flash race this fixes.
+        private Material _originalMaterial;
+
         private int _health;
         private int _armor;
         private bool _isAlive = true;
@@ -108,6 +112,9 @@ namespace _Project.Mechanics.Player
         private void Awake()
         {
             _lifetimeCts = new CancellationTokenSource();
+
+            if (_spriteRenderer != null)
+                _originalMaterial = _spriteRenderer.material;
         }
 
         private void OnDestroy()
@@ -167,14 +174,19 @@ namespace _Project.Mechanics.Player
                 HandleDeathAsync().Forget();
         }
 
-        /// <summary>Old: PlayerDamageable.AnimationOnDamage() - swaps in the damage material for 0.1s. Mirrors
-        /// MacroVirusController/MicroVirusController's own PlayDamageFlashAsync exactly.</summary>
+        /// <summary>
+        /// Old: PlayerDamageable.AnimationOnDamage() - swaps in the damage material for 0.1s. Mirrors
+        /// MacroVirusController/MicroVirusController's own PlayDamageFlashAsync exactly, including that method's
+        /// overlapping-flash race fix (see its doc comment) - two hits within DamageFlashDurationSeconds used to
+        /// race on a locally-captured "original" material, leaving the player sprite stuck fully white until the
+        /// next flash happened to finish cleanly. Now always reverts to the single <see cref="_originalMaterial"/>
+        /// cached once in Awake().
+        /// </summary>
         private async UniTaskVoid PlayDamageFlashAsync()
         {
             if (_spriteRenderer == null || _damageMaterial == null)
                 return;
 
-            Material original = _spriteRenderer.material;
             _spriteRenderer.material = _damageMaterial;
 
             try
@@ -186,7 +198,7 @@ namespace _Project.Mechanics.Player
                 return;
             }
 
-            _spriteRenderer.material = original;
+            _spriteRenderer.material = _originalMaterial;
         }
 
         private async UniTaskVoid HandleDeathAsync()

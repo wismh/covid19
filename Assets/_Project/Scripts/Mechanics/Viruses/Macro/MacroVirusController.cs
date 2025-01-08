@@ -104,6 +104,10 @@ namespace _Project.Mechanics.Viruses.Macro
         // this transform) - see OnSpawned's own comment for why this needs restoring every respawn.
         private Vector3 _originalScale;
 
+        // Cached once per spawn (not re-captured inside PlayDamageFlashAsync) - see that method's doc comment
+        // for the overlapping-flash race this fixes (user-reported "virus stuck fully white").
+        private Material _originalMaterial;
+
         // Old: VirusController._audioSources = GetComponents<AudioSource>() (root-only, matching Animator/
         // AudioSource layout on BigBob.prefab/PinkGlist.prefab); [0].Play() on every hit (AnimationOnDamage),
         // [1].Play() on death (AnimationOnDied). Neither prefab's AudioSource count changed since old
@@ -164,7 +168,10 @@ namespace _Project.Mechanics.Viruses.Macro
                 _collider.enabled = true;
 
             if (_spriteRenderer != null)
+            {
                 _spriteRenderer.material = _spriteRenderer.sharedMaterial;
+                _originalMaterial = _spriteRenderer.material;
+            }
 
             // Old: VirusController.Start() -> `ChangeBehavior(new MoveToCell());`
             SwitchBehavior(new MoveToCellBehavior(_cellTargetProvider, this, _config));
@@ -321,13 +328,28 @@ namespace _Project.Mechanics.Viruses.Macro
             OnKilled?.Invoke();
         }
 
-        /// <summary>Old: VirusController.AnimationOnDamage() - swaps in the damage material for 0.1s.</summary>
+        /// <summary>
+        /// Old: VirusController.AnimationOnDamage() - swaps in the damage material for 0.1s.
+        ///
+        /// --- Overlapping-flash race fix (Phase N testing fix) ---
+        /// Used to capture `Material original = _spriteRenderer.material;` right here, at the start of every
+        /// call, and restore that local at the end. Two hits landing within DamageFlashDurationSeconds of each
+        /// other (e.g. two bullets same frame) start two overlapping calls; the second call's "original" is
+        /// captured while the first flash is still active, i.e. it's the (cloned) damage material, not the true
+        /// original. When the first call finishes it correctly restores the true original - but the second call
+        /// then finishes later and stomps it right back to the white damage-material clone, where it now stays
+        /// permanently (nothing else ever resets it) until the pool respawns this instance. That's the
+        /// user-reported "virus sometimes shows up fully white and flies like that" bug - it looked
+        /// pooling-related because the same reused instance keeps the stuck material across sightings, but the
+        /// actual race exists independently of pooling. Fix: always revert to the single <see
+        /// cref="_originalMaterial"/> cached once in OnSpawned, so every overlapping flash converges on the same
+        /// correct value no matter which one finishes last.
+        /// </summary>
         private async UniTaskVoid PlayDamageFlashAsync()
         {
             if (_spriteRenderer == null || _damageMaterial == null)
                 return;
 
-            Material original = _spriteRenderer.material;
             _spriteRenderer.material = _damageMaterial;
 
             try
@@ -339,7 +361,7 @@ namespace _Project.Mechanics.Viruses.Macro
                 return;
             }
 
-            _spriteRenderer.material = original;
+            _spriteRenderer.material = _originalMaterial;
         }
 
         // --- IDriftBody: fresh port of GMTK.DriftMovableObject.Move/Rotate/Impulse, see IDriftBody doc comment. ---

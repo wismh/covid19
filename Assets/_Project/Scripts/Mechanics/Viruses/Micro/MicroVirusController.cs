@@ -98,6 +98,10 @@ namespace _Project.Mechanics.Viruses.Micro
         private IMemoryPool _pool;
         private bool _componentsResolved;
 
+        // Cached once per spawn (not re-captured inside PlayDamageFlashAsync) - see that method's doc comment
+        // for the overlapping-flash race this fixes (user-reported "virus stuck fully white").
+        private Material _originalMaterial;
+
         public bool IsAlive => _isAlive;
 
         /// <summary>Raised on death by damage (old: InCellVirus.Damage(), the `_health &lt;= 0` branch).</summary>
@@ -138,7 +142,10 @@ namespace _Project.Mechanics.Viruses.Micro
                 _collider.enabled = true;
 
             if (_spriteRenderer != null)
+            {
                 _spriteRenderer.material = _spriteRenderer.sharedMaterial;
+                _originalMaterial = _spriteRenderer.material;
+            }
 
             _playerTransform = _playerTargetProvider?.PlayerTransform;
             _behavior = BuildBehavior(_playerTransform);
@@ -297,13 +304,21 @@ namespace _Project.Mechanics.Viruses.Micro
             OnKilled?.Invoke();
         }
 
-        /// <summary>Old: InCellVirus.AnimationOnDamage() - swaps in the damage material for 0.1s.</summary>
+        /// <summary>
+        /// Old: InCellVirus.AnimationOnDamage() - swaps in the damage material for 0.1s.
+        ///
+        /// --- Overlapping-flash race fix (Phase N testing fix) ---
+        /// See MacroVirusController.PlayDamageFlashAsync's doc comment for the full explanation - identical bug,
+        /// identical fix. Two hits within DamageFlashDurationSeconds used to race on a locally-captured
+        /// "original" material, leaving the sprite stuck on the white damage-material clone until the pool
+        /// respawned this instance (the user-reported "virus fully white" bug). Now always reverts to the single
+        /// <see cref="_originalMaterial"/> cached once in OnSpawned.
+        /// </summary>
         private async UniTaskVoid PlayDamageFlashAsync()
         {
             if (_spriteRenderer == null || _damageMaterial == null)
                 return;
 
-            Material original = _spriteRenderer.material;
             _spriteRenderer.material = _damageMaterial;
 
             try
@@ -315,7 +330,7 @@ namespace _Project.Mechanics.Viruses.Micro
                 return;
             }
 
-            _spriteRenderer.material = original;
+            _spriteRenderer.material = _originalMaterial;
         }
 
         public class Factory : PlaceholderFactory<MicroVirusController>
