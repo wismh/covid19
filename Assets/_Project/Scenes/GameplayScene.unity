@@ -6041,29 +6041,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cde5a769bb09e594e1093cfc0dc6cd1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _upgradeDefinitions:
-  - {fileID: 11400000, guid: 5ea277fd40f05e7d04ccaa12ae6ec436, type: 2}
-  - {fileID: 11400000, guid: 74b83fad47897c6e67d59bfe5ae499a9, type: 2}
-  - {fileID: 11400000, guid: 15b1cc424fbfe9db98e74000e8f2fc5f, type: 2}
-  - {fileID: 11400000, guid: d5c22d47487850ea2cd8936c6c3da561, type: 2}
-  - {fileID: 11400000, guid: 98c921dcd1882fe38da09d3cac821772, type: 2}
-  - {fileID: 11400000, guid: e1d09ba18ab9c5c8c40725cd6b177db9, type: 2}
   _playerMovement: {fileID: 2337103139321944}
   _playerTurret: {fileID: 5614351604738210}
   _playerHealth: {fileID: 4696518097923576}
-  _playerParticlesController: {fileID: 0}
-  _arrowController: {fileID: 0}
   _bulletManager: {fileID: 2122897178}
-  _cellConfig: {fileID: 11400000, guid: 6421f115f1264b2cd9fd501ae511b7cf, type: 2}
-  _cellSpawner: {fileID: 7016120388211641}
-  _macroVirusConfig: {fileID: 11400000, guid: f59d974784a1871b8e9a7e0433a2e966, type: 2}
-  _macroVirusSpawner: {fileID: 5832045637886502}
-  _waveScalingConfig: {fileID: 11400000, guid: c526b4c270a5ed59980fd1bd36c061eb, type: 2}
   _worldCamera: {fileID: 519420031}
   _cameraFollow: {fileID: 519420033}
   _playerVisualRoot: {fileID: 4435939539474040}
   _playerCollider: {fileID: 6579931932917122}
-  _gameAudioCatalog: {fileID: 11400000, guid: 6a6ed9b10a11e75477ad69ca586ecfc5, type: 2}
   _hudScreen: {fileID: 817364529}
   _upgradeScreen: {fileID: 642187733}
   _gameOverScreen: {fileID: 355982164}

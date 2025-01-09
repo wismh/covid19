@@ -19,6 +19,10 @@ namespace _Project.Mechanics.Composition
     /// tactics-cards' GamePlayContextInstaller uses. Replaces MainSceneComposition.BuildMechanicsPocos() (which
     /// used to `new` every POCO by hand) - MainSceneComposition now receives them via [Inject] instead.
     /// UI screens/IScreenManager are bound separately by UiInstaller (also attached to the same SceneContext).
+    ///
+    /// 2026-09-20 "MainCompositionRoot split into installers": also calls
+    /// <see cref="GameplayEventWiringInstaller"/>, which binds the cross-system event-wiring drivers split out
+    /// of MainSceneComposition.WireCrossSystemEvents - see that installer's own doc comment.
     /// </summary>
     public class GameplaySceneInstaller : MonoInstaller
     {
@@ -73,6 +77,8 @@ namespace _Project.Mechanics.Composition
             // teardown - avoids a double-dispose between the two.
             Container.Bind<GameAudioCatalog>().FromInstance(_gameAudioCatalog).AsSingle();
             Container.Bind<GameAudioService>().AsSingle();
+
+            GameplayEventWiringInstaller.Install(Container);
         }
     }
 }

@@ -12,6 +12,9 @@ namespace _Project.Mechanics.Viruses.Macro
     /// Also binds the pooled Virus/Glist prefabs (one Zenject <see cref="IMemoryPool"/> per
     /// <see cref="MacroVirusVariant"/>, mirroring MicroVirusesInstaller's own per-variant pool shape) instead of
     /// the previous bare Instantiate/Destroy - see MacroVirusController/MacroVirusSpawner's own doc comments.
+    /// Also binds the scene-placed MacroVirusSpawner itself (mirrors PlayerInstaller's PlayerMovement/
+    /// PlayerTurret/PlayerHealth bindings) so GameplayEventWiringInstaller's cell/virus drivers can resolve it
+    /// via constructor injection instead of a hand-built reference.
     /// </summary>
     public static class VirusesInstaller
     {
@@ -24,6 +27,7 @@ namespace _Project.Mechanics.Viruses.Macro
             container.Bind<MacroVirusConfig>().FromInstance(macroVirusConfig).AsSingle();
             container.Bind<WaveScalingConfig>().FromInstance(waveScalingConfig).AsSingle();
             container.Bind<MacroVirusRegistry>().AsSingle();
+            container.Bind<MacroVirusSpawner>().FromComponentInHierarchy().AsSingle();
 
             BindVirusPools(container, virusPrefab, glistPrefab);
         }
