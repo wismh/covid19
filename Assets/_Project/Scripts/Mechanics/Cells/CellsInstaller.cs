@@ -8,14 +8,25 @@ namespace _Project.Mechanics.Cells
     /// both from the one singleton instance. Also binds the scene-placed CellSpawner itself (mirrors
     /// PlayerInstaller's PlayerMovement/PlayerTurret/PlayerHealth bindings) so GameplayEventWiringInstaller's
     /// VirusExperienceDriver can resolve it via constructor injection instead of a hand-built reference.
+    ///
+    /// A real Zenject <see cref="Installer{TParam1, TDerived}"/> subclass (not a bare static class) - matches
+    /// tactics-cards' own installers, which are all genuine Installer&lt;...&gt; types with constructor-injected
+    /// params, called via the base class's inherited static `Install(Container, ...)` factory method.
     /// </summary>
-    public static class CellsInstaller
+    public class CellsInstaller : Installer<CellConfig, CellsInstaller>
     {
-        public static void Install(DiContainer container, CellConfig cellConfig)
+        private readonly CellConfig _cellConfig;
+
+        public CellsInstaller(CellConfig cellConfig)
         {
-            container.Bind<CellConfig>().FromInstance(cellConfig).AsSingle();
-            container.BindInterfacesAndSelfTo<CellRegistry>().AsSingle();
-            container.Bind<CellSpawner>().FromComponentInHierarchy().AsSingle();
+            _cellConfig = cellConfig;
+        }
+
+        public override void InstallBindings()
+        {
+            Container.Bind<CellConfig>().FromInstance(_cellConfig).AsSingle();
+            Container.BindInterfacesAndSelfTo<CellRegistry>().AsSingle();
+            Container.Bind<CellSpawner>().FromComponentInHierarchy().AsSingle();
         }
     }
 }

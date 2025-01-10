@@ -8,34 +8,49 @@ namespace _Project.Mechanics.Player
     /// <summary>
     /// Binds the player POCO/config and the statically-placed Player-prefab MonoBehaviours (so other
     /// installers/consumers can resolve them via [Inject] instead of a hand-built reference), for
-    /// GameplaySceneInstaller. Follows the space-bac/tactics-cards convention: a plain static Install(Container, ...)
-    /// helper, not a MonoInstaller of its own.
+    /// GameplaySceneInstaller.
+    ///
+    /// A real Zenject <see cref="Installer{TParam1, TParam2, TParam3, TDerived}"/> subclass (not a bare static
+    /// class) - matches tactics-cards' own installers (e.g. PlaceablePoolsInstaller/ArenaMatchBindingsInstaller),
+    /// which are all genuine Installer&lt;...&gt; types with constructor-injected params, called via the base
+    /// class's inherited static `Install(Container, ...)` factory method - not a hand-rolled one.
     /// </summary>
-    public static class PlayerInstaller
+    public class PlayerInstaller : Installer<PlayerConfig, IReadOnlyList<UpgradeDefinition>, Bullet, PlayerInstaller>
     {
         private const string BulletPoolRootName = "BulletPool";
         private const int BulletPoolInitialSize = 50;
         private const int BulletPoolMaxSize = 100;
 
-        public static void Install(DiContainer container, PlayerConfig playerConfig, IReadOnlyList<UpgradeDefinition> upgradeDefinitions, Bullet bulletPrefab)
+        private readonly PlayerConfig _playerConfig;
+        private readonly IReadOnlyList<UpgradeDefinition> _upgradeDefinitions;
+        private readonly Bullet _bulletPrefab;
+
+        public PlayerInstaller(PlayerConfig playerConfig, IReadOnlyList<UpgradeDefinition> upgradeDefinitions, Bullet bulletPrefab)
         {
-            container.Bind<PlayerConfig>().FromInstance(playerConfig).AsSingle();
-            container.Bind<PlayerStatsService>().AsSingle().WithArguments(playerConfig, upgradeDefinitions);
+            _playerConfig = playerConfig;
+            _upgradeDefinitions = upgradeDefinitions;
+            _bulletPrefab = bulletPrefab;
+        }
 
-            container.Bind<PlayerMovement>().FromComponentInHierarchy().AsSingle();
-            container.Bind<PlayerTurret>().FromComponentInHierarchy().AsSingle();
-            container.Bind<PlayerHealth>().FromComponentInHierarchy().AsSingle();
+        public override void InstallBindings()
+        {
+            Container.Bind<PlayerConfig>().FromInstance(_playerConfig).AsSingle();
+            Container.Bind<PlayerStatsService>().AsSingle().WithArguments(_playerConfig, _upgradeDefinitions);
 
-            BindBulletPool(container, bulletPrefab);
+            Container.Bind<PlayerMovement>().FromComponentInHierarchy().AsSingle();
+            Container.Bind<PlayerTurret>().FromComponentInHierarchy().AsSingle();
+            Container.Bind<PlayerHealth>().FromComponentInHierarchy().AsSingle();
+
+            BindBulletPool(_bulletPrefab);
         }
 
         // Zenject-pooled replacement for BulletManager's previous UnityEngine.Pool.ObjectPool<Bullet> - see
         // Bullet's own class doc comment. MaxSize matches the old pool's own k_maxPoolSize.
-        private static void BindBulletPool(DiContainer container, Bullet bulletPrefab)
+        private void BindBulletPool(Bullet bulletPrefab)
         {
             var poolRoot = new GameObject(BulletPoolRootName).transform;
 
-            container
+            Container
                 .BindFactory<Vector3, Vector3, int, Bullet, Bullet.Factory>()
                 .FromMonoPoolableMemoryPool(pool => pool
                     .WithInitialSize(BulletPoolInitialSize)

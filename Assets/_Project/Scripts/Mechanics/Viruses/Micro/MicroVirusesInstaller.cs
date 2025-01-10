@@ -11,8 +11,13 @@ namespace _Project.Mechanics.Viruses.Micro
     /// multi-prefab pools) plus the Cucumber-only VirusBullet pool, for GameplaySceneInstaller. Both replace bare
     /// Instantiate/Destroy - see MicroVirusController/MicroVirusSpawner/VirusBullet/VirusBulletSpawner's own doc
     /// comments.
+    ///
+    /// A real Zenject <see cref="Installer{TParam1, TParam2, TParam3, TParam4, TDerived}"/> subclass (not a bare
+    /// static class) - matches tactics-cards' own installers, which are all genuine Installer&lt;...&gt; types
+    /// with constructor-injected params, called via the base class's inherited static `Install(Container, ...)`
+    /// factory method.
     /// </summary>
-    public static class MicroVirusesInstaller
+    public class MicroVirusesInstaller : Installer<MicroVirusController, MicroVirusController, MicroVirusController, VirusBullet, MicroVirusesInstaller>
     {
         private const string PoolRootName = "MicroVirusPool";
         private const int VirusInitialSize = 10;
@@ -20,33 +25,45 @@ namespace _Project.Mechanics.Viruses.Micro
         private const int VirusBulletInitialSize = 10;
         private const int VirusBulletMaxSize = 30;
 
-        public static void Install(
-            DiContainer container,
+        private readonly MicroVirusController _orangePrefab;
+        private readonly MicroVirusController _cucumberPrefab;
+        private readonly MicroVirusController _spinerPrefab;
+        private readonly VirusBullet _virusBulletPrefab;
+
+        public MicroVirusesInstaller(
             MicroVirusController orangePrefab,
             MicroVirusController cucumberPrefab,
             MicroVirusController spinerPrefab,
             VirusBullet virusBulletPrefab)
         {
+            _orangePrefab = orangePrefab;
+            _cucumberPrefab = cucumberPrefab;
+            _spinerPrefab = spinerPrefab;
+            _virusBulletPrefab = virusBulletPrefab;
+        }
+
+        public override void InstallBindings()
+        {
             var poolRoot = new GameObject(PoolRootName).transform;
 
-            BindVirusPool(container, MicroVirusVariant.Orange, orangePrefab, poolRoot);
-            BindVirusPool(container, MicroVirusVariant.Cucumber, cucumberPrefab, poolRoot);
-            BindVirusPool(container, MicroVirusVariant.Spiner, spinerPrefab, poolRoot);
+            BindVirusPool(MicroVirusVariant.Orange, _orangePrefab, poolRoot);
+            BindVirusPool(MicroVirusVariant.Cucumber, _cucumberPrefab, poolRoot);
+            BindVirusPool(MicroVirusVariant.Spiner, _spinerPrefab, poolRoot);
 
-            container
+            Container
                 .Bind<IReadOnlyDictionary<MicroVirusVariant, IFactory<MicroVirusController>>>()
                 .FromMethod(CreateFactoryMap)
                 .AsSingle();
 
-            BindVirusBulletPool(container, virusBulletPrefab, poolRoot);
+            BindVirusBulletPool(_virusBulletPrefab, poolRoot);
         }
 
-        private static void BindVirusPool(DiContainer container, MicroVirusVariant variant, MicroVirusController prefab, Transform poolRoot)
+        private void BindVirusPool(MicroVirusVariant variant, MicroVirusController prefab, Transform poolRoot)
         {
             if (prefab == null)
                 return;
 
-            container
+            Container
                 .BindFactory<MicroVirusController, MicroVirusController.Factory>()
                 .WithId(variant)
                 .FromMonoPoolableMemoryPool(pool => pool
@@ -71,12 +88,12 @@ namespace _Project.Mechanics.Viruses.Micro
 
         // Bound here (not PlayerInstaller/CombatInstaller) since VirusBullet is exclusively fired by the Cucumber
         // micro-virus behavior - see VirusBullet/VirusBulletSpawner's own class doc comments.
-        private static void BindVirusBulletPool(DiContainer container, VirusBullet prefab, Transform poolRoot)
+        private void BindVirusBulletPool(VirusBullet prefab, Transform poolRoot)
         {
             if (prefab == null)
                 return;
 
-            container
+            Container
                 .BindFactory<Vector3, Vector3, Transform, VirusBullet, VirusBullet.Factory>()
                 .FromMonoPoolableMemoryPool(pool => pool
                     .WithInitialSize(VirusBulletInitialSize)

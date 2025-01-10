@@ -15,10 +15,16 @@ namespace _Project.Mechanics.Composition
 {
     /// <summary>
     /// Umbrella MonoInstaller for GameplayScene's SceneContext - holds the Mechanics-POCO config assets and calls
-    /// out to the small per-feature XxxInstaller.Install(Container, ...) static helpers, the same shape
-    /// tactics-cards' GamePlayContextInstaller uses. Replaces MainSceneComposition.BuildMechanicsPocos() (which
-    /// used to `new` every POCO by hand) - MainSceneComposition now receives them via [Inject] instead.
-    /// UI screens/IScreenManager are bound separately by UiInstaller (also attached to the same SceneContext).
+    /// out to the small per-feature XxxInstaller.Install(Container, ...) calls, the same shape tactics-cards'
+    /// GamePlayContextInstaller uses. Each XxxInstaller is a real Zenject <c>Installer&lt;...&gt;</c> subclass
+    /// (constructor-injected params, <c>Container</c>/<c>InstallBindings()</c> from the base class) - not a bare
+    /// static helper class - matching tactics-cards' own installers (PlaceablePoolsInstaller,
+    /// ArenaMatchBindingsInstaller, GameStateInstaller, etc.) exactly; `Install(Container, ...)` itself is
+    /// Zenject's own inherited static factory method, not a hand-rolled one (2026-09-20 correction - the
+    /// installers here used to be bare static classes, an incorrect reading of the tactics-cards pattern).
+    /// Replaces MainSceneComposition.BuildMechanicsPocos() (which used to `new` every POCO by hand) -
+    /// MainSceneComposition now receives them via [Inject] instead. UI screens/IScreenManager are bound
+    /// separately by UiInstaller (also attached to the same SceneContext).
     ///
     /// 2026-09-20 "MainCompositionRoot split into installers": also calls
     /// <see cref="GameplayEventWiringInstaller"/>, which binds the cross-system event-wiring drivers split out

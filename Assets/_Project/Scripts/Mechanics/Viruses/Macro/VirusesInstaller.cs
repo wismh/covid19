@@ -15,42 +15,60 @@ namespace _Project.Mechanics.Viruses.Macro
     /// Also binds the scene-placed MacroVirusSpawner itself (mirrors PlayerInstaller's PlayerMovement/
     /// PlayerTurret/PlayerHealth bindings) so GameplayEventWiringInstaller's cell/virus drivers can resolve it
     /// via constructor injection instead of a hand-built reference.
+    ///
+    /// A real Zenject <see cref="Installer{TParam1, TParam2, TParam3, TParam4, TDerived}"/> subclass (not a bare
+    /// static class) - matches tactics-cards' own installers, which are all genuine Installer&lt;...&gt; types
+    /// with constructor-injected params, called via the base class's inherited static `Install(Container, ...)`
+    /// factory method.
     /// </summary>
-    public static class VirusesInstaller
+    public class VirusesInstaller : Installer<MacroVirusConfig, WaveScalingConfig, MacroVirusController, MacroVirusController, VirusesInstaller>
     {
         private const string PoolRootName = "MacroVirusPool";
         private const int VirusInitialSize = 10;
         private const int VirusMaxSize = 40;
 
-        public static void Install(DiContainer container, MacroVirusConfig macroVirusConfig, WaveScalingConfig waveScalingConfig, MacroVirusController virusPrefab, MacroVirusController glistPrefab)
-        {
-            container.Bind<MacroVirusConfig>().FromInstance(macroVirusConfig).AsSingle();
-            container.Bind<WaveScalingConfig>().FromInstance(waveScalingConfig).AsSingle();
-            container.Bind<MacroVirusRegistry>().AsSingle();
-            container.Bind<MacroVirusSpawner>().FromComponentInHierarchy().AsSingle();
+        private readonly MacroVirusConfig _macroVirusConfig;
+        private readonly WaveScalingConfig _waveScalingConfig;
+        private readonly MacroVirusController _virusPrefab;
+        private readonly MacroVirusController _glistPrefab;
 
-            BindVirusPools(container, virusPrefab, glistPrefab);
+        public VirusesInstaller(MacroVirusConfig macroVirusConfig, WaveScalingConfig waveScalingConfig, MacroVirusController virusPrefab, MacroVirusController glistPrefab)
+        {
+            _macroVirusConfig = macroVirusConfig;
+            _waveScalingConfig = waveScalingConfig;
+            _virusPrefab = virusPrefab;
+            _glistPrefab = glistPrefab;
         }
 
-        private static void BindVirusPools(DiContainer container, MacroVirusController virusPrefab, MacroVirusController glistPrefab)
+        public override void InstallBindings()
+        {
+            Container.Bind<MacroVirusConfig>().FromInstance(_macroVirusConfig).AsSingle();
+            Container.Bind<WaveScalingConfig>().FromInstance(_waveScalingConfig).AsSingle();
+            Container.Bind<MacroVirusRegistry>().AsSingle();
+            Container.Bind<MacroVirusSpawner>().FromComponentInHierarchy().AsSingle();
+
+            BindVirusPools();
+        }
+
+        private void BindVirusPools()
         {
             var poolRoot = new GameObject(PoolRootName).transform;
 
-            BindVirusPool(container, MacroVirusVariant.Virus, virusPrefab, poolRoot);
-            BindVirusPool(container, MacroVirusVariant.Glist, glistPrefab, poolRoot);
+            BindVirusPool(MacroVirusVariant.Virus, _virusPrefab, poolRoot);
+            BindVirusPool(MacroVirusVariant.Glist, _glistPrefab, poolRoot);
 
-            container
+            Container
                 .Bind<IReadOnlyDictionary<MacroVirusVariant, IFactory<Vector3, Quaternion, MacroVirusController>>>()
                 .FromMethod(CreateFactoryMap)
                 .AsSingle();
         }
 
-        private static void BindVirusPool(DiContainer container, MacroVirusVariant variant, MacroVirusController prefab, Transform poolRoot)
+        private void BindVirusPool(MacroVirusVariant variant, MacroVirusController prefab, Transform poolRoot)
         {
             if (prefab == null)
                 return;
 
-            container
+            Container
                 .BindFactory<Vector3, Quaternion, MacroVirusController, MacroVirusController.Factory>()
                 .WithId(variant)
                 .FromMonoPoolableMemoryPool(pool => pool

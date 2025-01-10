@@ -34,8 +34,9 @@ namespace _Project.Mechanics.Composition
     /// anything Awake-timing-sensitive - that wiring is now five small `IInitializable`/`IDisposable` driver
     /// services (<see cref="MacroVirusReplacementDriver"/>, <see cref="MacroVirusPauseDriver"/>,
     /// <see cref="VirusExperienceDriver"/>, <see cref="HudStatisticsDriver"/>, <see cref="GameOverDriver"/>)
-    /// bound by <see cref="GameplayEventWiringInstaller"/>, the same static-Install-helper shape
-    /// PlayerInstaller/CellsInstaller/etc. already use.
+    /// bound by <see cref="GameplayEventWiringInstaller"/>, a real Zenject <c>Installer&lt;...&gt;</c> subclass
+    /// the same shape PlayerInstaller/CellsInstaller/etc. already use (2026-09-20 correction - these installers
+    /// used to be bare static classes, an incorrect reading of the tactics-cards pattern).
     ///
     /// What's LEFT here, and why none of it could move to an installer:
     /// 1. <see cref="ResolvePlayerComponentReferences"/> - a runtime workaround for a Unity engine quirk (stripped
