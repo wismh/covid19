@@ -22,9 +22,6 @@ namespace _Project.Mechanics.Pickups
         {
             Container.Bind<PickupsConfig>().FromInstance(_pickupsConfig).AsSingle();
 
-            if (_medicalPrefab == null)
-                return;
-
             var poolRoot = new GameObject(PoolRootName).transform;
 
             Container

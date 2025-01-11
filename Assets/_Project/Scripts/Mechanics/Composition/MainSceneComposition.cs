@@ -88,11 +88,10 @@ namespace _Project.Mechanics.Composition
 
         private void Start()
         {
-            if (_cameraFollow != null && _playerMovement != null)
+            if (_playerMovement != null)
                 _cameraFollow.SetTarget(_playerMovement.transform);
 
-            if (_cameraFollow != null && _worldScaleTransitionContext != null)
-                _worldScaleTransitionContext.SetCameraTarget = t => _cameraFollow.SetTarget(t);
+            _worldScaleTransitionContext.SetCameraTarget = t => _cameraFollow.SetTarget(t);
         }
 
         private void OnDestroy()
@@ -100,13 +99,10 @@ namespace _Project.Mechanics.Composition
             _lifetimeCts?.Cancel();
             _lifetimeCts?.Dispose();
 
-            if (_cellRegistry != null)
-            {
-                _cellRegistry.OnAllCellsDied -= HandleAllCellsDiedForceMacroExit;
-                _cellRegistry.OnCellDied -= _handleCellDiedForceMacroExit;
-            }
+            _cellRegistry.OnAllCellsDied -= HandleAllCellsDiedForceMacroExit;
+            _cellRegistry.OnCellDied -= _handleCellDiedForceMacroExit;
 
-            _gameAudioService?.Dispose();
+            _gameAudioService.Dispose();
         }
 
         // A runtime scene load (as opposed to opening the scene directly in the Editor) can deserialize
@@ -130,11 +126,8 @@ namespace _Project.Mechanics.Composition
 
         private void HideOverlayScreensOnStart()
         {
-            if (_upgradeScreen != null)
-                _upgradeScreen.gameObject.SetActive(false);
-
-            if (_gameOverScreen != null)
-                _gameOverScreen.gameObject.SetActive(false);
+            _upgradeScreen.gameObject.SetActive(false);
+            _gameOverScreen.gameObject.SetActive(false);
         }
 
         private void BuildWorldScaleTransitionContext()
@@ -146,11 +139,7 @@ namespace _Project.Mechanics.Composition
                 PlayerCollider = _playerCollider,
                 PlayerMovement = _playerMovement,
                 Camera = _worldCamera,
-                SetCameraTarget = t =>
-                {
-                    if (_cameraFollow != null)
-                        _cameraFollow.SetTarget(t);
-                },
+                SetCameraTarget = t => _cameraFollow.SetTarget(t),
                 SetPlayerSpeedScale = _playerMovement != null ? _playerMovement.SetSpeedScale : (Action<float>)null,
             };
         }
@@ -166,13 +155,10 @@ namespace _Project.Mechanics.Composition
 
         private void ConstructScreens()
         {
-            if (_cellProximityPrompt != null)
-            {
-                _cellProximityPrompt.SetContext(_worldScaleTransitionContext);
+            _cellProximityPrompt.SetContext(_worldScaleTransitionContext);
 
-                if (_playerMovement != null)
-                    _cellProximityPrompt.SetPlayer(_playerMovement.transform);
-            }
+            if (_playerMovement != null)
+                _cellProximityPrompt.SetPlayer(_playerMovement.transform);
         }
 
         private void WireForcedMacroExitOnCellDeath()
@@ -229,23 +215,19 @@ namespace _Project.Mechanics.Composition
 
         private void UpdateNearestCellTarget()
         {
-            if (_cellRegistry == null || _playerMovement == null)
+            if (_playerMovement == null)
                 return;
 
             Transform nearestCell = _cellRegistry.FindNearestCell(_playerMovement.transform.position, out _);
 
-            if (_cellProximityPrompt != null)
-                _cellProximityPrompt.SetTargetCell(nearestCell);
+            _cellProximityPrompt.SetTargetCell(nearestCell);
 
-            if (_worldScaleTransitionContext != null)
-            {
-                _worldScaleTransitionContext.Cell = nearestCell;
-                _worldScaleTransitionContext.CellVisuals = nearestCell != null ? nearestCell.GetComponent<CellVisuals>() : null;
-                _worldScaleTransitionContext.CellRigidbody2D = nearestCell != null ? nearestCell.GetComponent<Rigidbody2D>() : null;
-                _worldScaleTransitionContext.CellAnimator = nearestCell != null ? nearestCell.GetComponent<Animator>() : null;
-                _worldScaleTransitionContext.CellMicroVirusSpawner = nearestCell != null ? nearestCell.GetComponent<MicroVirusSpawner>() : null;
-                _worldScaleTransitionContext.CellInfectionState = nearestCell != null ? nearestCell.GetComponent<CellInfectionState>() : null;
-            }
+            _worldScaleTransitionContext.Cell = nearestCell;
+            _worldScaleTransitionContext.CellVisuals = nearestCell != null ? nearestCell.GetComponent<CellVisuals>() : null;
+            _worldScaleTransitionContext.CellRigidbody2D = nearestCell != null ? nearestCell.GetComponent<Rigidbody2D>() : null;
+            _worldScaleTransitionContext.CellAnimator = nearestCell != null ? nearestCell.GetComponent<Animator>() : null;
+            _worldScaleTransitionContext.CellMicroVirusSpawner = nearestCell != null ? nearestCell.GetComponent<MicroVirusSpawner>() : null;
+            _worldScaleTransitionContext.CellInfectionState = nearestCell != null ? nearestCell.GetComponent<CellInfectionState>() : null;
         }
     }
 }

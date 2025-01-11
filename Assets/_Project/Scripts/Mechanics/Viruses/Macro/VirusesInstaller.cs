@@ -49,9 +49,6 @@ namespace _Project.Mechanics.Viruses.Macro
 
         private void BindVirusPool(MacroVirusVariant variant, MacroVirusController prefab, Transform poolRoot)
         {
-            if (prefab == null)
-                return;
-
             Container
                 .BindFactory<Vector3, Quaternion, MacroVirusController, MacroVirusController.Factory>()
                 .WithId(variant)

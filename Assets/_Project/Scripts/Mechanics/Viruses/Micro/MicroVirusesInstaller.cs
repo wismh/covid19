@@ -48,9 +48,6 @@ namespace _Project.Mechanics.Viruses.Micro
 
         private void BindVirusPool(MicroVirusVariant variant, MicroVirusController prefab, Transform poolRoot)
         {
-            if (prefab == null)
-                return;
-
             Container
                 .BindFactory<MicroVirusController, MicroVirusController.Factory>()
                 .WithId(variant)
@@ -76,9 +73,6 @@ namespace _Project.Mechanics.Viruses.Micro
 
         private void BindVirusBulletPool(VirusBullet prefab, Transform poolRoot)
         {
-            if (prefab == null)
-                return;
-
             Container
                 .BindFactory<Vector3, Vector3, Transform, VirusBullet, VirusBullet.Factory>()
                 .FromMonoPoolableMemoryPool(pool => pool
