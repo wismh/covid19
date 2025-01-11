@@ -5,18 +5,6 @@ using _Project.Mechanics.Combat;
 
 namespace _Project.Mechanics.Viruses.Micro
 {
-    /// <summary>
-    /// Binds the pooled in-cell virus prefabs (Orange/Cucumber/Spiner - one Zenject <see cref="IMemoryPool"/>
-    /// per <see cref="MicroVirusVariant"/>, keyed the same way ParticleFxPoolsInstaller&lt;TId&gt; keys its own
-    /// multi-prefab pools) plus the Cucumber-only VirusBullet pool, for GameplaySceneInstaller. Both replace bare
-    /// Instantiate/Destroy - see MicroVirusController/MicroVirusSpawner/VirusBullet/VirusBulletSpawner's own doc
-    /// comments.
-    ///
-    /// A real Zenject <see cref="Installer{TParam1, TParam2, TParam3, TParam4, TDerived}"/> subclass (not a bare
-    /// static class) - matches tactics-cards' own installers, which are all genuine Installer&lt;...&gt; types
-    /// with constructor-injected params, called via the base class's inherited static `Install(Container, ...)`
-    /// factory method.
-    /// </summary>
     public class MicroVirusesInstaller : Installer<MicroVirusController, MicroVirusController, MicroVirusController, VirusBullet, MicroVirusesInstaller>
     {
         private const string PoolRootName = "MicroVirusPool";
@@ -86,8 +74,6 @@ namespace _Project.Mechanics.Viruses.Micro
             return factories;
         }
 
-        // Bound here (not PlayerInstaller/CombatInstaller) since VirusBullet is exclusively fired by the Cucumber
-        // micro-virus behavior - see VirusBullet/VirusBulletSpawner's own class doc comments.
         private void BindVirusBulletPool(VirusBullet prefab, Transform poolRoot)
         {
             if (prefab == null)

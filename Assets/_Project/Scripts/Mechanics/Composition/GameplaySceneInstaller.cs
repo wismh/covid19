@@ -13,23 +13,6 @@ using _Project.Mechanics.WorldScale;
 
 namespace _Project.Mechanics.Composition
 {
-    /// <summary>
-    /// Umbrella MonoInstaller for GameplayScene's SceneContext - holds the Mechanics-POCO config assets and calls
-    /// out to the small per-feature XxxInstaller.Install(Container, ...) calls, the same shape tactics-cards'
-    /// GamePlayContextInstaller uses. Each XxxInstaller is a real Zenject <c>Installer&lt;...&gt;</c> subclass
-    /// (constructor-injected params, <c>Container</c>/<c>InstallBindings()</c> from the base class) - not a bare
-    /// static helper class - matching tactics-cards' own installers (PlaceablePoolsInstaller,
-    /// ArenaMatchBindingsInstaller, GameStateInstaller, etc.) exactly; `Install(Container, ...)` itself is
-    /// Zenject's own inherited static factory method, not a hand-rolled one (2026-09-20 correction - the
-    /// installers here used to be bare static classes, an incorrect reading of the tactics-cards pattern).
-    /// Replaces MainSceneComposition.BuildMechanicsPocos() (which used to `new` every POCO by hand) -
-    /// MainSceneComposition now receives them via [Inject] instead. UI screens/IScreenManager are bound
-    /// separately by UiInstaller (also attached to the same SceneContext).
-    ///
-    /// 2026-09-20 "MainCompositionRoot split into installers": also calls
-    /// <see cref="GameplayEventWiringInstaller"/>, which binds the cross-system event-wiring drivers split out
-    /// of MainSceneComposition.WireCrossSystemEvents - see that installer's own doc comment.
-    /// </summary>
     public class GameplaySceneInstaller : MonoInstaller
     {
         [Header("Player")]
@@ -40,7 +23,7 @@ namespace _Project.Mechanics.Composition
         [Header("Cells")]
         [SerializeField] private CellConfig _cellConfig;
 
-        [Header("Micro viruses (in-cell) - pooled prefabs, see MicroVirusesInstaller")]
+        [Header("Micro viruses")]
         [SerializeField] private MicroVirusController _orangeVirusPrefab;
         [SerializeField] private MicroVirusController _cucumberVirusPrefab;
         [SerializeField] private MicroVirusController _spinerVirusPrefab;
@@ -51,11 +34,11 @@ namespace _Project.Mechanics.Composition
         [SerializeField] private MacroVirusController _macroVirusPrefab;
         [SerializeField] private MacroVirusController _macroGlistPrefab;
 
-        [Header("Pickups (medical pills) - pooled prefab, see PickupsInstaller")]
+        [Header("Pickups")]
         [SerializeField] private PickupsConfig _pickupsConfig;
         [SerializeField] private MedicalPickup _medicalPrefab;
 
-        [Header("Waves - shared by MacroVirusSpawner and CellSpawner")]
+        [Header("Waves")]
         [SerializeField] private WaveScalingConfig _waveScalingConfig;
 
         [Header("World scale")]
@@ -73,14 +56,13 @@ namespace _Project.Mechanics.Composition
             WorldScaleInstaller.Install(Container, _worldScaleConfig);
             PickupsInstaller.Install(Container, _pickupsConfig, _medicalPrefab);
 
-            // IPlayerTargetProvider wraps PlayerMovement.transform - needs PlayerMovement already bound above.
+            // Needs PlayerMovement already bound above.
             Container.Bind<IPlayerTargetProvider>()
                 .FromMethod(ctx => new PlayerTargetProvider(ctx.Container.Resolve<PlayerMovement>().transform))
                 .AsSingle();
 
-            // Plain Bind, not BindInterfacesAndSelfTo: GameAudioService's IDisposable lifecycle stays owned by
-            // MainSceneComposition.OnDestroy() (its existing manual Dispose() call), not Zenject's container
-            // teardown - avoids a double-dispose between the two.
+            // Plain Bind, not BindInterfacesAndSelfTo: GameAudioService's Dispose() is called manually
+            // elsewhere, not by container teardown - avoids a double-dispose.
             Container.Bind<GameAudioCatalog>().FromInstance(_gameAudioCatalog).AsSingle();
             Container.Bind<GameAudioService>().AsSingle();
 

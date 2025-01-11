@@ -5,16 +5,6 @@ using _Project.Mechanics.Combat;
 
 namespace _Project.Mechanics.Player
 {
-    /// <summary>
-    /// Binds the player POCO/config and the statically-placed Player-prefab MonoBehaviours (so other
-    /// installers/consumers can resolve them via [Inject] instead of a hand-built reference), for
-    /// GameplaySceneInstaller.
-    ///
-    /// A real Zenject <see cref="Installer{TParam1, TParam2, TParam3, TDerived}"/> subclass (not a bare static
-    /// class) - matches tactics-cards' own installers (e.g. PlaceablePoolsInstaller/ArenaMatchBindingsInstaller),
-    /// which are all genuine Installer&lt;...&gt; types with constructor-injected params, called via the base
-    /// class's inherited static `Install(Container, ...)` factory method - not a hand-rolled one.
-    /// </summary>
     public class PlayerInstaller : Installer<PlayerConfig, IReadOnlyList<UpgradeDefinition>, Bullet, PlayerInstaller>
     {
         private const string BulletPoolRootName = "BulletPool";
@@ -44,8 +34,6 @@ namespace _Project.Mechanics.Player
             BindBulletPool(_bulletPrefab);
         }
 
-        // Zenject-pooled replacement for BulletManager's previous UnityEngine.Pool.ObjectPool<Bullet> - see
-        // Bullet's own class doc comment. MaxSize matches the old pool's own k_maxPoolSize.
         private void BindBulletPool(Bullet bulletPrefab)
         {
             var poolRoot = new GameObject(BulletPoolRootName).transform;
