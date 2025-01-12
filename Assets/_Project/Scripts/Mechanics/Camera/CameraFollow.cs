@@ -74,12 +74,6 @@ namespace _Project.Mechanics.Camera
             set => _maxBounds = value;
         }
 
-        private void Awake()
-        {
-            if (_camera == null)
-                _camera = GetComponent<UnityEngine.Camera>();
-        }
-
         private void LateUpdate()
         {
             if (_target == null)
@@ -161,7 +155,7 @@ namespace _Project.Mechanics.Camera
             float minY = _minBounds.y;
             float maxY = _maxBounds.y;
 
-            if (_clampByViewport && _camera != null && _camera.orthographic)
+            if (_clampByViewport && _camera.orthographic)
             {
                 float halfHeight = _camera.orthographicSize;
                 float halfWidth = halfHeight * _camera.aspect;

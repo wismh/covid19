@@ -187,34 +187,18 @@ namespace _Project.UI.Hud
 
             RefreshHealthAndArmorBars();
             RefreshExperienceBar();
-            if (_levelText != null)
-                _levelText.text = _playerStats.Level.ToString();
+            _levelText.text = _playerStats.Level.ToString();
 
-            if (_statisticsText != null)
-                _statisticsPattern = _statisticsText.text;
+            _statisticsPattern = _statisticsText.text;
 
             _elapsedSeconds = 0;
             UpdateTimerText();
             _timerCts = new CancellationTokenSource();
             RunTimerAsync(_timerCts.Token).Forget();
 
-            if (_fadePanel == null)
-            {
-                var fadeChild = transform.Find("FadePanelSprite");
-                if (fadeChild != null)
-                    _fadePanel = fadeChild.GetComponent<Image>();
-            }
-
-            if (_fadePanel != null)
-            {
-                _fadePanel.gameObject.SetActive(true);
-                _fadePanel.color = new Color(_fadePanel.color.r, _fadePanel.color.g, _fadePanel.color.b, 1f);
-                _fadePanel.DOFade(0f, 0.4f).SetUpdate(true).OnComplete(() =>
-                {
-                    if (_fadePanel != null)
-                        _fadePanel.gameObject.SetActive(false);
-                });
-            }
+            _fadePanel.gameObject.SetActive(true);
+            _fadePanel.color = new Color(_fadePanel.color.r, _fadePanel.color.g, _fadePanel.color.b, 1f);
+            _fadePanel.DOFade(0f, 0.4f).SetUpdate(true).OnComplete(() => _fadePanel.gameObject.SetActive(false));
         }
 
         private void Update()
@@ -228,9 +212,6 @@ namespace _Project.UI.Hud
             // kept ticking through to fully-reloaded on the game-over screen. Gated on PlayerHealth.IsAlive - the
             // indicator hides itself and stops updating the instant the player dies, matching what a player
             // expects to see once the fight is over, rather than leaking gameplay HUD into the death screen.
-            if (_reloadIndicatorFilled == null || _playerTurret == null || _playerHealth == null)
-                return;
-
             bool isAlive = _playerHealth.IsAlive;
             if (_reloadIndicatorFilled.gameObject.activeSelf != isAlive)
                 _reloadIndicatorFilled.gameObject.SetActive(isAlive);
@@ -260,7 +241,7 @@ namespace _Project.UI.Hud
         /// GameStatistics.OnStatisticsChange, ported verbatim (same {lc}/{sc}/{cd} `D2` formatting).</summary>
         public void SetStatistics(int livingCells, int sickCells, int diedCells)
         {
-            if (_statisticsText == null || _statisticsPattern == null)
+            if (_statisticsPattern == null)
                 return;
 
             _statisticsText.text = _statisticsPattern
@@ -288,9 +269,6 @@ namespace _Project.UI.Hud
 
         private void UpdateTimerText()
         {
-            if (_timerText == null)
-                return;
-
             int minutes = _elapsedSeconds / 60;
             int seconds = _elapsedSeconds % 60;
             _timerText.text = $"{minutes:D2}:{seconds:D2}";
@@ -300,22 +278,17 @@ namespace _Project.UI.Hud
         {
             // See _healthBarVisualCapacity's doc comment - divides by the bar art's fixed segment count, not
             // PlayerHealth.MaxHealth (the actual, now much smaller, gameplay cap).
-            if (_healthBarFilled != null)
-                _healthBarFilled.fillAmount = _healthBarVisualCapacity > 0f
-                    ? Mathf.Clamp01(_playerHealth.Health / _healthBarVisualCapacity)
-                    : 0f;
+            _healthBarFilled.fillAmount = _healthBarVisualCapacity > 0f
+                ? Mathf.Clamp01(_playerHealth.Health / _healthBarVisualCapacity)
+                : 0f;
 
-            if (_armorBarFilled != null)
-                _armorBarFilled.fillAmount = _config.MaxArmor > 0
-                    ? (float)_playerHealth.Armor / _config.MaxArmor
-                    : 0f;
+            _armorBarFilled.fillAmount = _config.MaxArmor > 0
+                ? (float)_playerHealth.Armor / _config.MaxArmor
+                : 0f;
         }
 
         private void RefreshExperienceBar()
         {
-            if (_experienceBarFilled == null)
-                return;
-
             _experienceBarFilled.fillAmount = _playerStats.MaxExperience > 0
                 ? (float)_playerStats.Experience / _playerStats.MaxExperience
                 : 0f;
@@ -331,8 +304,7 @@ namespace _Project.UI.Hud
 
         private void HandleLevelUp(int newLevel)
         {
-            if (_levelText != null)
-                _levelText.text = newLevel.ToString();
+            _levelText.text = newLevel.ToString();
 
             // See class doc comment's "Auto-opening" section for why this lives here instead of on UpgradeScreen.
             _screenManager.OpenScreen<UpgradeScreen>().Forget();
@@ -347,8 +319,7 @@ namespace _Project.UI.Hud
 
         private void OnDestroy()
         {
-            if (_fadePanel != null)
-                DOTween.Kill(_fadePanel);
+            DOTween.Kill(_fadePanel);
         }
     }
 }

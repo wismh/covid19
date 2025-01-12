@@ -91,29 +91,20 @@ namespace _Project.Mechanics.Cells
             // SpriteRenderer - user-reported symptom this also explains: the wrong (non-"empty") sprite showing
             // once a cell got sick while the player was inside it. Old code kept the Animator OFF except for the
             // brief "Dead" playback; restored that exactly.
-            if (_spriteRenderer != null)
-                _spriteRenderer.material.SetFloat("_Blend", 1f);
-
-            if (_entrailsRoot != null)
-                _entrailsRoot.SetActive(false);
+            _spriteRenderer.material.SetFloat("_Blend", 1f);
+            _entrailsRoot.SetActive(false);
 
             if (_animator != null)
                 _animator.enabled = false;
 
-            if (_health != null)
-            {
-                _health.OnHealthChanged += HandleHealthChanged;
-                _health.OnDied += HandleDied;
-            }
+            _health.OnHealthChanged += HandleHealthChanged;
+            _health.OnDied += HandleDied;
         }
 
         private void OnDestroy()
         {
-            if (_health != null)
-            {
-                _health.OnHealthChanged -= HandleHealthChanged;
-                _health.OnDied -= HandleDied;
-            }
+            _health.OnHealthChanged -= HandleHealthChanged;
+            _health.OnDied -= HandleDied;
         }
 
         /// <summary>Old: CellController.Die() -> `_animator.enabled = true; _animator.Play("Base Layer.Dead");
@@ -136,9 +127,6 @@ namespace _Project.Mechanics.Cells
         /// from CellConfig instead.</summary>
         private void HandleHealthChanged(float health)
         {
-            if (_spriteRenderer == null)
-                return;
-
             float targetBlend = health / _config.BaseHealth;
 
             DOTween.To(
@@ -152,28 +140,20 @@ namespace _Project.Mechanics.Cells
         /// <summary>Old: CellController.SetMacroSprite().</summary>
         public void SetMacroSprite()
         {
-            if (_spriteRenderer != null)
-            {
-                _spriteRenderer.sprite = _macroWorldBadSprite;
-                _spriteRenderer.material.SetTexture("_SecondaryTex", _macroWorldSprite);
-            }
+            _spriteRenderer.sprite = _macroWorldBadSprite;
+            _spriteRenderer.material.SetTexture("_SecondaryTex", _macroWorldSprite);
 
-            if (_entrailsRoot != null)
-                _entrailsRoot.SetActive(false);
+            _entrailsRoot.SetActive(false);
         }
 
         /// <summary>Old: CellController.SetMicroSprite() (minus the `_inCellVirusManager.SetVirusesCount(...)`
         /// call - see class doc comment for why that's deferred).</summary>
         public void SetMicroSprite()
         {
-            if (_spriteRenderer != null)
-            {
-                _spriteRenderer.sprite = _microWorldBadSprite;
-                _spriteRenderer.material.SetTexture("_SecondaryTex", _microWorldSprite);
-            }
+            _spriteRenderer.sprite = _microWorldBadSprite;
+            _spriteRenderer.material.SetTexture("_SecondaryTex", _microWorldSprite);
 
-            if (_entrailsRoot != null)
-                _entrailsRoot.SetActive(true);
+            _entrailsRoot.SetActive(true);
 
             ShuffleEntrails();
         }
@@ -181,9 +161,6 @@ namespace _Project.Mechanics.Cells
         /// <summary>Old: CellController.ShuffleEntrails().</summary>
         public void ShuffleEntrails()
         {
-            if (_entrailsContainer == null)
-                return;
-
             Bounds area = _config.EntrailsArea;
 
             foreach (Transform entrail in _entrailsContainer)

@@ -75,8 +75,7 @@ namespace _Project.UI.GameOver
 
         public override void OnOpen()
         {
-            if (_messageText != null)
-                _messageText.text = _allCellsDied ? _allCellsDiedMessage : _playerDiedMessage;
+            _messageText.text = _allCellsDied ? _allCellsDiedMessage : _playerDiedMessage;
 
             _inputActions.GameOver.Enable();
             _inputActions.GameOver.AnyKey.performed += OnAnyKeyPerformed;
