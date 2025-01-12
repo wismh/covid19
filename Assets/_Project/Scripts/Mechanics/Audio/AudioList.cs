@@ -16,7 +16,7 @@ namespace _Project.Mechanics.Audio
         public void Play(int i)
         {
             if (_source == null) _source = GetComponent<AudioSource>();
-            if (_clips != null && i >= 0 && i < _clips.Count && _source != null)
+            if (i >= 0 && i < _clips.Count && _source != null)
             {
                 _source.clip = _clips[i];
                 _source.Play();

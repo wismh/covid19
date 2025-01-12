@@ -120,10 +120,7 @@ namespace _Project.Mechanics.Audio
             if (_sfxLookup != null)
                 return;
 
-            _sfxLookup = new Dictionary<GameSfxCue, GameSfxCueEntry>(_sfxCues?.Length ?? 0);
-
-            if (_sfxCues == null)
-                return;
+            _sfxLookup = new Dictionary<GameSfxCue, GameSfxCueEntry>(_sfxCues.Length);
 
             foreach (GameSfxCueEntry entry in _sfxCues)
             {

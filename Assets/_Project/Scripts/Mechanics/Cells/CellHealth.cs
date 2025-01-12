@@ -76,16 +76,14 @@ namespace _Project.Mechanics.Cells
         {
             _health = _config.BaseHealth;
 
-            if (_infectionState != null)
-                _infectionState.OnInfectionCleared += HandleInfectionCleared;
+            _infectionState.OnInfectionCleared += HandleInfectionCleared;
 
             PoisonTickLoopAsync(_lifetimeCts.Token).Forget();
         }
 
         private void OnDestroy()
         {
-            if (_infectionState != null)
-                _infectionState.OnInfectionCleared -= HandleInfectionCleared;
+            _infectionState.OnInfectionCleared -= HandleInfectionCleared;
 
             _lifetimeCts?.Cancel();
             _lifetimeCts?.Dispose();
@@ -118,7 +116,7 @@ namespace _Project.Mechanics.Cells
                 if (!_isAlive)
                     return;
 
-                int virusCount = _infectionState != null ? _infectionState.VirusCount : 0;
+                int virusCount = _infectionState.VirusCount;
                 _health -= virusCount * _config.PoisonDamagePerVirusPerTick;
 
                 OnHealthChanged?.Invoke(_health);
