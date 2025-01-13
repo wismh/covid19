@@ -113,8 +113,7 @@ namespace _Project.Mechanics.Player
         {
             _lifetimeCts = new CancellationTokenSource();
 
-            if (_spriteRenderer != null)
-                _originalMaterial = _spriteRenderer.material;
+            _originalMaterial = _spriteRenderer.material;
         }
 
         private void OnDestroy()
@@ -162,12 +161,11 @@ namespace _Project.Mechanics.Player
             OnDamaged?.Invoke(damage, attackDirection);
 
             // Old: PlayerDamageable.AnimationOnDamage -> `_body.Impulse(attackDirection * 0.3f);`
-            if (_movement != null)
-                _movement.ApplyImpulse(attackDirection * _config.KnockbackImpulseStrength);
+            _movement.ApplyImpulse(attackDirection * _config.KnockbackImpulseStrength);
 
             // Old: PlayerDamageable.Damage -> `_audioList.Play(2);` (unconditional, same as the virus classes'
             // own hit-sound calls - see class doc comment).
-            _audioList?.Play(2);
+            _audioList.Play(2);
             PlayDamageFlashAsync().Forget();
 
             if (_health <= 0)
@@ -184,9 +182,6 @@ namespace _Project.Mechanics.Player
         /// </summary>
         private async UniTaskVoid PlayDamageFlashAsync()
         {
-            if (_spriteRenderer == null || _damageMaterial == null)
-                return;
-
             _spriteRenderer.material = _damageMaterial;
 
             try
@@ -207,21 +202,15 @@ namespace _Project.Mechanics.Player
 
             // See _arrowRoot's doc comment - stop movement/aiming/firing and the target arrow the instant death
             // is detected, not after the animation delay below, so the player can't keep playing during it.
-            if (_movement != null)
-                _movement.enabled = false;
-
-            if (_turret != null)
-                _turret.enabled = false;
-
-            if (_arrowRoot != null)
-                _arrowRoot.SetActive(false);
+            _movement.enabled = false;
+            _turret.enabled = false;
+            _arrowRoot.SetActive(false);
 
             // Old: PlayerDamageable.AnimationOnDied -> `transform.Find("Turret").gameObject.SetActive(false);`
             // - see PlayerTurret.TurretVisualObject's doc comment for why this can't be `_turret.gameObject`
             // (that resolves to the whole player root, not the old code's child "Turret" object - confirmed live,
             // dying used to deactivate the entire Player GameObject instead of just hiding the turret).
-            if (_turret != null && _turret.TurretVisualObject != null)
-                _turret.TurretVisualObject.SetActive(false);
+            _turret.TurretVisualObject.SetActive(false);
 
             // Old: PlayerDamageable.Damage -> `StartCoroutine(AnimationOnDied()); Destroy(gameObject, 2f);` -
             // AnimationOnDied() itself waited 0.2s before playing the death sound/animation. Split into two
@@ -238,8 +227,8 @@ namespace _Project.Mechanics.Player
             }
 
             // Old: AnimationOnDied() -> `_audioList.Play(3); ... _animator.Play("Base Layer.Died");`.
-            _audioList?.Play(3);
-            _animator?.Play("Base Layer.Died");
+            _audioList.Play(3);
+            _animator.Play("Base Layer.Died");
 
             try
             {

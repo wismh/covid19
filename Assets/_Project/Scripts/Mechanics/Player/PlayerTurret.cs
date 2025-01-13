@@ -36,7 +36,7 @@ namespace _Project.Mechanics.Player
         /// Player GameObject instantly. Exposes the actual turret child object so PlayerHealth can disable the
         /// right one.
         /// </summary>
-        public GameObject TurretVisualObject => _turretTransform != null ? _turretTransform.gameObject : null;
+        public GameObject TurretVisualObject => _turretTransform.gameObject;
 
         private IProjectileSpawner _projectileSpawner;
 
@@ -82,8 +82,7 @@ namespace _Project.Mechanics.Player
         {
             _inputActions = new Actions();
 
-            if (_turretTransform != null)
-                _fireAudioSource = _turretTransform.GetComponent<AudioSource>();
+            _fireAudioSource = _turretTransform.GetComponent<AudioSource>();
         }
 
         private void OnEnable()

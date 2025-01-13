@@ -110,8 +110,7 @@ namespace _Project.UI.Hud
             _inputActions = new Actions();
             _lifetimeCts = new CancellationTokenSource();
 
-            if (_promptCanvas != null)
-                _promptCanvas.SetActive(false);
+            _promptCanvas.SetActive(false);
         }
 
         private void OnEnable()
@@ -139,10 +138,10 @@ namespace _Project.UI.Hud
         /// shows/hides it based on the squared-distance check.</summary>
         private void Update()
         {
-            if (_player == null || _targetCell == null || _promptCanvas == null)
+            if (_player == null || _targetCell == null)
                 return;
 
-            if (_worldScale == null || _worldScale.CurrentScale != WorldScale.Macro)
+            if (_worldScale.CurrentScale != WorldScale.Macro)
             {
                 HidePrompt();
                 return;
@@ -187,8 +186,8 @@ namespace _Project.UI.Hud
         /// </summary>
         private void OnPenetrationPerformed(InputAction.CallbackContext context)
         {
-            if (_worldScale == null || _context == null)
-                return; // No-op until a composition root supplies both - see class doc comment.
+            if (_context == null)
+                return; // No-op until a composition root supplies it - see class doc comment.
 
             // Phase 7 testing fix (2026-09-11): a fast/repeated E-press while a transition was still animating
             // (~TransitionDurationSeconds, WorldScaleConfig) let a second Enter*WorldSafeAsync fire before the

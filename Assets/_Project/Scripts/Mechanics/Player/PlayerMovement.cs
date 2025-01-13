@@ -36,7 +36,7 @@ namespace _Project.Mechanics.Player
 
         public Vector3 Velocity => _velocity;
         public float AngularVelocity => _angularVelocity;
-        public float MaxSpeed => _stats != null ? _stats.EffectiveMoveSpeed : (_config != null ? _config.BaseMoveSpeed : 3f);
+        public float MaxSpeed => _stats.EffectiveMoveSpeed;
 
         [Inject]
         public void Construct(PlayerConfig config, PlayerStatsService stats)

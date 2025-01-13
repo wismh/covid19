@@ -87,16 +87,10 @@ namespace _Project.Mechanics.Player
             if (_isInitialized)
                 return;
 
-            if (_particleSystem == null)
-                _particleSystem = GetComponentInChildren<ParticleSystem>();
-
-            if (_particleSystem != null)
-            {
-                _emissionModule = _particleSystem.emission;
-                _mainModule = _particleSystem.main;
-                _baseStartSpeed = _mainModule.startSpeedMultiplier;
-                _baseStartSize = _mainModule.startSizeMultiplier;
-            }
+            _emissionModule = _particleSystem.emission;
+            _mainModule = _particleSystem.main;
+            _baseStartSpeed = _mainModule.startSpeedMultiplier;
+            _baseStartSize = _mainModule.startSizeMultiplier;
 
             _isInitialized = true;
         }
@@ -110,9 +104,6 @@ namespace _Project.Mechanics.Player
         {
             InitializeIfNeeded();
 
-            if (_particleSystem == null)
-                return;
-
             bool isMicro = scale == WorldScale.WorldScale.Micro;
             _currentEmissionMultiplier = isMicro ? _worldScaleConfig.MicroParticleEmissionMultiplier : _worldScaleConfig.MacroParticleEmissionMultiplier;
 
@@ -125,9 +116,6 @@ namespace _Project.Mechanics.Player
 
         private void UpdateEmission()
         {
-            if (_particleSystem == null)
-                return;
-
             float velocityMagnitude = 0f;
             float maxSpeed = 3f;
 
