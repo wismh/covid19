@@ -38,7 +38,7 @@ namespace _Project.Mechanics.Environment
 
         public void InitList()
         {
-            if (_prefabs == null || _prefabs.Count == 0)
+            if (_prefabs.Count == 0)
             {
                 Debug.LogWarning("[BackgroundBacteriaManager] No bacteria prefabs assigned.", this);
                 return;

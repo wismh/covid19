@@ -41,7 +41,7 @@ namespace _Project.Mechanics.Combat
 
         private bool IsMicroWorld()
         {
-            return _worldScaleController != null && _worldScaleController.CurrentScale == WorldScale.WorldScale.Micro;
+            return _worldScaleController.CurrentScale == WorldScale.WorldScale.Micro;
         }
 
         public void OnSpawned(Vector3 position, Vector3 direction, int damage, IMemoryPool pool)
@@ -83,7 +83,7 @@ namespace _Project.Mechanics.Combat
         private void UpdateScaleAndVelocity(float deltaTime)
         {
             bool isMicro = IsMicroWorld();
-            Vector3 microScale = _worldScaleConfig != null ? _worldScaleConfig.MicroPlayerScale : new Vector3(0.3f, 0.3f, 1f);
+            Vector3 microScale = _worldScaleConfig.MicroPlayerScale;
             Vector3 targetScale = isMicro ? microScale : Vector3.one;
             if (transform.localScale != targetScale)
             {

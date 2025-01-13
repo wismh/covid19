@@ -83,17 +83,13 @@ namespace _Project.Mechanics.Pickups
             _isBroken = false;
             _remainingVitamins = 0;
 
-            if (_boxCollider != null)
-                _boxCollider.enabled = true;
+            _boxCollider.enabled = true;
 
-            if (_animator != null)
-            {
-                _animator.enabled = true;
+            _animator.enabled = true;
 
-                // "Appearance" is this controller's default/idle state (confirmed via its serialized
-                // m_DefaultState) - resets a respawned pill back to its resting look after Break()'s "Explosion".
-                _animator.Play("Base Layer.Appearance");
-            }
+            // "Appearance" is this controller's default/idle state (confirmed via its serialized
+            // m_DefaultState) - resets a respawned pill back to its resting look after Break()'s "Explosion".
+            _animator.Play("Base Layer.Appearance");
 
             if (_spriteRenderer != null)
                 _spriteRenderer.enabled = true;
@@ -116,22 +112,10 @@ namespace _Project.Mechanics.Pickups
 
         private void ResolveComponents()
         {
-            if (_animator == null)
-                _animator = GetComponent<Animator>();
-
-            if (_boxCollider == null)
-                _boxCollider = GetComponent<BoxCollider2D>();
-
             if (_spriteRenderer == null)
                 _spriteRenderer = GetComponent<SpriteRenderer>();
 
-            var audioSources = GetComponents<AudioSource>();
-            if (audioSources.Length > 0 && _openAudioSource == null)
-                _openAudioSource = audioSources[0];
-            if (audioSources.Length > 1 && _collectAudioSource == null)
-                _collectAudioSource = audioSources[1];
-
-            if (_vitamins == null || _vitamins.Count == 0)
+            if (_vitamins.Count == 0)
             {
                 _vitamins = new List<VitaminPickup>(GetComponentsInChildren<VitaminPickup>(true));
             }
@@ -184,14 +168,9 @@ namespace _Project.Mechanics.Pickups
         {
             _isBroken = true;
 
-            if (_animator != null)
-                _animator.Play("Base Layer.Explosion");
-
-            if (_openAudioSource != null)
-                _openAudioSource.Play();
-
-            if (_boxCollider != null)
-                _boxCollider.enabled = false;
+            _animator.Play("Base Layer.Explosion");
+            _openAudioSource.Play();
+            _boxCollider.enabled = false;
 
             StartCoroutine(ReleaseVitaminsRoutine());
         }
@@ -201,11 +180,10 @@ namespace _Project.Mechanics.Pickups
             if (_config.BreakDelaySeconds > 0f)
                 yield return new WaitForSeconds(_config.BreakDelaySeconds);
 
-            if (_animator != null)
-                _animator.enabled = false;
+            _animator.enabled = false;
 
             // Refresh list in case children changed
-            if (_vitamins == null || _vitamins.Count == 0)
+            if (_vitamins.Count == 0)
                 _vitamins = new List<VitaminPickup>(GetComponentsInChildren<VitaminPickup>(true));
 
             _remainingVitamins = _vitamins.Count;
@@ -256,7 +234,7 @@ namespace _Project.Mechanics.Pickups
 
         private void FinishAndDestroy()
         {
-            _playerStatsService?.AddExperience();
+            _playerStatsService.AddExperience();
 
             // Hide sprite renderer while audio finishes playing
             if (_spriteRenderer != null)
@@ -265,7 +243,7 @@ namespace _Project.Mechanics.Pickups
             // If collect audio is playing, give it a moment to finish before despawning back into the pool.
             // Invoke, not Destroy(gameObject, delay) - see class doc comment's "Pooling migration" section; a
             // real Destroy would permanently remove this pooled instance instead of recycling it.
-            float destroyDelay = (_collectAudioSource != null && _collectAudioSource.isPlaying)
+            float destroyDelay = _collectAudioSource.isPlaying
                 ? _config.DestroyDelayWithAudioSeconds
                 : _config.DestroyDelayWithoutAudioSeconds;
             Invoke(nameof(Despawn), destroyDelay);

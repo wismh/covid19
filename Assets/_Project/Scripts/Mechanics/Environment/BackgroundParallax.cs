@@ -24,18 +24,8 @@ namespace _Project.Mechanics.Environment
             set => _scrollSpeed = Mathf.Clamp01(value);
         }
 
-        private void Awake()
-        {
-            if (_targetObject == null && UnityEngine.Camera.main != null)
-            {
-                _targetObject = UnityEngine.Camera.main.transform;
-            }
-        }
-
         private void Update()
         {
-            if (_targetObject == null) return;
-
             float factor = 1f - _scrollSpeed;
             transform.position = new Vector3(
                 _targetObject.position.x * factor,

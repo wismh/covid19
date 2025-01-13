@@ -19,9 +19,6 @@ namespace _Project.Mechanics.Navigation
 
         private void Awake()
         {
-            if (_spriteRenderer == null)
-                _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-
             SetArrowState(false);
         }
 
@@ -33,8 +30,7 @@ namespace _Project.Mechanics.Navigation
         public void SetArrowState(bool state)
         {
             _isActive = state;
-            if (_spriteRenderer != null)
-                _spriteRenderer.enabled = state;
+            _spriteRenderer.enabled = state;
         }
 
         private void Update()

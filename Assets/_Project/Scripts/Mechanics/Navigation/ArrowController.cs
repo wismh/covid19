@@ -65,12 +65,6 @@ namespace _Project.Mechanics.Navigation
 
         private void Awake()
         {
-            if (_arrow == null)
-                _arrow = GetComponent<Arrow>();
-
-            if (_arrow == null)
-                _arrow = GetComponentInChildren<Arrow>();
-
             if (_camera == null)
                 _camera = UnityEngine.Camera.main;
 
@@ -132,7 +126,7 @@ namespace _Project.Mechanics.Navigation
 
         public void FindTarget()
         {
-            if (!isActiveAndEnabled || _arrow == null)
+            if (!isActiveAndEnabled)
                 return;
 
             if (_isPlayerDead ||
@@ -208,11 +202,8 @@ namespace _Project.Mechanics.Navigation
 
         private void HideArrow()
         {
-            if (_arrow != null)
-            {
-                _arrow.SetArrowState(false);
-                _arrow.SetTarget(null);
-            }
+            _arrow.SetArrowState(false);
+            _arrow.SetTarget(null);
         }
 
         private void HandlePlayerDied()
