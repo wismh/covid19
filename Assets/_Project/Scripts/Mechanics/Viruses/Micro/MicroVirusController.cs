@@ -138,16 +138,12 @@ namespace _Project.Mechanics.Viruses.Micro
             // Old: InCellVirus.Awake() -> `_health = _maxHealth;`
             _health = _config.MaxHealth;
 
-            if (_collider != null)
-                _collider.enabled = true;
+            _collider.enabled = true;
 
-            if (_spriteRenderer != null)
-            {
-                _spriteRenderer.material = _spriteRenderer.sharedMaterial;
-                _originalMaterial = _spriteRenderer.material;
-            }
+            _spriteRenderer.material = _spriteRenderer.sharedMaterial;
+            _originalMaterial = _spriteRenderer.material;
 
-            _playerTransform = _playerTargetProvider?.PlayerTransform;
+            _playerTransform = _playerTargetProvider.PlayerTransform;
             _behavior = BuildBehavior(_playerTransform);
             _behavior.Init(transform);
             _behavior.OnEnable();
@@ -248,8 +244,7 @@ namespace _Project.Mechanics.Viruses.Micro
             _health -= damage;
 
             // Old: AnimationOnDamage() -> `if (transform.TryGetComponent(out Rigidbody2D rd)) rd.AddForce(attackDirection * 0.8f, ForceMode2D.Impulse);`
-            if (_rigidbody2D != null)
-                _rigidbody2D.AddForce(attackDirection * _config.KnockbackForceOnHit, ForceMode2D.Impulse);
+            _rigidbody2D.AddForce(attackDirection * _config.KnockbackForceOnHit, ForceMode2D.Impulse);
 
             PlayDamageFlashAsync().Forget();
 
@@ -273,8 +268,7 @@ namespace _Project.Mechanics.Viruses.Micro
         {
             _isAlive = false;
 
-            if (_collider != null)
-                _collider.enabled = false;
+            _collider.enabled = false;
 
             try
             {
@@ -316,9 +310,6 @@ namespace _Project.Mechanics.Viruses.Micro
         /// </summary>
         private async UniTaskVoid PlayDamageFlashAsync()
         {
-            if (_spriteRenderer == null || _damageMaterial == null)
-                return;
-
             _spriteRenderer.material = _damageMaterial;
 
             try

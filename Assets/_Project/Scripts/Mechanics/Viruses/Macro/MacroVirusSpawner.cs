@@ -119,7 +119,7 @@ namespace _Project.Mechanics.Viruses.Macro
                 for (int i = 0; i < count; i++)
                     SpawnVirus();
 
-                _waveSize *= _waveScalingConfig != null ? _waveScalingConfig.WaveSizeGrowthMultiplier : 1.5f;
+                _waveSize *= _waveScalingConfig.WaveSizeGrowthMultiplier;
             }
         }
 
@@ -147,7 +147,6 @@ namespace _Project.Mechanics.Viruses.Macro
             }
 
             bool glistUnlocked = _factories.ContainsKey(MacroVirusVariant.Glist)
-                && _waveScalingConfig != null
                 && ElapsedSeconds >= _waveScalingConfig.GlistUnlockTimeSeconds;
 
             MacroVirusVariant variant = glistUnlocked && UnityEngine.Random.value < _waveScalingConfig.EliteSpawnChance ? MacroVirusVariant.Glist : MacroVirusVariant.Virus;

@@ -26,14 +26,9 @@ namespace _Project.Mechanics.Cells
     /// invented - so a future Stage 6 scene-composition step can drop this component in with correct-by-default
     /// values and only needs to reassign the prefab reference.
     ///
-    /// --- Prefab seam (this phase's core constraint - no .prefab/.scene edits) ---
-    /// <see cref="_cellPrefab"/> is a plain [SerializeField] left unassigned by this phase, exactly like old
-    /// CellSpawner's own `_cellPrefab` field - a human (or Stage 3's prefab surgery, which adds CellHealth/
-    /// CellInfectionState/CellVisuals to Cell.prefab) assigns it once a prefab carrying those three new components
-    /// exists. Until then this component compiles and is fully testable in isolation (e.g. via a fake prefab in a
-    /// PlayMode test) but does nothing useful in a real scene. SpawnCell() defensively no-ops (logs a warning
-    /// once) if the assigned prefab is missing the expected components, rather than throwing - a spawner
-    /// half-wired during Stage 3's incremental prefab surgery shouldn't hard-crash the rest of the scene.
+    /// --- Prefab content validation ---
+    /// SpawnCell() checks the assigned <see cref="_cellPrefab"/> actually carries CellHealth/CellInfectionState
+    /// before registering it, logging an error instead of throwing if it doesn't.
     ///
     /// --- Registry seam ---
     /// <see cref="CellRegistry"/> is NOT constructed here - per REFACTORING_PLAN.md Phase 7 Stage 2, a future
@@ -115,12 +110,6 @@ namespace _Project.Mechanics.Cells
         /// <summary>Old: CellSpawner.SpawnCell().</summary>
         public void SpawnCell()
         {
-            if (_cellPrefab == null || _cellConfig == null || _registry == null)
-            {
-                Debug.LogWarning($"{nameof(CellSpawner)}.{nameof(SpawnCell)} called before prefab/config/registry were assigned - no-op. See class doc comment's prefab/registry seams.", this);
-                return;
-            }
-
             Vector3 position = SpawnPlacementUtility.FindPosition(
                 _cellConfig.SpawnBounds,
                 _spawnedPositions,

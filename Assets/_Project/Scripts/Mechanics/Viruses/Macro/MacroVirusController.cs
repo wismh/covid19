@@ -164,14 +164,10 @@ namespace _Project.Mechanics.Viruses.Macro
             _velocity = Vector3.zero;
             _angularVelocity = 0f;
 
-            if (_collider != null)
-                _collider.enabled = true;
+            _collider.enabled = true;
 
-            if (_spriteRenderer != null)
-            {
-                _spriteRenderer.material = _spriteRenderer.sharedMaterial;
-                _originalMaterial = _spriteRenderer.material;
-            }
+            _spriteRenderer.material = _spriteRenderer.sharedMaterial;
+            _originalMaterial = _spriteRenderer.material;
 
             // Old: VirusController.Start() -> `ChangeBehavior(new MoveToCell());`
             SwitchBehavior(new MoveToCellBehavior(_cellTargetProvider, this, _config));
@@ -204,8 +200,7 @@ namespace _Project.Mechanics.Viruses.Macro
             // drifts/turns freely. Not ported in Phase 3 (no prefab existed yet to reference); BigBob.prefab/
             // PinkGlist.prefab (Phase 7 Stage 3) always wire _spriteRenderer, so this restores it against that
             // reference directly instead of a magic-index GetChild(0).
-            if (_spriteRenderer != null)
-                _spriteRenderer.transform.rotation = Quaternion.identity;
+            _spriteRenderer.transform.rotation = Quaternion.identity;
         }
 
         private void FixedUpdate()
@@ -298,8 +293,7 @@ namespace _Project.Mechanics.Viruses.Macro
         {
             _isAlive = false;
 
-            if (_collider != null)
-                _collider.enabled = false;
+            _collider.enabled = false;
 
             try
             {
@@ -311,7 +305,7 @@ namespace _Project.Mechanics.Viruses.Macro
             }
 
             // Old: AnimationOnDied() -> `_animator.Play("Base Layer.Died"); _audioSources[1].Play();`.
-            _animator?.Play("Base Layer.Died");
+            _animator.Play("Base Layer.Died");
             PlayAudioIfAvailable(1);
 
             // See class doc comment's "Why HandleDeathAsync waits again" section - gives the death animation/
@@ -347,9 +341,6 @@ namespace _Project.Mechanics.Viruses.Macro
         /// </summary>
         private async UniTaskVoid PlayDamageFlashAsync()
         {
-            if (_spriteRenderer == null || _damageMaterial == null)
-                return;
-
             _spriteRenderer.material = _damageMaterial;
 
             try

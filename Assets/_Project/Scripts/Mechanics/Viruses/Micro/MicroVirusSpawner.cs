@@ -195,8 +195,7 @@ namespace _Project.Mechanics.Viruses.Micro
             // GMTK.CellController.OnDestroyVirus() via `_inCellVirusManager.OnObjectRemoved += OnDestroyVirus;`
             // (wired in CellController.Start()). This spawner reproduces that direct call itself since it already
             // holds the sibling CellInfectionState reference - see class doc comment.
-            if (_cellInfectionState != null)
-                _cellInfectionState.RemoveVirus();
+            _cellInfectionState.RemoveVirus();
 
             OnVirusKilled?.Invoke();
 
