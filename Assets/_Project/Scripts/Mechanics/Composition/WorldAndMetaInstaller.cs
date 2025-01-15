@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using Zenject;
 using _Project.Mechanics.Audio;
@@ -53,19 +52,18 @@ namespace _Project.Mechanics.Composition
 
             var context = new WorldScaleTransitionContext
             {
-                Player = playerMovement != null ? playerMovement.transform : null,
+                Player = playerMovement.transform,
                 PlayerVisualRoot = _playerVisualRoot,
                 PlayerCollider = _playerCollider,
                 PlayerMovement = playerMovement,
                 Camera = _worldCamera,
                 SetCameraTarget = t => _cameraFollow.SetTarget(t),
-                SetPlayerSpeedScale = playerMovement != null ? playerMovement.SetSpeedScale : (Action<float>)null,
+                SetPlayerSpeedScale = playerMovement.SetSpeedScale,
             };
 
             // Sets the camera's initial follow target immediately, matching the old composition root's
             // Start()-time call (Awake() only registered the delegate, didn't invoke it).
-            if (playerMovement != null)
-                context.SetCameraTarget(playerMovement.transform);
+            context.SetCameraTarget(playerMovement.transform);
 
             return context;
         }

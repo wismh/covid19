@@ -66,9 +66,6 @@ namespace _Project.Mechanics.Composition
 
         private void UpdateNearestCellTarget()
         {
-            if (_playerMovement == null)
-                return;
-
             Transform nearestCell = _cellRegistry.FindNearestCell(_playerMovement.transform.position, out _);
 
             _cellProximityPrompt.SetTargetCell(nearestCell);

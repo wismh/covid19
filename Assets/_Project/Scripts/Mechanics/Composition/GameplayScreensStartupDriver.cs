@@ -44,8 +44,7 @@ namespace _Project.Mechanics.Composition
             _gameOverScreen.gameObject.SetActive(false);
 
             _cellProximityPrompt.SetContext(_worldScaleTransitionContext);
-            if (_playerMovement != null)
-                _cellProximityPrompt.SetPlayer(_playerMovement.transform);
+            _cellProximityPrompt.SetPlayer(_playerMovement.transform);
 
             _gameAudioService.PlayGameplayMusic();
             _screenManager.OpenScreen<HudScreen>().Forget();

@@ -29,12 +29,10 @@ namespace _Project.Mechanics.Player
         private bool _isInitialized;
 
         [Inject]
-        public void Construct(WorldScaleConfig worldScaleConfig, WorldScaleController worldScaleController, PlayerMovement playerMovement = null)
+        public void Construct(WorldScaleConfig worldScaleConfig, WorldScaleController worldScaleController, PlayerMovement playerMovement)
         {
             _worldScaleConfig = worldScaleConfig;
-
-            if (playerMovement != null)
-                _playerMovement = playerMovement;
+            _playerMovement = playerMovement;
 
             SetWorldScaleController(worldScaleController);
         }
@@ -62,9 +60,6 @@ namespace _Project.Mechanics.Player
 
         private void Start()
         {
-            if (_playerMovement == null)
-                _playerMovement = GetComponent<PlayerMovement>();
-
             if (_worldScaleController != null)
                 ApplyScale(_worldScaleController.CurrentScale);
         }
@@ -116,14 +111,8 @@ namespace _Project.Mechanics.Player
 
         private void UpdateEmission()
         {
-            float velocityMagnitude = 0f;
-            float maxSpeed = 3f;
-
-            if (_playerMovement != null)
-            {
-                velocityMagnitude = _playerMovement.Velocity.magnitude;
-                maxSpeed = _playerMovement.MaxSpeed;
-            }
+            float velocityMagnitude = _playerMovement.Velocity.magnitude;
+            float maxSpeed = _playerMovement.MaxSpeed;
 
             if (maxSpeed <= 0.001f)
                 maxSpeed = 3f;

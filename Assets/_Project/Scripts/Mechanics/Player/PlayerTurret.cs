@@ -72,12 +72,6 @@ namespace _Project.Mechanics.Player
             _projectileSpawner = spawner;
         }
 
-        private void Start()
-        {
-            if (_projectileSpawner == null)
-                _projectileSpawner = FindFirstObjectByType<_Project.Mechanics.Combat.BulletManager>();
-        }
-
         private void Awake()
         {
             _inputActions = new Actions();
@@ -128,8 +122,7 @@ namespace _Project.Mechanics.Player
 
         private void Fire()
         {
-            if (_projectileSpawner != null)
-                _projectileSpawner.SpawnProjectile(_muzzlePoint.position, _turretTransform.right);
+            _projectileSpawner.SpawnProjectile(_muzzlePoint.position, _turretTransform.right);
 
             // Old: PlayerTurretController.Update() -> `_audioSource.Play();`, unconditionally on every shot.
             if (_fireAudioSource != null)

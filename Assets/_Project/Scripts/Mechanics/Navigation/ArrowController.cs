@@ -36,7 +36,7 @@ namespace _Project.Mechanics.Navigation
             MacroVirusRegistry macroVirusRegistry,
             CellRegistry cellRegistry,
             WorldScaleController worldScaleController,
-            PlayerHealth playerHealth = null,
+            PlayerHealth playerHealth,
             UnityEngine.Camera targetCamera = null)
         {
             _macroVirusRegistry = macroVirusRegistry;
@@ -46,15 +46,9 @@ namespace _Project.Mechanics.Navigation
             if (targetCamera != null)
                 _camera = targetCamera;
 
-            if (playerHealth != null)
-            {
-                if (_playerHealth != null)
-                    _playerHealth.OnDied -= HandlePlayerDied;
-
-                _playerHealth = playerHealth;
-                _playerHealth.OnDied += HandlePlayerDied;
-                _isPlayerDead = !_playerHealth.IsAlive;
-            }
+            _playerHealth = playerHealth;
+            _playerHealth.OnDied += HandlePlayerDied;
+            _isPlayerDead = !_playerHealth.IsAlive;
 
             if (_worldScaleController != null)
             {
@@ -67,16 +61,6 @@ namespace _Project.Mechanics.Navigation
         {
             if (_camera == null)
                 _camera = UnityEngine.Camera.main;
-
-            if (_playerHealth == null)
-            {
-                _playerHealth = GetComponentInParent<PlayerHealth>();
-                if (_playerHealth != null)
-                {
-                    _playerHealth.OnDied += HandlePlayerDied;
-                    _isPlayerDead = !_playerHealth.IsAlive;
-                }
-            }
         }
 
         private void Start()
@@ -100,8 +84,7 @@ namespace _Project.Mechanics.Navigation
             _lifetimeCts?.Cancel();
             _lifetimeCts?.Dispose();
 
-            if (_playerHealth != null)
-                _playerHealth.OnDied -= HandlePlayerDied;
+            _playerHealth.OnDied -= HandlePlayerDied;
 
             if (_worldScaleController != null)
                 _worldScaleController.OnEnteredMicroWorld -= HandleEnteredMicroWorld;
