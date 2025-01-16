@@ -5,8 +5,7 @@ namespace _Project.Mechanics.Combat
 {
     /// <summary>
     /// Enemy virus projectile, fired by CucumberVirus.
-    /// Replaces legacy GMTK.VirusBullet (Assets/GMTK/Scripts/Behaviors/MicroVirus/Bullet/VirusBullet.cs).
-    /// Inflicts damage on any GMTK.IDamageable (typically PlayerHealth).
+    /// Inflicts damage on any <see cref="IDamageable"/> (typically PlayerHealth).
     /// Pooled via a Zenject <see cref="IMemoryPool"/> (bound by MicroVirusesInstaller) instead of the previous
     /// bare Instantiate/Destroy - see class doc comment on <see cref="VirusBulletSpawner"/>. Mirrors
     /// <see cref="Bullet"/>'s own pooling shape: position/direction/scaleReference (the same three arguments

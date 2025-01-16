@@ -5,7 +5,6 @@ namespace _Project.Mechanics.Camera
     /// <summary>
     /// Smoothly follows a target Transform with offset, speed, optional smoothing modes
     /// (MoveTowards, Lerp, SmoothDamp), and optional movement boundary clamping.
-    /// Replaces the legacy GMTK.CameraFollow (Assets/GMTK/Scripts/Behaviors/Player/CameraFollow.cs).
     /// </summary>
     public sealed class CameraFollow : MonoBehaviour
     {

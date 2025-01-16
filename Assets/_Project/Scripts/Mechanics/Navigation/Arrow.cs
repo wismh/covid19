@@ -4,7 +4,6 @@ namespace _Project.Mechanics.Navigation
 {
     /// <summary>
     /// Visual presentation component for the navigation indicator.
-    /// Replaces the legacy GMTK.Arrow (Assets/GMTK/Scripts/Behaviors/Arrow/Arrow.cs).
     /// Rotates to point towards the active target and controls the visibility of its SpriteRenderer.
     /// </summary>
     public sealed class Arrow : MonoBehaviour

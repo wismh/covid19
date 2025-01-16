@@ -84,15 +84,11 @@ namespace _Project.Mechanics.Player
         public event Action OnDied;
 
         /// <summary>
-        /// Phase 7 testing fix (2026-09-11): HP/armor initialization and the OnUpgraded/OnBonusHealthGranted
-        /// subscriptions used to happen in Start(), which reported "HP still 0" in the HUD - MainSceneComposition
-        /// opens HudScreen (whose OnOpen() reads PlayerHealth.Health/MaxHealth for its initial bar fill) from
-        /// its OWN Awake(), and Unity does not guarantee this component's Awake()/Start() run before or after a
-        /// DIFFERENT GameObject's Awake() - only that ALL Awake()s finish before ANY Start(). So HudScreen's
-        /// first read could land before this Start() had ever run, seeing the C# default (0) for _health. Moved
-        /// into Construct() instead: MainSceneComposition.ConstructSpawners() calls this synchronously, before
-        /// ConstructScreens()/OpenScreen(HudScreen) in the same Awake() call - deterministic regardless of any
-        /// cross-GameObject ordering.
+        /// HP/armor initialization happens here rather than in Start(): HudScreen reads Health/MaxHealth for its
+        /// initial bar fill from <see cref="Composition.GameplayScreensStartupDriver"/>, and Unity does not
+        /// guarantee this component's Start() runs before a different GameObject's - only that all [Inject]
+        /// Construct calls finish before any driver's Initialize(). Start()-ordering would risk HudScreen reading
+        /// the C# default (0) for _health.
         /// </summary>
         [Inject]
         public void Construct(PlayerConfig config, PlayerStatsService stats)

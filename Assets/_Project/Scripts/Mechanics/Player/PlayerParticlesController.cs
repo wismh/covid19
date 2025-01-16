@@ -7,7 +7,6 @@ namespace _Project.Mechanics.Player
     /// <summary>
     /// Controls the player's engine bubble trail particle system emission, particle speed, and particle size
     /// according to player velocity and the current world scale (Macro vs Micro).
-    /// Replaces the legacy GMTK.PlayerParticlesController (Assets/GMTK/Scripts/Behaviors/Player/PlayerParticlesController.cs).
     /// </summary>
     public sealed class PlayerParticlesController : MonoBehaviour
     {
@@ -15,9 +14,6 @@ namespace _Project.Mechanics.Player
         [SerializeField] private ParticleSystem _particleSystem;
         [SerializeField] private PlayerMovement _playerMovement;
 
-        // Emission-rate range and Macro/Micro speed/size/emission multipliers now live on
-        // WorldScaleConfig instead of local [SerializeField]s - see that class's own "Player particle trail"
-        // header.
         private WorldScaleConfig _worldScaleConfig;
         private WorldScaleController _worldScaleController;
         private ParticleSystem.EmissionModule _emissionModule;
@@ -33,35 +29,15 @@ namespace _Project.Mechanics.Player
         {
             _worldScaleConfig = worldScaleConfig;
             _playerMovement = playerMovement;
-
-            SetWorldScaleController(worldScaleController);
-        }
-
-        public void SetWorldScaleController(WorldScaleController worldScaleController)
-        {
-            if (_worldScaleController != null)
-            {
-                _worldScaleController.OnScaleChanged -= HandleScaleChanged;
-            }
-
             _worldScaleController = worldScaleController;
 
-            if (_worldScaleController != null)
-            {
-                _worldScaleController.OnScaleChanged += HandleScaleChanged;
-                ApplyScale(_worldScaleController.CurrentScale);
-            }
+            _worldScaleController.OnScaleChanged += HandleScaleChanged;
+            ApplyScale(_worldScaleController.CurrentScale);
         }
 
         private void Awake()
         {
             InitializeIfNeeded();
-        }
-
-        private void Start()
-        {
-            if (_worldScaleController != null)
-                ApplyScale(_worldScaleController.CurrentScale);
         }
 
         private void Update()
@@ -71,10 +47,7 @@ namespace _Project.Mechanics.Player
 
         private void OnDestroy()
         {
-            if (_worldScaleController != null)
-            {
-                _worldScaleController.OnScaleChanged -= HandleScaleChanged;
-            }
+            _worldScaleController.OnScaleChanged -= HandleScaleChanged;
         }
 
         private void InitializeIfNeeded()

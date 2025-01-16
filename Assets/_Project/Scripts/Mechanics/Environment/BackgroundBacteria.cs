@@ -7,7 +7,6 @@ namespace _Project.Mechanics.Environment
     /// <summary>
     /// Background bacteria visual drifting behavior.
     /// Moves continuously along a cyclic sequence of waypoints and rotates to face movement direction.
-    /// Replaces legacy GMTK.BackgroundBacteria.
     /// </summary>
     public sealed class BackgroundBacteria : MonoBehaviour
     {

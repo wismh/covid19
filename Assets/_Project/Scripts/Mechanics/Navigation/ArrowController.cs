@@ -14,7 +14,6 @@ namespace _Project.Mechanics.Navigation
     /// <summary>
     /// Controls the navigation arrow indicator, finding the nearest macro virus or infected cell in the arena
     /// and pointing the arrow towards it when it is outside the camera view.
-    /// Replaces the legacy GMTK.ArrowController (Assets/GMTK/Scripts/Behaviors/Arrow/ArrowController.cs).
     /// </summary>
     public sealed class ArrowController : MonoBehaviour
     {

@@ -8,12 +8,10 @@ using _Project.Mechanics.Viruses.Micro;
 namespace _Project.Mechanics.Pickups
 {
     /// <summary>
-    /// Stage 4: Spawner for MedicalPickup pills. Replaces legacy GMTK.MedicalSpawner (Assets/GMTK/Scripts/Behaviors/Medicals/MedicalSpawner.cs).
-    /// Spawns MedicalPickup pills at regular intervals within specified bounds, enforcing a maximum concurrent pill limit.
-    /// Injected with PlayerStatsService and IPlayerTargetProvider via Construct(). Pools MedicalPickup instances
-    /// via <see cref="MedicalPickup.Factory"/> (bound by PickupsInstaller) instead of a [SerializeField] prefab +
-    /// Instantiate - see that class's own "Pooling migration" doc comment. Now [Inject]-tagged (was hand-composed
-    /// by MainSceneComposition before pooling needed a real container-bound Factory anyway).
+    /// Spawner for MedicalPickup pills. Spawns them at regular intervals within specified bounds, enforcing a
+    /// maximum concurrent pill limit. Injected with PlayerStatsService and IPlayerTargetProvider via Construct().
+    /// Pools MedicalPickup instances via <see cref="MedicalPickup.Factory"/> (bound by PickupsInstaller) instead
+    /// of a [SerializeField] prefab + Instantiate - see that class's own "Pooling migration" doc comment.
     /// </summary>
     public class MedicalSpawner : MonoBehaviour
     {

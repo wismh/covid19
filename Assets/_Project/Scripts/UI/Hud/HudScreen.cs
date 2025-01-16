@@ -64,12 +64,9 @@ namespace _Project.UI.Hud
     /// its own small shared service; duplicating it into two owners would be worse than this screen owning the
     /// display-only copy until that's decided.
     ///
-    /// --- Statistics text: documented gap, now RESOLVED (CellRegistry.OnStatisticsChanged wired in Phase 7) ---
-    /// Old: GMTK.UI.HUD.Awake() captured the TextMeshProUGUI's own initial text as a `{lc}`/`{sc}`/`{cd}` template
-    /// and re-rendered it on GMTK.Services.GameStatistics.OnStatisticsChange (living/sick/died cell counts).
-    /// <see cref="SetStatistics"/> is that same hook, wired to CellRegistry.OnStatisticsChanged by
-    /// MainSceneComposition.WireCrossSystemEvents() once that registry existed - see CellRegistry's own doc
-    /// comment for the exact wiring.
+    /// --- Statistics text ---
+    /// <see cref="SetStatistics"/> is wired to CellRegistry.OnStatisticsChanged by
+    /// <see cref="_Project.Mechanics.Composition.HudStatisticsDriver"/>.
     ///
     /// --- Phase 8 testing fix (2026-09-11): the shared "Statistics" TMP_Text was corrupted before this class
     /// ever saw it ---
@@ -159,13 +156,6 @@ namespace _Project.UI.Hud
         // literal "{lc}/{sc}/{cd}" template into the TMP_Text asset later, same as the old prefab did.
         private string _statisticsPattern;
 
-        /// <summary>
-        /// Composition-root note: PlayerConfig/PlayerHealth/PlayerStatsService are Mechanics/* POCOs/MonoBehaviours
-        /// deliberately kept outside Zenject binding per REFACTORING_PLAN.md section 4 (see PlayerHealth.Construct's
-        /// own doc comment for the identical, already-existing gap) - a future GameplayComposition/MainSceneComposition
-        /// class is expected to supply them, exactly as Phase 2/3/4 already leave for PlayerMovement/PlayerTurret/
-        /// CellVisuals. IScreenManager IS a real Zenject binding (UiInstaller -&gt; BaseScreenManager) and resolves today.
-        /// </summary>
         [Inject]
         public void Construct(PlayerConfig config, PlayerHealth playerHealth, PlayerStatsService playerStats, IScreenManager screenManager, PlayerTurret playerTurret)
         {

@@ -6,7 +6,6 @@ namespace _Project.Mechanics.Environment
 {
     /// <summary>
     /// Manages spawning and waypoint path distribution for background bacteria.
-    /// Replaces legacy GMTK.BackgroundBacteriaManager.
     /// Uses <see cref="SpawnPlacementUtility"/> for point distribution across bounds.
     /// </summary>
     public sealed class BackgroundBacteriaManager : MonoBehaviour
