@@ -2,11 +2,8 @@ using UnityEngine;
 
 namespace _Project.Mechanics.Viruses.Micro
 {
-    /// <summary>
-    /// Ports GMTK.MicroViruses.SpinerVirus (Assets/GMTK/Scripts/Behaviors/MicroVirus/Behaviors/SpinerVirus.cs) -
-    /// no continuous movement at all, just a periodic impulse rush toward the player with an "Attack" animation
-    /// wind-up 1 second before the rush fires.
-    /// </summary>
+    /// <summary>No continuous movement - a periodic impulse rush toward the player with an "Attack" animation
+    /// wind-up shortly before it fires.</summary>
     public sealed class SpinerVirusBehavior : IMicroVirusBehavior
     {
         private readonly MicroVirusConfig _config;
@@ -32,8 +29,6 @@ namespace _Project.Mechanics.Viruses.Micro
             _animator = transform.GetComponent<Animator>();
         }
 
-        /// <summary>Old: SpinerVirus.OnEnable() -> `_attackTime = Time.time + Random.Range(0, k_attackCooldown *
-        /// 1.5f); _animationPlaying = false;`</summary>
         public void OnEnable()
         {
             _attackTime = Time.time + UnityEngine.Random.Range(0f, _config.RushCooldownSeconds * _config.InitialCooldownJitterMultiplier);
@@ -42,20 +37,17 @@ namespace _Project.Mechanics.Viruses.Micro
 
         public void Update() { }
 
-        /// <summary>Old: SpinerVirus.FixedUpdate().</summary>
         public void FixedUpdate()
         {
             if (_target == null)
                 return;
 
-            // Old: `if (Time.time > (_attackTime + k_attackCooldown - 1) && !_animationPlaying) { ...Play("Base Layer.Attack"); }`
             if (Time.time > _attackTime + _config.RushCooldownSeconds - _config.RushWindupLeadSeconds && !_animationPlaying)
             {
                 _animationPlaying = true;
                 _animator?.Play("Base Layer.Attack");
             }
 
-            // Old: `if (Time.time > _attackTime + k_attackCooldown) { ... AddForce(..., ForceMode2D.Impulse); }`
             if (Time.time > _attackTime + _config.RushCooldownSeconds)
             {
                 _attackTime = Time.time + _config.RushCooldownSeconds;

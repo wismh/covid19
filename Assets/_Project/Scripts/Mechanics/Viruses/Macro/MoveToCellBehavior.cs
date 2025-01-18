@@ -2,13 +2,7 @@ using UnityEngine;
 
 namespace _Project.Mechanics.Viruses.Macro
 {
-    /// <summary>
-    /// Ports GMTK.VirusBehaviors.MoveToCell (Assets/GMTK/Scripts/Behaviors/MacroVirus/Behaviors/MoveToCell.cs).
-    /// Dependencies old code resolved via ServiceLocator (CellManager) and GetComponent (DriftMovableObject) are
-    /// now constructor-injected instead: <see cref="ICellTargetProvider"/> replaces the ServiceLocator lookup,
-    /// <see cref="IDriftBody"/> replaces the GetComponent call (implemented directly by MacroVirusController -
-    /// see IDriftBody's doc comment).
-    /// </summary>
+    /// <summary>Steers toward the nearest cell until it finds one to attack.</summary>
     public sealed class MoveToCellBehavior : IMacroVirusBehavior
     {
         private readonly ICellTargetProvider _cellTargetProvider;

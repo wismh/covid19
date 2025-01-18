@@ -2,14 +2,8 @@ using UnityEngine;
 
 namespace _Project.Mechanics.Viruses.Macro
 {
-    /// <summary>
-    /// Ports GMTK.VirusBehaviors.AttackCell (Assets/GMTK/Scripts/Behaviors/MacroVirus/Behaviors/AttackCell.cs) -
-    /// orbits/rams a specific cell once touching it. <see cref="Target"/> is exposed exactly like the old class
-    /// (`public Transform Target => _target;`) because MacroVirusController.FixedUpdate needs it: old
-    /// VirusController.FixedUpdate checked `if (_behavior is AttackCell attackBehavior && !attackBehavior.Target)`
-    /// to fall back to MoveToCell if the target cell died mid-attack - MacroVirusController reproduces that same
-    /// check against this property.
-    /// </summary>
+    /// <summary>Orbits/rams a specific cell once touching it. <see cref="Target"/> is exposed so
+    /// MacroVirusController.FixedUpdate can fall back to MoveToCell if the target cell dies mid-attack.</summary>
     public sealed class AttackCellBehavior : IMacroVirusBehavior
     {
         private readonly IDriftBody _body;

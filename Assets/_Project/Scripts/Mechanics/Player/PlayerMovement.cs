@@ -4,17 +4,12 @@ using _Project.Input;
 
 namespace _Project.Mechanics.Player
 {
-    /// <summary>
-    /// Ports GMTK.DriftMovableObject (the generic inertia/drift primitive) fused with GMTK.PlayerBodyController
-    /// (the player-specific input wiring on top of it) - Assets/GMTK/Scripts/Behaviors/DriftMovableObject.cs and
-    /// Assets/GMTK/Scripts/Behaviors/Player/PlayerBodyController.cs. No ServiceLocator: config/stats arrive via
-    /// Zenject method injection, input is read directly (no transform.Find/GetChild).
-    /// </summary>
+    /// <summary>Transform-driven inertia/drift movement with independent forward/backward thrust and rotation.</summary>
     public sealed class PlayerMovement : MonoBehaviour
     {
-        // Optional: old PlayerBodyController zeroed an attached Rigidbody2D's velocity every FixedUpdate, since
-        // movement is transform-driven here (see Update()), not physics-driven - the Rigidbody2D only exists for
-        // collision detection. Left optional/nullable since this phase creates no prefab to wire it on.
+        // Movement is transform-driven (see Update()), not physics-driven - the Rigidbody2D only exists for
+        // collision detection, so its own velocity is zeroed every FixedUpdate below. Optional/nullable since not
+        // every prefab wires one.
         [SerializeField] private Rigidbody2D _rigidbody2D;
 
         private PlayerConfig _config;
@@ -25,13 +20,8 @@ namespace _Project.Mechanics.Player
         private Vector3 _velocity;
         private float _angularVelocity;
 
-        // Old: GMTK.Services.PlayerStats.SpeedScale (1f macro, 0.01f micro), consumed by GMTK.PlayerBodyController.
-        // FixedUpdate: `_body.Move(inputValue.y * _playerStats.SpeedScale * backMovement)` - throttles forward/
-        // backward thrust input only, never Rotate's turning input. WorldScaleController's own class doc comment
-        // (seam item 4) already flagged this exact gap: WorldScaleTransition calls
-        // `context.SetPlayerSpeedScale?.Invoke(...)` correctly end-to-end, but nothing on this side ever consumed
-        // it - Phase 7 testing fix (2026-09-11): user reported movement in the micro world was much too fast, this
-        // is why. Defaults to 1 (macro) so nothing changes until a composition root actually wires SetSpeedScale.
+        // World-scale speed multiplier (1 macro, 0.01 micro) - throttles forward/backward thrust only, not
+        // turning. Wired via SetSpeedScale below.
         private float _speedScale = 1f;
 
         public Vector3 Velocity => _velocity;
@@ -45,8 +35,6 @@ namespace _Project.Mechanics.Player
             _stats = stats;
         }
 
-        /// <summary>See <see cref="_speedScale"/>'s doc comment. Wired from
-        /// WorldScaleTransitionContext.SetPlayerSpeedScale by a composition root.</summary>
         public void SetSpeedScale(float scale)
         {
             _speedScale = scale;
@@ -77,7 +65,6 @@ namespace _Project.Mechanics.Player
             Vector2 input = _inputActions.PlayerBody.Move.ReadValue<Vector2>();
 
             // Backward movement is throttled to a small fraction of full thrust.
-            // Old: GMTK.PlayerBodyController.FixedUpdate -> `inputValue.y < 0 ? 0.05f : 1f`.
             float backwardThrottle = input.y < 0f ? _config.BackwardMovementMultiplier : 1f;
 
             Move(input.y * backwardThrottle * _speedScale);
@@ -96,7 +83,6 @@ namespace _Project.Mechanics.Player
             transform.Rotate(0f, 0f, Time.deltaTime * _angularVelocity);
         }
 
-        /// <summary>Old: GMTK.DriftMovableObject.Move(float).</summary>
         public void Move(float direction)
         {
             float maxSpeed = _stats.EffectiveMoveSpeed;
@@ -106,7 +92,6 @@ namespace _Project.Mechanics.Player
             _velocity = Vector3.ClampMagnitude(_velocity, maxSpeed);
         }
 
-        /// <summary>Old: GMTK.DriftMovableObject.Rotate(float).</summary>
         public void Rotate(float direction)
         {
             float maxAngularSpeed = _stats.EffectiveTurnRate;
@@ -116,14 +101,13 @@ namespace _Project.Mechanics.Player
             _angularVelocity = Mathf.Clamp(_angularVelocity, -maxAngularSpeed, maxAngularSpeed);
         }
 
-        /// <summary>Old: GMTK.DriftMovableObject.Stop().</summary>
         public void Stop()
         {
             _velocity = Vector3.zero;
             _angularVelocity = 0f;
         }
 
-        /// <summary>Old: GMTK.DriftMovableObject.Impulse(Vector3) - used by PlayerHealth for on-hit knockback.</summary>
+        /// <summary>Used by PlayerHealth for on-hit knockback.</summary>
         public void ApplyImpulse(Vector3 impulse)
         {
             _velocity += impulse;

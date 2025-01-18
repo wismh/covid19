@@ -8,52 +8,16 @@ using _Project.Mechanics.Combat;
 
 namespace _Project.Mechanics.Player
 {
-    /// <summary>
-    /// Ports GMTK.PlayerDamageable (Assets/GMTK/Scripts/Behaviors/Player/PlayerDamageable.cs). Implements the
-    /// IDamageable interface.
-    ///
-    /// --- Damage/death audio + material flash + death animation (Phase 8 testing fix, 2026-09-11) ---
-    /// None of old PlayerDamageable's presentation side effects survived the initial port - HandleDeathAsync's
-    /// own earlier doc comment explicitly deferred them ("a later UI/animation phase can subscribe to OnDamaged/
-    /// OnDied to restore staged death-animation timing"), but no such phase ever followed up, so hits/death were
-    /// silent, effect-less, and animation-less. Restored directly here instead of via a separate subscriber -
-    /// matches how MacroVirusController/MicroVirusController already own their own damage/death presentation
-    /// rather than delegating it to a listener, now that this class also needs the same
-    /// per-instance timing control (see <see cref="HandleDeathAsync"/>).
-    ///
-    /// Old code's audio went through `GetComponent<AudioList>().Play(i)` (a single shared AudioSource with
-    /// a swappable clip list - index 2 "PlayerHit", index 3 "Explosion", confirmed live against Player.prefab's
-    /// still-present AudioList component/clips) rather than per-effect AudioSources like the virus classes use -
-    /// reused via <see cref="_audioList"/> instead of re-wiring two new AudioSources with duplicate clips.
-    /// <see cref="_animator"/>/<see cref="_spriteRenderer"/>/<see cref="_damageMaterial"/> mirror the virus
-    /// classes' own fields exactly (child "Body" GameObject's Animator/SpriteRenderer; Damage.mat, the same
-    /// shared asset BigBob/PinkGlist/Orange/Cucumber/Spiner already flash) - confirmed "Body"'s Animator
-    /// controller (Died.controller) has a "Base Layer.Died" state, matching the old hardcoded string.
-    /// </summary>
+    /// <summary>Player health/armor/damage-death presentation (hit flash, death animation, audio).</summary>
     public sealed class PlayerHealth : MonoBehaviour, IDamageable
     {
-        // Direct references instead of the old `transform.Find("Turret")` / GetComponentInChildren lookups.
-        [SerializeField] private PlayerMovement _movement; // on-hit knockback impulse, disabled on death
-        [SerializeField] private PlayerTurret _turret; // disabled on death
+        [SerializeField] private PlayerMovement _movement;
+        [SerializeField] private PlayerTurret _turret;
 
-        /// <summary>
-        /// Phase 9 testing fix (2026-09-12): user-reported symptom - after dying, the player's Body sprite went
-        /// invisible (the "Died" animation clip hides it) but the player could still move, aim, and fire, and
-        /// the nearest-infected-cell arrow (old GMTK.ArrowController, still active on Player.prefab's "Arrow"
-        /// child) kept pointing and showing. HandleDeathAsync only ever hid the turret's own visual and played
-        /// the death animation - it never stopped PlayerMovement/PlayerTurret from still processing input
-        /// (neither old PlayerDamageable nor this port's initial version disabled them), and ArrowController's
-        /// own StartCoroutine(StartFindTargets(...)) keeps running regardless of the component's enabled state
-        /// (a well-known Unity gotcha - disabling a MonoBehaviour does not stop coroutines it already started;
-        /// only deactivating its GameObject, or explicitly stopping the coroutine, does). Disabling
-        /// PlayerMovement/PlayerTurret (their OnDisable() unsubscribes input, matching how OnEnable() wired it -
-        /// see those classes' own lifecycle methods) stops movement/aiming/firing outright; deactivating the
-        /// whole "Arrow" GameObject is the only way to actually stop its coroutine too, not just hide it for one
-        /// frame until the next FindTarget() tick turns it back on.
-        /// </summary>
+        /// <summary>Deactivated (not just disabled) on death - the nearest-cell-arrow's polling loop runs via
+        /// StartCoroutine, which disabling a MonoBehaviour doesn't stop; only deactivating its GameObject does.</summary>
         [SerializeField] private GameObject _arrowRoot;
 
-        // See class doc comment's "Damage/death audio + material flash + death animation" section.
         [SerializeField] private _Project.Mechanics.Audio.AudioList _audioList;
         [SerializeField] private Animator _animator;
         [SerializeField] private SpriteRenderer _spriteRenderer;
@@ -64,8 +28,8 @@ namespace _Project.Mechanics.Player
 
         private CancellationTokenSource _lifetimeCts;
 
-        // Cached once in Awake() (not re-captured inside PlayDamageFlashAsync) - see that method's doc comment
-        // for the overlapping-flash race this fixes.
+        // Cached once in Awake(), not re-captured per flash - avoids two overlapping flashes racing on which
+        // material to revert to.
         private Material _originalMaterial;
 
         private int _health;
@@ -123,21 +87,15 @@ namespace _Project.Mechanics.Player
 
         private void HandleUpgraded(UpgradeStat stat, int newLevel)
         {
-            // Old: PlayerDamageable.OnUpgrade -
-            // `if (_upgrade == UpgradeType.PLAYER_ARMOR && Armor < 8) Armor += 1;`
             if (stat == UpgradeStat.Armor && _armor < _config.MaxArmor)
                 _armor += 1;
 
-            // Old: PlayerDamageable.OnUpgrade -
-            // `if (_upgrade == UpgradeType.PLAYER_HP && _health < _maxHealth) _health += 1;`
             if (stat == UpgradeStat.Health && _health < _stats.EffectiveMaxHealth)
                 _health += 1;
         }
 
         private void HandleBonusHealthGranted(int amount)
         {
-            // Intentionally uncapped by max health - exact port of the old rule (see
-            // PlayerStatsService.OnBonusHealthGranted doc comment for why).
             _health += amount;
         }
 
@@ -146,8 +104,6 @@ namespace _Project.Mechanics.Player
             if (!_isAlive)
                 return;
 
-            // Old: PlayerDamageable.Damage ->
-            // `float chanceIgnore = Armor / 6.0f; if (Random.Range(0.1f, 1.0f) < chanceIgnore) Armor -= 1; else _health -= damage;`
             float chanceToIgnore = _armor / _config.ArmorIgnoreChanceDivisor;
             if (UnityEngine.Random.Range(_config.ArmorIgnoreRollMin, _config.ArmorIgnoreRollMax) < chanceToIgnore)
                 _armor = Mathf.Max(0, _armor - 1);
@@ -156,11 +112,8 @@ namespace _Project.Mechanics.Player
 
             OnDamaged?.Invoke(damage, attackDirection);
 
-            // Old: PlayerDamageable.AnimationOnDamage -> `_body.Impulse(attackDirection * 0.3f);`
             _movement.ApplyImpulse(attackDirection * _config.KnockbackImpulseStrength);
 
-            // Old: PlayerDamageable.Damage -> `_audioList.Play(2);` (unconditional, same as the virus classes'
-            // own hit-sound calls - see class doc comment).
             _audioList.Play(2);
             PlayDamageFlashAsync().Forget();
 
@@ -168,14 +121,6 @@ namespace _Project.Mechanics.Player
                 HandleDeathAsync().Forget();
         }
 
-        /// <summary>
-        /// Old: PlayerDamageable.AnimationOnDamage() - swaps in the damage material for 0.1s. Mirrors
-        /// MacroVirusController/MicroVirusController's own PlayDamageFlashAsync exactly, including that method's
-        /// overlapping-flash race fix (see its doc comment) - two hits within DamageFlashDurationSeconds used to
-        /// race on a locally-captured "original" material, leaving the player sprite stuck fully white until the
-        /// next flash happened to finish cleanly. Now always reverts to the single <see cref="_originalMaterial"/>
-        /// cached once in Awake().
-        /// </summary>
         private async UniTaskVoid PlayDamageFlashAsync()
         {
             _spriteRenderer.material = _damageMaterial;
@@ -196,23 +141,13 @@ namespace _Project.Mechanics.Player
         {
             _isAlive = false;
 
-            // See _arrowRoot's doc comment - stop movement/aiming/firing and the target arrow the instant death
-            // is detected, not after the animation delay below, so the player can't keep playing during it.
+            // Stop movement/aiming/firing/the target arrow the instant death is detected, not after the
+            // animation delay below, so the player can't keep playing during it.
             _movement.enabled = false;
             _turret.enabled = false;
             _arrowRoot.SetActive(false);
-
-            // Old: PlayerDamageable.AnimationOnDied -> `transform.Find("Turret").gameObject.SetActive(false);`
-            // - see PlayerTurret.TurretVisualObject's doc comment for why this can't be `_turret.gameObject`
-            // (that resolves to the whole player root, not the old code's child "Turret" object - confirmed live,
-            // dying used to deactivate the entire Player GameObject instead of just hiding the turret).
             _turret.TurretVisualObject.SetActive(false);
 
-            // Old: PlayerDamageable.Damage -> `StartCoroutine(AnimationOnDied()); Destroy(gameObject, 2f);` -
-            // AnimationOnDied() itself waited 0.2s before playing the death sound/animation. Split into two
-            // delays instead of old code's single 2s wait (Phase 8 testing fix, 2026-09-11) so the death
-            // sound/animation start at the same relative moment old code did, while OnDied still fires at the
-            // same total ~2s mark this class already used (HandleGameOver/game-over UI timing unchanged).
             try
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(_config.DeathAnimationDelaySeconds), cancellationToken: _lifetimeCts.Token);
@@ -222,7 +157,6 @@ namespace _Project.Mechanics.Player
                 return;
             }
 
-            // Old: AnimationOnDied() -> `_audioList.Play(3); ... _animator.Play("Base Layer.Died");`.
             _audioList.Play(3);
             _animator.Play("Base Layer.Died");
 

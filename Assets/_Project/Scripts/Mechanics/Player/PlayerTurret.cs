@@ -5,37 +5,16 @@ using _Project.Input;
 
 namespace _Project.Mechanics.Player
 {
-    /// <summary>
-    /// Ports GMTK.PlayerTurretController (Assets/GMTK/Scripts/Behaviors/Player/PlayerTurretController.cs):
-    /// independent turret aiming at the pointer regardless of body facing, with a reload cooldown that scales
-    /// with the AttackSpeed upgrade. No ServiceLocator, no transform.Find - direct [SerializeField] references
-    /// and Zenject method injection instead.
-    ///
-    /// Firing seam: projectile spawning goes through <see cref="IProjectileSpawner"/>, implemented by
-    /// <see cref="_Project.Mechanics.Combat.BulletManager"/> (a Zenject-pooled native port, GMTK.BulletManager's
-    /// replacement - see that class's own doc comment) which pulls damage from
-    /// <see cref="PlayerStatsService.EffectiveDamage"/> directly.
-    ///
-    /// UI seam: the old controller drove a DOTween-animated Image directly (`_filledReloadImage.fillAmount`).
-    /// Mechanics shouldn't own presentation, so this exposes <see cref="ReloadProgress01"/> instead for a future
-    /// UI screen (Phase 5, BaseScreen-based per REFACTORING_PLAN.md) to bind to.
-    /// </summary>
+    /// <summary>Independent turret aiming at the pointer regardless of body facing, with a reload cooldown that
+    /// scales with the AttackSpeed upgrade.</summary>
     public sealed class PlayerTurret : MonoBehaviour
     {
         [SerializeField] private Transform _turretTransform;
         [SerializeField] private Transform _muzzlePoint;
 
-        /// <summary>
-        /// Phase 7 testing fix (2026-09-11): PlayerHealth.HandleDeathAsync's old-code port does `_turret.gameObject
-        /// .SetActive(false)` to hide the turret on death (old: `transform.Find("Turret").gameObject.SetActive
-        /// (false)`). Old code's "Turret" was a CHILD GameObject holding only the turret sub-mesh - disabling it
-        /// hid the visual while the player's own root object (movement, health, everything) stayed alive. This
-        /// PlayerTurret SCRIPT, however, lives on the PLAYER'S ROOT GameObject, not on that child - so
-        /// `_turret.gameObject` (where `_turret` is a PlayerTurret reference) resolves to the whole player, not
-        /// the turret visual. Confirmed live via Unity CLI: killing the player in a cell deactivated the entire
-        /// Player GameObject instantly. Exposes the actual turret child object so PlayerHealth can disable the
-        /// right one.
-        /// </summary>
+        /// <summary>This script lives on the player's root GameObject, not the turret's own child GameObject -
+        /// exposes the actual turret child so PlayerHealth can deactivate just the turret visual on death, not
+        /// the whole player.</summary>
         public GameObject TurretVisualObject => _turretTransform.gameObject;
 
         private IProjectileSpawner _projectileSpawner;
@@ -49,10 +28,6 @@ namespace _Project.Mechanics.Player
         private float _lastFireTime = float.NegativeInfinity;
         private float _currentReloadTime;
 
-        // Old: PlayerTurretController.Start() -> `_audioSource = _turret.GetComponent<AudioSource>();`, played
-        // in Update() on every shot. Player.prefab's "Turret" child (= _turretTransform's GameObject) still
-        // carries that same AudioSource - resolved here instead of adding a new [SerializeField] since the
-        // reference is already reachable off an existing one.
         private AudioSource _fireAudioSource;
 
         /// <summary>0 (just fired) to 1 (ready to fire) - for a future UI screen to bind a reload indicator to.</summary>
@@ -124,14 +99,10 @@ namespace _Project.Mechanics.Player
         {
             _projectileSpawner.SpawnProjectile(_muzzlePoint.position, _turretTransform.right);
 
-            // Old: PlayerTurretController.Update() -> `_audioSource.Play();`, unconditionally on every shot.
             if (_fireAudioSource != null)
                 _fireAudioSource.Play();
 
             _lastFireTime = Time.time;
-
-            // Old: PlayerTurretController.Update() ->
-            // `_reloadTime = _baseReloadTime - level * _scaleByLevelUpgrade; _reloadTime = _reloadTime <= 0 ? 0.25f : _reloadTime;`
             _currentReloadTime = _stats.EffectiveReloadTime;
         }
     }
