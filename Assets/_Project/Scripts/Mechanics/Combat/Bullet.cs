@@ -5,18 +5,10 @@ using _Project.Mechanics.WorldScale;
 
 namespace _Project.Mechanics.Combat
 {
-    /// <summary>
-    /// Player bullet projectile.
-    /// Replaces legacy GMTK.Bullet (Assets/GMTK/Scripts/Behaviors/Bullet/Bullet.cs).
-    /// Handles flight, damage application to GMTK.IDamageable, lifetime tracking, and pool return.
-    /// Supports dynamic world scale (Macro 1x scale/speed vs Micro WorldScaleConfig.MicroPlayerScale-x speed).
-    /// Pooled via a Zenject <see cref="IMemoryPool"/> (bound by PlayerInstaller.Install) instead of the previous
-    /// <see cref="UnityEngine.Pool.ObjectPool{T}"/> - <see cref="OnSpawned"/> replaces the old Fire() call,
-    /// <see cref="ReturnToPool"/> now despawns back into that pool. <see cref="Construct"/> resolves
-    /// PlayerConfig/WorldScaleConfig/WorldScaleController via real Zenject injection, called ONCE when the pool
-    /// actually instantiates this prefab - not per spawn - since those are stable container singletons, unlike
-    /// position/direction/damage which vary every spawn and so go through <see cref="OnSpawned"/> instead.
-    /// </summary>
+    /// <summary>Player bullet projectile: flight, damage application, lifetime, and pool return. Scales speed
+    /// and visual size for the Micro world. Pooled via a Zenject <see cref="IMemoryPool"/> -
+    /// <see cref="Construct"/> resolves container singletons once at pool creation, while per-spawn data
+    /// (position/direction/damage) goes through <see cref="OnSpawned"/> instead.</summary>
     public class Bullet : MonoBehaviour, IPoolable<Vector3, Vector3, int, IMemoryPool>
     {
         [SerializeField] private float _speed = 10f;

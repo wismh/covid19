@@ -9,26 +9,12 @@ using _Project.Mechanics.Viruses.Micro;
 
 namespace _Project.Mechanics.Pickups
 {
-    /// <summary>
-    /// Stage 4: Medical pill pickup component. Replaces legacy GMTK.Medical (Assets/GMTK/Scripts/Behaviors/Medicals/Medical.cs).
-    /// Implements _Project.Mechanics.Combat.IDamageable. When taking lethal damage:
-    /// plays explosion animation and audio, disables collision, and releases child VitaminPickups to fly towards the player.
-    /// Awards one XP via PlayerStatsService when the pill finishes (all vitamins collected, or the
-    /// safety-timeout fallback), matching the original GMTK.Medical's "+1 XP per pill" behavior.
-    /// Passes player target dependencies down to vitamins.
-    ///
-    /// --- Pooling migration ---
-    /// Now spawned via a Zenject <see cref="IMemoryPool"/> (bound by PickupsInstaller) instead of bare
-    /// Instantiate/Destroy - see <see cref="OnSpawned"/>. The trickiest part: each <see cref="VitaminPickup"/>
-    /// child is a permanent, prefab-baked part of THIS instance (not separately spawned/pooled), and used to
-    /// destroy itself on collection - which would permanently empty that slot the next time this same pooled
-    /// instance respawns. VitaminPickup.Collect() now deactivates instead (see its own doc comment), and
-    /// OnSpawned reactivates + repositions every vitamin back to its original, cached local position via
-    /// VitaminPickup.ResetForPool. <see cref="Construct"/> is now real `[Inject]`-tagged DI (called once, at this
-    /// pooled instance's one-time real construction) - the old second, <c>Transform playerTransform</c> overload
-    /// was a manual/test fallback per its own prior doc comment, now dead now that IPlayerTargetProvider is
-    /// always available from the container, so it (and the <c>_playerTransform</c> field) is removed.
-    /// </summary>
+    /// <summary>Medical pill pickup. When taking lethal damage: plays explosion animation/audio, disables
+    /// collision, and releases child VitaminPickups to fly toward the player, awarding one XP once all are
+    /// collected (or a safety timeout elapses). Pooled via a Zenject <see cref="IMemoryPool"/> - each
+    /// VitaminPickup child is a permanent, prefab-baked part of this instance rather than separately pooled, so
+    /// <see cref="OnSpawned"/> reactivates and repositions them back to their cached original local position
+    /// instead of re-instantiating.</summary>
     public class MedicalPickup : MonoBehaviour, IDamageable, IPoolable<Vector3, Quaternion, IMemoryPool>
     {
         [Header("Components")]
@@ -39,7 +25,6 @@ namespace _Project.Mechanics.Pickups
         [SerializeField] private SpriteRenderer _spriteRenderer;
         [SerializeField] private List<VitaminPickup> _vitamins;
 
-        // Health/timing tunables now live on PickupsConfig instead of local [SerializeField]s.
         private PickupsConfig _config;
         private int _health;
         private PlayerStatsService _playerStatsService;
@@ -61,8 +46,6 @@ namespace _Project.Mechanics.Pickups
             _targetProvider = targetProvider;
         }
 
-        /// <summary>Runs on every (re)spawn from the pool, not just the first one - see class doc comment's
-        /// "Pooling migration" section.</summary>
         public void OnSpawned(Vector3 position, Quaternion rotation, IMemoryPool pool)
         {
             _pool = pool;
@@ -87,8 +70,7 @@ namespace _Project.Mechanics.Pickups
 
             _animator.enabled = true;
 
-            // "Appearance" is this controller's default/idle state (confirmed via its serialized
-            // m_DefaultState) - resets a respawned pill back to its resting look after Break()'s "Explosion".
+            // Resets a respawned pill back to its resting look after Break()'s "Explosion" state.
             _animator.Play("Base Layer.Appearance");
 
             if (_spriteRenderer != null)
@@ -104,7 +86,6 @@ namespace _Project.Mechanics.Pickups
             OnDestroyed?.Invoke(this);
         }
 
-        /// <summary>Replaces <c>Destroy(gameObject)</c> for this pooled type - see MedicalSpawner.SpawnMedical/HandleMedicalDestroyed.</summary>
         public void Despawn()
         {
             _pool?.Despawn(this);
@@ -241,8 +222,6 @@ namespace _Project.Mechanics.Pickups
                 _spriteRenderer.enabled = false;
 
             // If collect audio is playing, give it a moment to finish before despawning back into the pool.
-            // Invoke, not Destroy(gameObject, delay) - see class doc comment's "Pooling migration" section; a
-            // real Destroy would permanently remove this pooled instance instead of recycling it.
             float destroyDelay = _collectAudioSource.isPlaying
                 ? _config.DestroyDelayWithAudioSeconds
                 : _config.DestroyDelayWithoutAudioSeconds;

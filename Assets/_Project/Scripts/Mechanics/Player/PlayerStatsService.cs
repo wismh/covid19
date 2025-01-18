@@ -4,23 +4,7 @@ using UnityEngine;
 
 namespace _Project.Mechanics.Player
 {
-    /// <summary>
-    /// Plain C# service (POCO), not a MonoBehaviour - matches the Mechanics/* manual-composition philosophy from
-    /// REFACTORING_PLAN.md section 4 (gameplay systems are composed by hand, e.g. `new PlayerStatsService(...)`,
-    /// rather than threaded through Zenject like the platform services bound in ProjectContextInstaller). Ports
-    /// GMTK.Services.PlayerStats (XP/level, Assets/GMTK/Scripts/Behaviors/Player/PlayerStats.cs) merged with the
-    /// upgrade-application logic that used to live partly in PlayerStats.Upgrade() and partly in
-    /// PlayerBodyController/PlayerDamageable's OnUpgrade handlers.
-    ///
-    /// Receives its <see cref="UpgradeDefinition"/> list via a plain constructor parameter rather than a Zenject
-    /// collection binding ([Inject] UpgradeDefinition[] _definitions). Per REFACTORING_PLAN.md section 4,
-    /// gameplay systems under Mechanics/* are deliberately NOT threaded through the DI container the way
-    /// platform services (Save/Audio/SceneLoader/Assets) are - so wiring a Zenject collection binding here would
-    /// cut against that stated architecture decision. Whoever composes the gameplay scene (a future
-    /// GameplayComposition/MainSceneComposition class, per the plan) is expected to pass the six
-    /// UpgradeDefinition_* assets in directly - e.g. from a `[SerializeField] List&lt;UpgradeDefinition&gt;` on
-    /// that composition root, the same way PlayerConfig itself would be assigned and passed along.
-    /// </summary>
+    /// <summary>XP/level and per-stat upgrade tracking, plus the effective-stat formulas derived from them.</summary>
     public sealed class PlayerStatsService
     {
         private readonly PlayerConfig _config;
@@ -60,21 +44,13 @@ namespace _Project.Mechanics.Player
         /// <summary>Raised whenever a specific stat's upgrade level increases: (stat, new level for that stat).</summary>
         public event Action<UpgradeStat, int> OnUpgraded;
 
-        /// <summary>
-        /// Explicit port of a rule that was a hidden side effect in the old code: inside
-        /// GMTK.PlayerDamageable.OnUpgrade, `if (_playerStats.Level % 2 == 0) _health += 1;` ran unconditionally
-        /// for EVERY upgrade type, not just PLAYER_HP - so picking any upgrade while the player's overall level
-        /// happened to be even granted a silent, uncapped bonus HP on top of whatever stat was actually picked.
-        /// Kept here as a named, documented rule (PlayerConfig.BonusHealthPerEvenLevel) fired explicitly from
-        /// ApplyUpgrade instead of being buried in an unrelated class - see TECHNICAL_AUDIT.md's callout on
-        /// magic numbers / balance rules hidden in unrelated code paths.
-        /// </summary>
+        /// <summary>Fires alongside every upgrade pick (not just Health) whenever the player's overall level is
+        /// even - an original-game rule, not a bug.</summary>
         public event Action<int> OnBonusHealthGranted;
 
         public int GetUpgradeLevel(UpgradeStat stat) =>
             _upgradeLevels.TryGetValue(stat, out int level) ? level : 1;
 
-        /// <summary>Old: GMTK.Services.PlayerStats.AddExperience() - XP curve grows maxExperience ×1.5 per level.</summary>
         public void AddExperience()
         {
             _experience += 1;
@@ -93,7 +69,6 @@ namespace _Project.Mechanics.Player
                 OnLevelUp?.Invoke(_level);
         }
 
-        /// <summary>Old: GMTK.Services.PlayerStats.Upgrade(UpgradeType).</summary>
         public void ApplyUpgrade(UpgradeStat stat)
         {
             int newLevel = GetUpgradeLevel(stat) + 1;
@@ -101,18 +76,11 @@ namespace _Project.Mechanics.Player
 
             OnUpgraded?.Invoke(stat, newLevel);
 
-            // See OnBonusHealthGranted doc: this used to be a hidden side effect of ANY upgrade pick, now it's
-            // an explicit, named step.
             if (_level % 2 == 0)
                 OnBonusHealthGranted?.Invoke(_config.BonusHealthPerEvenLevel);
         }
 
-        // --- Effective stats: pure functions of (config, upgrade level, upgrade definitions). ---
-        // NOTE: MoveSpeed/Mobility were stateful accumulators in the old DriftMovableObject
-        // (`SetSpeed(GetSpeed() + 0.5f)` on every OnUpgrade callback - a subscription PlayerBodyController never
-        // unsubscribed, see TECHNICAL_AUDIT.md 2.1's "потенційний memory leak" callout). Recomputing them here
-        // as pure functions of the stored upgrade level is mathematically equivalent to that old accumulation
-        // AND removes the double-subscription/leak risk entirely.
+        // Effective stats: pure functions of (config, upgrade level, upgrade definitions).
 
         public float EffectiveMoveSpeed =>
             _config.BaseMoveSpeed + EffectPerLevel(UpgradeStat.MoveSpeed) * (GetUpgradeLevel(UpgradeStat.MoveSpeed) - 1);
@@ -135,12 +103,6 @@ namespace _Project.Mechanics.Player
             }
         }
 
-        /// <summary>
-        /// Old: `_damage * (GetLevelUpgrade(PLAYER_DAMAGE) / 2)` using C# integer division (Bullet.cs
-        /// OnTriggerEnter2D), minimum 1. This is the plug-in point for a future Bullet/projectile port - see
-        /// GmtkBulletManagerProjectileSpawner's doc comment for why the OLD GMTK.Bullet still computes its own
-        /// damage from the OLD GMTK.Services.PlayerStats instead of this property, for now.
-        /// </summary>
         public int EffectiveDamage
         {
             get
@@ -151,25 +113,16 @@ namespace _Project.Mechanics.Player
             }
         }
 
-        /// <summary>
-        /// Level-derived nominal armor value (what upgrading Armor currently grants), capped at
-        /// PlayerConfig.MaxArmor exactly like the old inline `Armor &lt; 8` check. NOT the authoritative runtime
-        /// armor: unlike MoveSpeed/ReloadTime/Damage, armor is consumable at runtime (a damage-ignore proc spends
-        /// 1 point - old PlayerDamageable.Damage: `Armor -= 1`), so the live value that decreases from combat
-        /// lives on PlayerHealth, seeded from this property and mutated independently - exactly how
-        /// GMTK.PlayerDamageable.Armor worked (a plain stateful int, never recomputed from level on every use).
-        /// </summary>
+        /// <summary>Nominal armor level-up would grant, capped at MaxArmor. NOT the authoritative runtime armor -
+        /// unlike the other effective stats, armor is consumable at runtime (a damage-ignore proc spends a
+        /// point), so the live value lives on PlayerHealth, seeded from this and mutated independently.</summary>
         public int EffectiveArmor =>
             Mathf.Min(
                 _config.BaseArmor + Mathf.RoundToInt(EffectPerLevel(UpgradeStat.Armor) * (GetUpgradeLevel(UpgradeStat.Armor) - 1)),
                 _config.MaxArmor);
 
-        /// <summary>
-        /// Old: `_maxHealth` was a static ceiling itself (not derived from level) that current health moved
-        /// toward via the HP upgrade card - `if (_health &lt; _maxHealth) _health += 1;` - so it's a pure
-        /// PlayerConfig value with no per-level term. NOT the starting health - see PlayerConfig.StartingHealth/
-        /// BaseMaxHealth doc comments for why those are two distinct original values (3 and 8 respectively).
-        /// </summary>
+        /// <summary>The upgrade ceiling current health moves toward - distinct from PlayerConfig.StartingHealth
+        /// (the initial value).</summary>
         public int EffectiveMaxHealth => _config.BaseMaxHealth;
 
         private float EffectPerLevel(UpgradeStat stat) =>
