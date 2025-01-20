@@ -1,3 +1,4 @@
+using Project.Core.AudioSystem;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Zenject;
@@ -11,6 +12,7 @@ namespace _Project.Mechanics.Player
     {
         [SerializeField] private Transform _turretTransform;
         [SerializeField] private Transform _muzzlePoint;
+        [SerializeField] private AudioClip _fireClip;
 
         /// <summary>This script lives on the player's root GameObject, not the turret's own child GameObject -
         /// exposes the actual turret child so PlayerHealth can deactivate just the turret visual on death, not
@@ -21,6 +23,7 @@ namespace _Project.Mechanics.Player
 
         private PlayerConfig _config;
         private PlayerStatsService _stats;
+        private IAudioSystem _audioSystem;
 
         private Actions _inputActions;
 
@@ -28,18 +31,17 @@ namespace _Project.Mechanics.Player
         private float _lastFireTime = float.NegativeInfinity;
         private float _currentReloadTime;
 
-        private AudioSource _fireAudioSource;
-
         /// <summary>0 (just fired) to 1 (ready to fire) - for a future UI screen to bind a reload indicator to.</summary>
         public float ReloadProgress01 => _currentReloadTime <= 0f
             ? 1f
             : Mathf.Clamp01((Time.time - _lastFireTime) / _currentReloadTime);
 
         [Inject]
-        public void Construct(PlayerConfig config, PlayerStatsService stats)
+        public void Construct(PlayerConfig config, PlayerStatsService stats, IAudioSystem audioSystem)
         {
             _config = config;
             _stats = stats;
+            _audioSystem = audioSystem;
         }
 
         public void SetProjectileSpawner(IProjectileSpawner spawner)
@@ -50,8 +52,6 @@ namespace _Project.Mechanics.Player
         private void Awake()
         {
             _inputActions = new Actions();
-
-            _fireAudioSource = _turretTransform.GetComponent<AudioSource>();
         }
 
         private void OnEnable()
@@ -99,8 +99,7 @@ namespace _Project.Mechanics.Player
         {
             _projectileSpawner.SpawnProjectile(_muzzlePoint.position, _turretTransform.right);
 
-            if (_fireAudioSource != null)
-                _fireAudioSource.Play();
+            _audioSystem.PlaySfx(_fireClip);
 
             _lastFireTime = Time.time;
             _currentReloadTime = _stats.EffectiveReloadTime;

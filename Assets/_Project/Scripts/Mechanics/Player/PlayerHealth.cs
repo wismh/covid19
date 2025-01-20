@@ -1,9 +1,9 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Project.Core.AudioSystem;
 using UnityEngine;
 using Zenject;
-using _Project.Mechanics.Audio;
 using _Project.Mechanics.Combat;
 
 namespace _Project.Mechanics.Player
@@ -18,13 +18,15 @@ namespace _Project.Mechanics.Player
         /// StartCoroutine, which disabling a MonoBehaviour doesn't stop; only deactivating its GameObject does.</summary>
         [SerializeField] private GameObject _arrowRoot;
 
-        [SerializeField] private _Project.Mechanics.Audio.AudioList _audioList;
         [SerializeField] private Animator _animator;
         [SerializeField] private SpriteRenderer _spriteRenderer;
         [SerializeField] private Material _damageMaterial;
+        [SerializeField] private AudioClip _hitClip;
+        [SerializeField] private AudioClip _diedClip;
 
         private PlayerConfig _config;
         private PlayerStatsService _stats;
+        private IAudioSystem _audioSystem;
 
         private CancellationTokenSource _lifetimeCts;
 
@@ -55,10 +57,11 @@ namespace _Project.Mechanics.Player
         /// the C# default (0) for _health.
         /// </summary>
         [Inject]
-        public void Construct(PlayerConfig config, PlayerStatsService stats)
+        public void Construct(PlayerConfig config, PlayerStatsService stats, IAudioSystem audioSystem)
         {
             _config = config;
             _stats = stats;
+            _audioSystem = audioSystem;
 
             // Intentional starting value (PlayerConfig.StartingHealth), distinct from EffectiveMaxHealth
             // (the separate upgrade ceiling - see PlayerConfig's doc comment).
@@ -114,7 +117,7 @@ namespace _Project.Mechanics.Player
 
             _movement.ApplyImpulse(attackDirection * _config.KnockbackImpulseStrength);
 
-            _audioList.Play(2);
+            _audioSystem.PlaySfx(_hitClip);
             PlayDamageFlashAsync().Forget();
 
             if (_health <= 0)
@@ -157,7 +160,7 @@ namespace _Project.Mechanics.Player
                 return;
             }
 
-            _audioList.Play(3);
+            _audioSystem.PlaySfx(_diedClip);
             _animator.Play("Base Layer.Died");
 
             try

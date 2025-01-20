@@ -1,3 +1,4 @@
+using Project.Core.AudioSystem;
 using UnityEngine;
 
 namespace _Project.Mechanics.Viruses.Micro
@@ -10,7 +11,8 @@ namespace _Project.Mechanics.Viruses.Micro
         private readonly MicroVirusConfig _config;
         private readonly Transform _target;
         private readonly Transform _bulletSpawnPoint;
-        private readonly AudioSource _attackAudioSource;
+        private readonly IAudioSystem _audioSystem;
+        private readonly AudioClip _attackClip;
         private readonly IVirusBulletSpawner _bulletSpawner;
 
         private Transform _transform;
@@ -24,13 +26,15 @@ namespace _Project.Mechanics.Viruses.Micro
             MicroVirusConfig config,
             Transform target,
             Transform bulletSpawnPoint,
-            AudioSource attackAudioSource,
+            IAudioSystem audioSystem,
+            AudioClip attackClip,
             IVirusBulletSpawner bulletSpawner)
         {
             _config = config;
             _target = target;
             _bulletSpawnPoint = bulletSpawnPoint;
-            _attackAudioSource = attackAudioSource;
+            _audioSystem = audioSystem;
+            _attackClip = attackClip;
             _bulletSpawner = bulletSpawner;
         }
 
@@ -72,7 +76,7 @@ namespace _Project.Mechanics.Viruses.Micro
 
                 var bullet = _bulletSpawner?.SpawnBullet(spawnPosition, direction, _bulletSpawnPoint);
                 bullet?.Construct(_config.VirusBulletSpeed, _config.VirusBulletLifetimeSeconds, _config.VirusBulletDamage);
-                _attackAudioSource?.Play();
+                _audioSystem.PlaySfx(_attackClip);
             }
         }
     }

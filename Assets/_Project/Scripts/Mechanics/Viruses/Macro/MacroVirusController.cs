@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Project.Core.AudioSystem;
 using UnityEngine;
 using Zenject;
 using _Project.Mechanics.Cells;
@@ -23,9 +24,12 @@ namespace _Project.Mechanics.Viruses.Macro
         [SerializeField] private SpriteRenderer _spriteRenderer;
         [SerializeField] private Material _damageMaterial;
         [SerializeField] private Animator _animator;
+        [SerializeField] private AudioClip _hitClip;
+        [SerializeField] private AudioClip _deathClip;
 
         private MacroVirusConfig _config;
         private ICellTargetProvider _cellTargetProvider;
+        private IAudioSystem _audioSystem;
 
         private Vector3 _velocity;
         private float _angularVelocity;
@@ -49,9 +53,6 @@ namespace _Project.Mechanics.Viruses.Macro
         // bullets same frame) would otherwise race on which material to revert to and can get stuck fully white.
         private Material _originalMaterial;
 
-        // [0] plays on hit, [1] plays on death - matches this prefab's AudioSource component order.
-        private AudioSource[] _audioSources;
-
         public bool IsAlive => _isAlive;
 
         /// <summary>Raised on death by damage. XP-granting/GameObject lifecycle are left to whatever listens to
@@ -62,10 +63,11 @@ namespace _Project.Mechanics.Viruses.Macro
         public event Action OnPenetratedIntoCell;
 
         [Inject]
-        public void Construct(MacroVirusConfig config, ICellTargetProvider cellTargetProvider)
+        public void Construct(MacroVirusConfig config, ICellTargetProvider cellTargetProvider, IAudioSystem audioSystem)
         {
             _config = config;
             _cellTargetProvider = cellTargetProvider;
+            _audioSystem = audioSystem;
         }
 
         /// <summary>Runs on every (re)spawn from the pool, not just the first - folds together what would
@@ -76,7 +78,6 @@ namespace _Project.Mechanics.Viruses.Macro
 
             if (!_componentsResolved)
             {
-                _audioSources = GetComponents<AudioSource>();
                 _originalScale = transform.localScale;
                 _componentsResolved = true;
             }
@@ -181,16 +182,10 @@ namespace _Project.Mechanics.Viruses.Macro
 
             Impulse(attackDirection);
             PlayDamageFlashAsync().Forget();
-            PlayAudioIfAvailable(0);
+            _audioSystem.PlaySfx(_hitClip);
 
             if (_health <= 0)
                 HandleDeathAsync().Forget();
-        }
-
-        private void PlayAudioIfAvailable(int index)
-        {
-            if (_audioSources != null && index < _audioSources.Length && _audioSources[index] != null)
-                _audioSources[index].Play();
         }
 
         private async UniTaskVoid HandleDeathAsync()
@@ -209,7 +204,7 @@ namespace _Project.Mechanics.Viruses.Macro
             }
 
             _animator.Play("Base Layer.Died");
-            PlayAudioIfAvailable(1);
+            _audioSystem.PlaySfx(_deathClip);
 
             // Waits before raising OnKilled (which triggers GameObject destruction/despawn) so the death
             // animation/audio actually has time to be seen/heard first.

@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Project.Core.AudioSystem;
 using UnityEngine;
 using Zenject;
 using _Project.Mechanics.Combat;
@@ -21,17 +22,18 @@ namespace _Project.Mechanics.Viruses.Micro
 
         // Cucumber-only; left null for Orange/Spiner variants.
         [SerializeField] private Transform _bulletSpawnPoint;
-        [SerializeField] private AudioSource _attackAudioSource;
+        [SerializeField] private AudioClip _attackClip;
 
         [SerializeField] private _Project.Mechanics.Combat.VirusBulletSpawner _bulletSpawner;
 
+        [SerializeField] private AudioClip _hitClip;
+        [SerializeField] private AudioClip _deathClip;
+
         private IPlayerTargetProvider _playerTargetProvider;
+        private IAudioSystem _audioSystem;
         private IMicroVirusBehavior _behavior;
         private Transform _playerTransform;
 
-        // [0] plays on hit, [1] plays on death - resolved once (not per-spawn) since these don't change across a
-        // pooled instance's lifetime.
-        private AudioSource[] _audioSources;
         private Animator _animator;
 
         private int _health;
@@ -57,9 +59,10 @@ namespace _Project.Mechanics.Viruses.Micro
         public event Action OnKilled;
 
         [Inject]
-        public void Construct(IPlayerTargetProvider playerTargetProvider)
+        public void Construct(IPlayerTargetProvider playerTargetProvider, IAudioSystem audioSystem)
         {
             _playerTargetProvider = playerTargetProvider;
+            _audioSystem = audioSystem;
         }
 
         /// <summary>Runs on every (re)spawn from the pool, not just the first - folds together what would
@@ -70,7 +73,6 @@ namespace _Project.Mechanics.Viruses.Micro
 
             if (!_componentsResolved)
             {
-                _audioSources = GetComponents<AudioSource>();
                 _animator = GetComponent<Animator>();
                 _componentsResolved = true;
             }
@@ -132,7 +134,7 @@ namespace _Project.Mechanics.Viruses.Micro
                 case MicroVirusVariant.Orange:
                     return new OrangeVirusBehavior(_config, target);
                 case MicroVirusVariant.Cucumber:
-                    return new CucumberVirusBehavior(_config, target, _bulletSpawnPoint, _attackAudioSource, _bulletSpawner);
+                    return new CucumberVirusBehavior(_config, target, _bulletSpawnPoint, _audioSystem, _attackClip, _bulletSpawner);
                 case MicroVirusVariant.Spiner:
                     return new SpinerVirusBehavior(_config, target);
                 default:
@@ -168,16 +170,10 @@ namespace _Project.Mechanics.Viruses.Micro
             _rigidbody2D.AddForce(attackDirection * _config.KnockbackForceOnHit, ForceMode2D.Impulse);
 
             PlayDamageFlashAsync().Forget();
-            PlayAudioIfAvailable(0);
+            _audioSystem.PlaySfx(_hitClip);
 
             if (_health <= 0)
                 HandleDeathAsync().Forget();
-        }
-
-        private void PlayAudioIfAvailable(int index)
-        {
-            if (_audioSources != null && index < _audioSources.Length && _audioSources[index] != null)
-                _audioSources[index].Play();
         }
 
         private async UniTaskVoid HandleDeathAsync()
@@ -196,7 +192,7 @@ namespace _Project.Mechanics.Viruses.Micro
             }
 
             _animator?.Play("Base Layer.Died");
-            PlayAudioIfAvailable(1);
+            _audioSystem.PlaySfx(_deathClip);
 
             // Waits before raising OnKilled (which despawns this back into the pool) so the death animation/audio
             // actually has time to be seen/heard first.
