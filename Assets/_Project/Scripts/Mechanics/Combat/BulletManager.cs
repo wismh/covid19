@@ -29,15 +29,9 @@ namespace _Project.Mechanics.Combat
             Fire(position, direction);
         }
 
-        public void SpawnBullet(Vector3 position, Vector3 direction)
+        private void Fire(Vector3 position, Vector3 direction)
         {
-            Fire(position, direction);
-        }
-
-        public void Fire(Vector3 position, Vector3 direction)
-        {
-            int damage = _playerStats != null ? _playerStats.EffectiveDamage : 1;
-            _bulletFactory.Create(position, direction, damage);
+            _bulletFactory.Create(position, direction, _playerStats.EffectiveDamage);
         }
     }
 }
