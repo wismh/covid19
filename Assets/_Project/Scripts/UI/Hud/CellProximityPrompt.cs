@@ -10,50 +10,12 @@ using _Project.Mechanics.WorldScale;
 namespace _Project.UI.Hud
 {
     /// <summary>
-    /// Ports GMTK.UI.AdviceDialog (Assets/GMTK/Scripts/UI/AdviceDialog.cs) - the world-space "press E to enter
-    /// the cell" prompt that appears near a cell and toggles Macro/Micro world.
-    ///
-    /// --- Why this is a plain MonoBehaviour, not a BaseScreen ---
-    /// The old class was a world-space Canvas following a specific cell's position every frame, not a full-panel
-    /// overlay someone opens/closes/stacks - it has no meaningful "open"/"close" lifecycle in the BaseScreen sense
-    /// (no other screen ever needs to hide it, it's never one of several mutually-exclusive panels in a stack,
-    /// and BaseScreenManager's layer-stack model - "opening a screen hides the previous top of its own layer" -
-    /// doesn't describe anything this class needs). Forcing it into ScreenLayer.Default/Overlay would just mean
-    /// always keeping it open and never touching OnOpen/OnClose for real work, which is a worse fit than what it
-    /// actually is: a small always-active proximity watcher, exactly like GMTK.UI.AdviceDialog itself was (a
-    /// plain MonoBehaviour + IService, never resembling a stacked panel).
-    ///
-    /// --- Where this lives - a judgement call ---
-    /// Placed under UI/Hud/ alongside HudScreen rather than its own UI/CellProximity/ folder: it is HUD-adjacent
-    /// presentation (a small world-space indicator, conceptually "part of the gameplay HUD experience") rather
-    /// than a distinct feature with its own screen, config, and sub-parts the way Upgrades/GameOver are. If a
-    /// second world-space prompt type is ever added, promoting both into their own folder then would be a trivial
-    /// two-file move; splitting it out preemptively for a single class wasn't judged worth the indirection.
-    ///
-    /// --- The "which cell" problem: a documented seam, not an invented registry ---
-    /// Old `AdviceDialog.Update()` called `_cellManager.FindNearToPoint(player.position, out sqrDistance)` -
-    /// GMTK.CellManager knew about every live cell in the scene. REFACTORING_PLAN.md's own Phase 3 notes confirm
-    /// no `_Project` equivalent (a cell/virus registry) has been ported yet (see CellInfectionState.cs's class
-    /// doc comment). Per the phase brief's explicit instruction for exactly this situation, this class does NOT
-    /// invent a registry or a FindObjectsOfType-based substitute - it takes its candidate cell directly via
-    /// <see cref="_targetCell"/> (a plain [SerializeField] reference a human assigns per-cell-instance in the
-    /// Editor once a real cell prefab/scene exists) instead of searching for "the nearest cell" among a set this
-    /// class has no way to enumerate. A future cell-registry composition root that DOES have a "find nearest cell
-    /// to point" query is expected to either (a) keep one CellProximityPrompt per cell with its own _targetCell -
-    /// works unmodified with the single-target model - or (b) call <see cref="SetTargetCell"/> to repoint a single
-    /// shared prompt instance at whichever cell is currently nearest, whichever shape that future registry ends
-    /// up having.
-    ///
-    /// --- WorldScaleTransitionContext: also a documented seam ---
-    /// EnterMicroWorldAsync/EnterMacroWorldAsync (Phase 4, WorldScaleController) take a WorldScaleTransitionContext
-    /// bundling live references this class has no way to obtain itself (Camera, the player's collider/AudioSource,
-    /// CellVisuals, the gameplay-music AudioSource/AudioMixerGroups, etc. - see WorldScaleTransitionContext.cs).
-    /// That class is also not `[Serializable]` (several fields are delegates, which Unity cannot serialize
-    /// regardless), so it cannot be a [SerializeField] here even in principle. <see cref="SetContext"/> is the
-    /// entry point a future composition root uses to hand this class the one shared context object it should pass
-    /// through to WorldScaleController - built once per scene, the same context every world-scale-transition
-    /// caller in that scene would use. Until a composition root calls it, <see cref="_context"/> is null and the
-    /// E-key handler is a safe no-op (documented below) rather than throwing.
+    /// World-space "press E to enter the cell" prompt that appears near a cell and toggles Macro/Micro world.
+    /// Not a BaseScreen - it's a small always-active proximity watcher, not a stacked panel. Its target cell
+    /// is assigned per-instance via <see cref="_targetCell"/>/<see cref="SetTargetCell"/> rather than found
+    /// through a cell registry, since none exists yet. <see cref="SetContext"/> supplies the shared
+    /// <see cref="WorldScaleTransitionContext"/> passed through to <see cref="WorldScaleController"/>; until
+    /// called, <see cref="_context"/> is null and the E-key handler is a safe no-op.
     /// </summary>
     public sealed class CellProximityPrompt : MonoBehaviour
     {
@@ -61,9 +23,6 @@ namespace _Project.UI.Hud
         [SerializeField] private Transform _player;
         [SerializeField] private Transform _targetCell;
 
-        // Squared-distance activation threshold now lives on WorldScaleConfig.CellProximityActivationSqrDistance
-        // instead of a local [SerializeField] (2026-09-19 hardcode audit) - see that field's own doc comment for
-        // the full history (old misleading-name field, the 4->10 retuning round, etc.), preserved there.
         private WorldScaleConfig _worldScaleConfig;
         private WorldScaleController _worldScale;
         private WorldScaleTransitionContext _context;
@@ -73,8 +32,6 @@ namespace _Project.UI.Hud
 
         private bool _isPromptShown;
 
-        /// <summary>WorldScaleConfig/WorldScaleController are real Zenject bindings post the 2026-09-19
-        /// SceneContext/Installer migration - see WorldScaleInstaller.</summary>
         [Inject]
         public void Construct(WorldScaleConfig worldScaleConfig, WorldScaleController worldScale)
         {
@@ -82,24 +39,17 @@ namespace _Project.UI.Hud
             _worldScale = worldScale;
         }
 
-        /// <summary>See class doc comment's "WorldScaleTransitionContext" section.</summary>
         public void SetContext(WorldScaleTransitionContext context)
         {
             _context = context;
         }
 
-        /// <summary>See class doc comment's "which cell" section - lets a future registry repoint this prompt.</summary>
+        /// <summary>Lets a future cell registry repoint this prompt at whichever cell is currently nearest.</summary>
         public void SetTargetCell(Transform cell)
         {
             _targetCell = cell;
         }
 
-        /// <summary>
-        /// Phase 7 testing fix (2026-09-11): <see cref="_player"/> was left as a bare [SerializeField] with no
-        /// setter, and nothing wired it in GameplayScene.unity - Update()'s "_player == null" guard silently kept
-        /// the prompt hidden and the E-key handler always took the "enter macro" no-op branch. A composition root
-        /// now calls this the same way it calls SetTargetCell/SetContext.
-        /// </summary>
         public void SetPlayer(Transform player)
         {
             _player = player;
@@ -133,9 +83,6 @@ namespace _Project.UI.Hud
             _lifetimeCts?.Dispose();
         }
 
-        /// <summary>Old: AdviceDialog.Update() - only watches for proximity while in the macro world (`if
-        /// (_gamePlayState.State != WorldState.MACRO_WORLD) return;`), moves the canvas to the cell's position and
-        /// shows/hides it based on the squared-distance check.</summary>
         private void Update()
         {
             if (_player == null || _targetCell == null)
@@ -174,30 +121,13 @@ namespace _Project.UI.Hud
             _isPromptShown = false;
         }
 
-        /// <summary>
-        /// Old: AdviceDialog.OnPlayerPenetration -
-        /// `if (_canvas.activeSelf) { _canvas.SetActive(false); _gamePlayState.State = WorldState.MICRO_WORLD; }
-        /// else { _gamePlayState.State = WorldState.MACRO_WORLD; }` - i.e. pressing E while the prompt is showing
-        /// (near a cell, in macro) enters micro; pressing E at any other time (prompt hidden - either not near a
-        /// cell, or already inside micro since Update() early-returns and never re-shows the prompt while in
-        /// micro) exits back to macro. Same toggle shape here, calling WorldScaleController's async entry points
-        /// instead of the old synchronous `GamePlayState.State` setter (see WorldScaleController's class doc
-        /// comment for why that's a deliberate, documented timing change from the old code).
-        /// </summary>
+        /// <summary>E while the prompt is shown enters micro world; otherwise exits back to macro.</summary>
         private void OnPenetrationPerformed(InputAction.CallbackContext context)
         {
             if (_context == null)
-                return; // No-op until a composition root supplies it - see class doc comment.
+                return; // No-op until SetContext is called.
 
-            // Phase 7 testing fix (2026-09-11): a fast/repeated E-press while a transition was still animating
-            // (~TransitionDurationSeconds, WorldScaleConfig) let a second Enter*WorldSafeAsync fire before the
-            // first one's WorldScaleController.CurrentScale flip had landed - WorldScaleController deliberately
-            // throws InvalidOperationException for exactly this overlap (see its own IsTransitioning doc comment:
-            // "a second call while _isTransitioning is true throws instead of silently starting overlapping
-            // DOTween sequences") rather than silently corrupting the transition. Confirmed live via repeated
-            // "InvalidOperationException: ... called while a transition was already in flight" console errors
-            // during manual E-mashing. This is the toggle's job to debounce, not the controller's to swallow -
-            // simplest fix: ignore extra presses entirely while one is already in flight.
+            // WorldScaleController throws if a second transition starts while one is already in flight.
             if (_worldScale.IsTransitioning)
                 return;
 
