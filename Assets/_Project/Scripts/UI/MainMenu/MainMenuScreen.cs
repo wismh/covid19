@@ -2,6 +2,7 @@ using System;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Lumenwake.UIModule;
+using Project.Core.AudioSystem;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.UI;
@@ -14,15 +15,17 @@ namespace _Project.UI.MainMenu
     {
         [SerializeField] private PlayableDirector _cutscene;
         [SerializeField] private Image _fadeInPanel;
-        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip _startClip;
 
         private GlobalGameStateMachine _stateMachine;
+        private IAudioSystem _audioSystem;
         private bool _isPlaying;
 
         [Inject]
-        public void Construct(GlobalGameStateMachine stateMachine)
+        public void Construct(GlobalGameStateMachine stateMachine, IAudioSystem audioSystem)
         {
             _stateMachine = stateMachine;
+            _audioSystem = audioSystem;
         }
 
         private void Start()
@@ -64,7 +67,7 @@ namespace _Project.UI.MainMenu
             _isPlaying = true;
 
             _cutscene.Play();
-            _audioSource.Play();
+            _audioSystem.PlaySfx(_startClip);
 
             await UniTask.Delay(TimeSpan.FromSeconds(1.5f), cancellationToken: destroyCancellationToken);
 

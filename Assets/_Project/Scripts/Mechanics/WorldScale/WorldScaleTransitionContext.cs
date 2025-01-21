@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.Audio;
 using _Project.Mechanics.Cells;
 using _Project.Mechanics.Player;
 using _Project.Mechanics.Viruses.Micro;
@@ -20,13 +19,6 @@ namespace _Project.Mechanics.WorldScale
         public Transform PlayerVisualRoot;
 
         public BoxCollider2D PlayerCollider;
-
-        /// <summary>Used for both the volume dip/restore (micro only) and the transition-whoosh clip.</summary>
-        public AudioSource PlayerAudioSource;
-
-        public AudioClip PlayerEnterMacroClip;
-
-        public AudioClip PlayerEnterMicroClip;
 
         public PlayerMovement PlayerMovement;
 
@@ -58,13 +50,5 @@ namespace _Project.Mechanics.WorldScale
 
         /// <summary>Supplies the current virus count at the moment of entry for <see cref="CellMicroVirusSpawner"/>.</summary>
         public CellInfectionState CellInfectionState;
-
-        // --- Global audio mix (distinct from the player's own AudioSource above) ---
-
-        public AudioSource GameplayMusicAudioSource;
-
-        public AudioMixerGroup MacroMixerGroup;
-
-        public AudioMixerGroup MicroMixerGroup;
     }
 }

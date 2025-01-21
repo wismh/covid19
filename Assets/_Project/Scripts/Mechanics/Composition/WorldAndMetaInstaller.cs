@@ -1,6 +1,6 @@
+using Project.Core.AudioSystem;
 using UnityEngine;
 using Zenject;
-using _Project.Mechanics.Audio;
 using _Project.Mechanics.Player;
 using _Project.Mechanics.WorldScale;
 using _Project.UI.Hud;
@@ -18,7 +18,9 @@ namespace _Project.Mechanics.Composition
         [SerializeField] private BoxCollider2D _playerCollider;
 
         [Header("Audio")]
-        [SerializeField] private GameAudioCatalog _gameAudioCatalog;
+        [SerializeField] private SoundData _gameplayMusic;
+        [SerializeField] private AudioClip _enterMicroWhooshClip;
+        [SerializeField] private AudioClip _exitMicroWhooshClip;
 
         [Header("Cell-proximity polling")]
         [SerializeField] private CellProximityPrompt _cellProximityPrompt;
@@ -28,22 +30,17 @@ namespace _Project.Mechanics.Composition
         {
             WorldScaleInstaller.Install(Container, _worldScaleConfig);
 
-            // Plain Bind, not BindInterfacesAndSelfTo: GameAudioService's Dispose() is called manually
-            // elsewhere, not by container teardown - avoids a double-dispose.
-            Container.Bind<GameAudioCatalog>().FromInstance(_gameAudioCatalog).AsSingle();
-            Container.Bind<GameAudioService>().AsSingle();
-
             Container.Bind<CellProximityPrompt>().FromInstance(_cellProximityPrompt).AsSingle();
 
             Container.Bind<WorldScaleTransitionContext>()
                 .FromMethod(CreateWorldScaleTransitionContext)
                 .AsSingle();
 
-            GameplayEventWiringInstaller.Install(Container);
+            GameplayEventWiringInstaller.Install(Container, _enterMicroWhooshClip, _exitMicroWhooshClip);
 
             Container.BindInterfacesAndSelfTo<ForcedMacroExitOnCellDeathDriver>().AsSingle();
             Container.BindInterfacesAndSelfTo<NearestCellTrackingDriver>().AsSingle().WithArguments(_cellProximityPollIntervalSeconds);
-            Container.BindInterfacesAndSelfTo<GameplayScreensStartupDriver>().AsSingle();
+            Container.BindInterfacesAndSelfTo<GameplayScreensStartupDriver>().AsSingle().WithArguments(_gameplayMusic);
         }
 
         private WorldScaleTransitionContext CreateWorldScaleTransitionContext(InjectContext ctx)

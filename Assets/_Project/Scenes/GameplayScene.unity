@@ -2434,7 +2434,9 @@ MonoBehaviour:
   _cameraFollow: {fileID: 519420033}
   _playerVisualRoot: {fileID: 4435939539474040}
   _playerCollider: {fileID: 6579931932917122}
-  _gameAudioCatalog: {fileID: 11400000, guid: 6a6ed9b10a11e75477ad69ca586ecfc5, type: 2}
+  _gameplayMusic: {fileID: 11400000, guid: df2b92bc3dd55cdbcab67b4fcb16d7e3, type: 2}
+  _enterMicroWhooshClip: {fileID: 8300000, guid: 927726475811714458d81fc02203429e, type: 3}
+  _exitMicroWhooshClip: {fileID: 8300000, guid: 15c9945713065444da5aa9dda7d69bc0, type: 3}
   _cellProximityPrompt: {fileID: 928471605}
   _cellProximityPollIntervalSeconds: 0.2
 --- !u!4 &806075023

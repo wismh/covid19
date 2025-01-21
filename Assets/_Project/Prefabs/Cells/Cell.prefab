@@ -372,7 +372,6 @@ GameObject:
   - component: {fileID: 3089290741938929314}
   - component: {fileID: 4030958730235458231}
   - component: {fileID: 4525280840446699477}
-  - component: {fileID: 195698897678994983}
   - component: {fileID: 9490113281003477}
   - component: {fileID: 2383433699385333}
   - component: {fileID: 1763481191115899}
@@ -657,103 +656,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!82 &195698897678994983
-AudioSource:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3083464567721885813}
-  m_Enabled: 1
-  serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: c2c1703c69ae0264e972a67077a001f0, type: 3}
-  m_PlayOnAwake: 0
-  m_Volume: 0.8
-  m_Pitch: 1
-  Loop: 0
-  Mute: 0
-  Spatialize: 0
-  SpatializePostEffects: 0
-  Priority: 128
-  DopplerLevel: 1
-  MinDistance: 1
-  MaxDistance: 500
-  Pan2D: 0
-  rolloffMode: 0
-  BypassEffects: 0
-  BypassListenerEffects: 0
-  BypassReverbZones: 0
-  rolloffCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  panLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  spreadCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverbZoneMixCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
 --- !u!114 &9490113281003477
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -799,6 +701,7 @@ MonoBehaviour:
   _macroWorldBadSprite: {fileID: 21300000, guid: 4956d9f1eb95d744ca27f04b526ef1d4, type: 3}
   _microWorldSprite: {fileID: 2800000, guid: 512b1d37afac64347bc8470f7a1dea6f, type: 3}
   _microWorldBadSprite: {fileID: 21300000, guid: cce96867b5fecf84eae79d8f93e91d24, type: 3}
+  _deathClip: {fileID: 8300000, guid: c2c1703c69ae0264e972a67077a001f0, type: 3}
 --- !u!114 &-1371910281917200006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -813,12 +716,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_Project.Mechanics.Viruses.Micro.MicroVirusSpawner
   _cellInfectionState: {fileID: 2383433699385333}
   _virusContainer: {fileID: 5278171966705873521}
-  _orangePrefab: {fileID: 5719283746102938, guid: 0183e584c89852141b0e344f8190177e, type: 3}
-  _cucumberPrefab: {fileID: 6183920475610283, guid: e788e810ecf524e428d803df54c730d0, type: 3}
-  _spinerPrefab: {fileID: 4837261950482716, guid: b391c0c2e026c044a852aa29b551e53e, type: 3}
-  _bounds:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 2, y: 2, z: 0}
 --- !u!1 &3537804771441810972
 GameObject:
   m_ObjectHideFlags: 0

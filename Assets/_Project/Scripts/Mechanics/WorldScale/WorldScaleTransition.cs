@@ -54,15 +54,6 @@ namespace _Project.Mechanics.WorldScale
             if (context.PlayerVisualRoot != null)
                 context.PlayerVisualRoot.localScale = _config.MacroPlayerScale;
 
-            if (context.PlayerAudioSource != null && context.PlayerEnterMacroClip != null)
-            {
-                context.PlayerAudioSource.clip = context.PlayerEnterMacroClip;
-                context.PlayerAudioSource.Play();
-            }
-
-            if (context.GameplayMusicAudioSource != null)
-                context.GameplayMusicAudioSource.outputAudioMixerGroup = context.MacroMixerGroup;
-
             context.SetPlayerSpeedScale?.Invoke(_config.MacroSpeedScale);
             context.SetCameraTarget?.Invoke(context.Player);
 
@@ -115,22 +106,8 @@ namespace _Project.Mechanics.WorldScale
             if (context.PlayerVisualRoot != null)
                 context.PlayerVisualRoot.localScale = _config.MicroPlayerScale;
 
-            if (context.PlayerAudioSource != null)
-            {
-                context.PlayerAudioSource.volume = _config.MicroPlayerAudioVolume;
-
-                if (context.PlayerEnterMicroClip != null)
-                {
-                    context.PlayerAudioSource.clip = context.PlayerEnterMicroClip;
-                    context.PlayerAudioSource.Play();
-                }
-            }
-
             if (context.CellAnimator != null)
                 context.CellAnimator.speed = 0f;
-
-            if (context.GameplayMusicAudioSource != null)
-                context.GameplayMusicAudioSource.outputAudioMixerGroup = context.MicroMixerGroup;
 
             context.SetPlayerSpeedScale?.Invoke(_config.MicroSpeedScale);
             context.SetCameraTarget?.Invoke(context.Cell);
@@ -154,9 +131,6 @@ namespace _Project.Mechanics.WorldScale
 
                     if (context.PlayerCollider != null)
                         context.PlayerCollider.isTrigger = false;
-
-                    if (context.PlayerAudioSource != null)
-                        context.PlayerAudioSource.volume = _config.RestoredPlayerAudioVolume;
                 },
                 cancellationToken: cancellationToken);
         }

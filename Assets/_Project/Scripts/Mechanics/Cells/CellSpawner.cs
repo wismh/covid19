@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Project.Core.AudioSystem;
 using UnityEngine;
 using Zenject;
 using _Project.Mechanics.Shared;
@@ -22,6 +23,7 @@ namespace _Project.Mechanics.Cells
         private IPlayerTargetProvider _playerTargetProvider;
         private WaveScalingConfig _waveScalingConfig;
         private IReadOnlyDictionary<MicroVirusVariant, IFactory<MicroVirusController>> _microVirusFactories;
+        private IAudioSystem _audioSystem;
 
         private readonly List<Vector3> _spawnedPositions = new();
         private CancellationTokenSource _lifetimeCts;
@@ -31,13 +33,14 @@ namespace _Project.Mechanics.Cells
         public event Action<MicroVirusSpawner> OnMicroVirusSpawnerCreated;
 
         [Inject]
-        public void Construct(CellConfig cellConfig, CellRegistry registry, IPlayerTargetProvider playerTargetProvider, WaveScalingConfig waveScalingConfig, IReadOnlyDictionary<MicroVirusVariant, IFactory<MicroVirusController>> microVirusFactories)
+        public void Construct(CellConfig cellConfig, CellRegistry registry, IPlayerTargetProvider playerTargetProvider, WaveScalingConfig waveScalingConfig, IReadOnlyDictionary<MicroVirusVariant, IFactory<MicroVirusController>> microVirusFactories, IAudioSystem audioSystem)
         {
             _cellConfig = cellConfig;
             _registry = registry;
             _playerTargetProvider = playerTargetProvider;
             _waveScalingConfig = waveScalingConfig;
             _microVirusFactories = microVirusFactories;
+            _audioSystem = audioSystem;
         }
 
         private void Awake()
@@ -79,7 +82,7 @@ namespace _Project.Mechanics.Cells
 
             health.Construct(_cellConfig);
             if (instance.TryGetComponent(out CellVisuals visuals))
-                visuals.Construct(_cellConfig);
+                visuals.Construct(_cellConfig, _audioSystem);
 
             _registry.Register(health, infectionState);
 

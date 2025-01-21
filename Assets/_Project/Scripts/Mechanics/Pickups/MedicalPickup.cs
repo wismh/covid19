@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Project.Core.AudioSystem;
 using UnityEngine;
 using Zenject;
 using _Project.Mechanics.Combat;
@@ -20,8 +21,7 @@ namespace _Project.Mechanics.Pickups
         [Header("Components")]
         [SerializeField] private Animator _animator;
         [SerializeField] private Collider2D _boxCollider;
-        [SerializeField] private AudioSource _openAudioSource;
-        [SerializeField] private AudioSource _collectAudioSource;
+        [SerializeField] private AudioClip _openClip;
         [SerializeField] private SpriteRenderer _spriteRenderer;
         [SerializeField] private List<VitaminPickup> _vitamins;
 
@@ -29,6 +29,7 @@ namespace _Project.Mechanics.Pickups
         private int _health;
         private PlayerStatsService _playerStatsService;
         private IPlayerTargetProvider _targetProvider;
+        private IAudioSystem _audioSystem;
 
         private bool _isBroken;
         private int _remainingVitamins;
@@ -39,11 +40,12 @@ namespace _Project.Mechanics.Pickups
         public event Action<MedicalPickup> OnDestroyed;
 
         [Inject]
-        public void Construct(PickupsConfig config, PlayerStatsService playerStatsService, IPlayerTargetProvider targetProvider)
+        public void Construct(PickupsConfig config, PlayerStatsService playerStatsService, IPlayerTargetProvider targetProvider, IAudioSystem audioSystem)
         {
             _config = config;
             _playerStatsService = playerStatsService;
             _targetProvider = targetProvider;
+            _audioSystem = audioSystem;
         }
 
         public void OnSpawned(Vector3 position, Quaternion rotation, IMemoryPool pool)
@@ -129,7 +131,7 @@ namespace _Project.Mechanics.Pickups
             foreach (var vitamin in _vitamins)
             {
                 if (vitamin != null)
-                    vitamin.Construct(_config, _targetProvider, _collectAudioSource, null, HandleVitaminCollected);
+                    vitamin.Construct(_config, _targetProvider, HandleVitaminCollected);
             }
         }
 
@@ -150,7 +152,7 @@ namespace _Project.Mechanics.Pickups
             _isBroken = true;
 
             _animator.Play("Base Layer.Explosion");
-            _openAudioSource.Play();
+            _audioSystem.PlaySfx(_openClip);
             _boxCollider.enabled = false;
 
             StartCoroutine(ReleaseVitaminsRoutine());
@@ -183,7 +185,7 @@ namespace _Project.Mechanics.Pickups
                     continue;
                 }
 
-                vitamin.Construct(_config, _targetProvider, _collectAudioSource, null, HandleVitaminCollected);
+                vitamin.Construct(_config, _targetProvider, HandleVitaminCollected);
 
                 Vector2 outwardDir = (vitamin.transform.position - transform.position);
                 Vector2 dir = outwardDir.sqrMagnitude > 0.001f ? outwardDir.normalized : UnityEngine.Random.insideUnitCircle.normalized;
@@ -221,11 +223,7 @@ namespace _Project.Mechanics.Pickups
             if (_spriteRenderer != null)
                 _spriteRenderer.enabled = false;
 
-            // If collect audio is playing, give it a moment to finish before despawning back into the pool.
-            float destroyDelay = _collectAudioSource.isPlaying
-                ? _config.DestroyDelayWithAudioSeconds
-                : _config.DestroyDelayWithoutAudioSeconds;
-            Invoke(nameof(Despawn), destroyDelay);
+            Invoke(nameof(Despawn), _config.DestroyDelayWithAudioSeconds);
         }
 
         public class Factory : PlaceholderFactory<Vector3, Quaternion, MedicalPickup>
