@@ -104,7 +104,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a87feef44b2371f49a811cbc1d37f9c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _collectClip: {fileID: 8300000, guid: 36952a4a9a78f314eb920c5e6690aed1, type: 3}
+  _collectSound: {fileID: 11400000, guid: db7f1d2baaee26744a5ac25d685f64ec, type: 2}
 --- !u!1 &2612024362023782167
 GameObject:
   m_ObjectHideFlags: 0
@@ -313,7 +313,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _animator: {fileID: 6094716261856361595}
   _boxCollider: {fileID: 6797316141820831628}
-  _openClip: {fileID: 8300000, guid: cbb554b1df4a9fe44abe5d28020d18d5, type: 3}
+  _openSound: {fileID: 11400000, guid: 0e424ccef6a333345b7bc804040fa586, type: 2}
   _spriteRenderer: {fileID: 0}
   _vitamins:
   - {fileID: 7130991984259805481}
@@ -424,7 +424,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a87feef44b2371f49a811cbc1d37f9c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _collectClip: {fileID: 8300000, guid: 36952a4a9a78f314eb920c5e6690aed1, type: 3}
+  _collectSound: {fileID: 11400000, guid: db7f1d2baaee26744a5ac25d685f64ec, type: 2}
 --- !u!1 &5367362277776333284
 GameObject:
   m_ObjectHideFlags: 0
@@ -529,7 +529,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a87feef44b2371f49a811cbc1d37f9c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _collectClip: {fileID: 8300000, guid: 36952a4a9a78f314eb920c5e6690aed1, type: 3}
+  _collectSound: {fileID: 11400000, guid: db7f1d2baaee26744a5ac25d685f64ec, type: 2}
 --- !u!1 &7096756080200920429
 GameObject:
   m_ObjectHideFlags: 0
@@ -634,4 +634,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a87feef44b2371f49a811cbc1d37f9c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _collectClip: {fileID: 8300000, guid: 36952a4a9a78f314eb920c5e6690aed1, type: 3}
+  _collectSound: {fileID: 11400000, guid: db7f1d2baaee26744a5ac25d685f64ec, type: 2}

@@ -240,5 +240,5 @@ MonoBehaviour:
   _spriteRenderer: {fileID: 2544876351399848502}
   _damageMaterial: {fileID: 2100000, guid: ff1c34b5819982642a8c9b8f51409db0, type: 2}
   _animator: {fileID: 1754253263504572329}
-  _hitClip: {fileID: 8300000, guid: cbb554b1df4a9fe44abe5d28020d18d5, type: 3}
-  _deathClip: {fileID: 8300000, guid: 6f7af499f2ef05243a1543743a65104f, type: 3}
+  _hitSound: {fileID: 11400000, guid: 0e424ccef6a333345b7bc804040fa586, type: 2}
+  _deathSound: {fileID: 11400000, guid: 3cf56a644bed7904a936ebcbfa925bd2, type: 2}

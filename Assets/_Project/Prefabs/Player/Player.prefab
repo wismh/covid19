@@ -5524,7 +5524,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _turretTransform: {fileID: 5267248891490517249}
   _muzzlePoint: {fileID: 7599956719394627767}
-  _fireClip: {fileID: 8300000, guid: 00425cfd61838534d8b4214930116d07, type: 3}
+  _fireSound: {fileID: 11400000, guid: bcc36bedb6c9b5c489dcc87905818a88, type: 2}
 --- !u!114 &5444760068224439
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5543,8 +5543,8 @@ MonoBehaviour:
   _animator: {fileID: 5762737321540400294}
   _spriteRenderer: {fileID: 5153227940720375673}
   _damageMaterial: {fileID: 2100000, guid: ff1c34b5819982642a8c9b8f51409db0, type: 2}
-  _hitClip: {fileID: 8300000, guid: 6f4f20da2a3f781439591f2c26d3ba94, type: 3}
-  _diedClip: {fileID: 8300000, guid: 4d8c4fe52174637409737d8471662028, type: 3}
+  _hitSound: {fileID: 11400000, guid: b3551946d01be8141b2790efd4f7cdca, type: 2}
+  _diedSound: {fileID: 11400000, guid: bb55d4e0548f1af4d9efba3135570793, type: 2}
 --- !u!1 &5584657780918533717
 GameObject:
   m_ObjectHideFlags: 0

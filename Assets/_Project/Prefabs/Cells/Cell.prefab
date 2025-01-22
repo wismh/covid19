@@ -701,7 +701,7 @@ MonoBehaviour:
   _macroWorldBadSprite: {fileID: 21300000, guid: 4956d9f1eb95d744ca27f04b526ef1d4, type: 3}
   _microWorldSprite: {fileID: 2800000, guid: 512b1d37afac64347bc8470f7a1dea6f, type: 3}
   _microWorldBadSprite: {fileID: 21300000, guid: cce96867b5fecf84eae79d8f93e91d24, type: 3}
-  _deathClip: {fileID: 8300000, guid: c2c1703c69ae0264e972a67077a001f0, type: 3}
+  _deathSound: {fileID: 11400000, guid: 95f43541bcd78c64bb8531fa41f77cb7, type: 2}
 --- !u!114 &-1371910281917200006
 MonoBehaviour:
   m_ObjectHideFlags: 0

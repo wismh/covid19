@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96870a4c42badd34481f0a421f2331da, type: 3}
+  m_Name: SoundData_CellDeath
+  m_EditorClassIdentifier: Assembly-CSharp::Project.Core.AudioSystem.SoundData
+  _clip: {fileID: 8300000, guid: c2c1703c69ae0264e972a67077a001f0, type: 3}
+  _volume: 0.8
+  _pitchRange: {x: 1, y: 1}

@@ -1121,7 +1121,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _cutscene: {fileID: 59254647}
   _fadeInPanel: {fileID: 260997220}
-  _startClip: {fileID: 8300000, guid: d0d6c835ce66be845953aded6325fc5c, type: 3}
+  _startSound: {fileID: 11400000, guid: 6fe0979a68519e448bca034034f121bb, type: 2}
 --- !u!4 &1800793703
 Transform:
   m_ObjectHideFlags: 0
