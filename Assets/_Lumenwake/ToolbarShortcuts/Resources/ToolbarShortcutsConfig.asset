@@ -26,7 +26,7 @@ MonoBehaviour:
     icon: {fileID: 0}
     actionType: 2
     asset: {fileID: 0}
-    primaryScene: {fileID: 102900000, guid: 110e5b9f9d0cd735baf0b7e143c717d2, type: 3}
+    primaryScene: {fileID: 102900000, guid: 00de928934efe7ba0ecd5d865b3f829f, type: 3}
     additiveScenes: []
     windowOpenKind: 0
     windowTarget: 0
@@ -43,7 +43,7 @@ MonoBehaviour:
     icon: {fileID: 0}
     actionType: 2
     asset: {fileID: 0}
-    primaryScene: {fileID: 102900000, guid: 8c9cfa26abfee488c85f1582747f6a02, type: 3}
+    primaryScene: {fileID: 102900000, guid: 5b43d735f4c127347af4930e136e1661, type: 3}
     additiveScenes: []
     windowOpenKind: 0
     windowTarget: 0
@@ -60,6 +60,40 @@ MonoBehaviour:
     icon: {fileID: 0}
     actionType: 0
     asset: {fileID: 5290510010037733803, guid: 7f76a2e13cd0050438579dd51078b190, type: 3}
+    primaryScene: {fileID: 0}
+    additiveScenes: []
+    windowOpenKind: 0
+    windowTarget: 0
+    menuPath: 
+    staticTypeName: 
+    staticMethodName: 
+  - _foldout: 0
+    enabled: 1
+    label: PlayerConfig_Default
+    tooltip: 
+    placement: 1
+    dock: 0
+    order: 2
+    icon: {fileID: 0}
+    actionType: 1
+    asset: {fileID: 11400000, guid: 78e9e5a65a4dc9d40bfcf4ba901cb207, type: 2}
+    primaryScene: {fileID: 0}
+    additiveScenes: []
+    windowOpenKind: 0
+    windowTarget: 0
+    menuPath: 
+    staticTypeName: 
+    staticMethodName: 
+  - _foldout: 0
+    enabled: 1
+    label: Player
+    tooltip: 
+    placement: 1
+    dock: 0
+    order: 3
+    icon: {fileID: 0}
+    actionType: 1
+    asset: {fileID: 4626583103710619316, guid: 3d3ccb67c50d3fc4fa8f4f8bb7988f83, type: 3}
     primaryScene: {fileID: 0}
     additiveScenes: []
     windowOpenKind: 0
