@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Project.Core.AudioSystem.SoundData
   _clip: {fileID: 8300000, guid: 00425cfd61838534d8b4214930116d07, type: 3}
   _volume: 1
-  _pitchRange: {x: 1, y: 1}
+  _pitchRange: {x: 0.95, y: 1.05}
