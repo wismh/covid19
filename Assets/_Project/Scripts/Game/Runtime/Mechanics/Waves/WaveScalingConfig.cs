@@ -12,7 +12,7 @@ namespace _Project.Mechanics.Waves
         [SerializeField] private float _glistUnlockTimeSeconds = 80f;
         [SerializeField] private float _waveSizeGrowthMultiplier = 1.5f;
 
-        [Header("In-cell virus")]
+        [Header("Micro virus")]
         [SerializeField] private float _cucumberUnlockTimeSeconds = 50f;
         [SerializeField] private float _spinerUnlockTimeSeconds = 100f;
 

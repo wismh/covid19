@@ -8,11 +8,11 @@ using _Project.Mechanics.Waves;
 
 namespace _Project.Mechanics.Viruses.Micro
 {
-    /// <summary>Spawns/tracks the in-cell micro viruses for one cell instance - privately owned per-cell (not a
+    /// <summary>Spawns/tracks the micro viruses for one cell instance - privately owned per-cell (not a
     /// shared singleton like CellRegistry/MacroVirusRegistry), meant to live alongside
     /// CellHealth/CellInfectionState/CellVisuals on the Cell prefab. <see cref="SetVirusesCount"/> is called
     /// lazily, once, when the player actually enters this cell (not reactively on every infection change) -
-    /// spawning eagerly on infection produced full-size in-cell viruses visibly wandering the macro world.</summary>
+    /// spawning eagerly on infection produced full-size micro viruses visibly wandering the macro world.</summary>
     public sealed class MicroVirusSpawner : MonoBehaviour
     {
         [SerializeField] private CellInfectionState _cellInfectionState;

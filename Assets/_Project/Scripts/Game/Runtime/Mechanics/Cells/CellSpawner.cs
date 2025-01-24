@@ -29,7 +29,7 @@ namespace _Project.Mechanics.Cells
         private CancellationTokenSource _lifetimeCts;
 
         /// <summary>Raised each time a spawned cell's MicroVirusSpawner is constructed - lets listeners (e.g.
-        /// XP-granting on in-cell virus kills) reach it without CellSpawner needing to know why.</summary>
+        /// XP-granting on micro-virus kills) reach it without CellSpawner needing to know why.</summary>
         public event Action<MicroVirusSpawner> OnMicroVirusSpawnerCreated;
 
         [Inject]
@@ -89,13 +89,13 @@ namespace _Project.Mechanics.Cells
             health.OnDied += _ => DestroyCellAfterDelayAsync(instance).Forget();
 
             // Only Construct() happens here, deliberately not a CellInfectionState.OnVirusCountChanged
-            // subscription - that produced full-size in-cell viruses wandering the macro world. SetVirusesCount
+            // subscription - that produced full-size micro viruses wandering the macro world. SetVirusesCount
             // is instead called lazily, once, by WorldScaleTransition.EnterMicroWorldAsync when the player
             // actually enters this cell.
-            if (instance.TryGetComponent(out MicroVirusSpawner inCellVirusSpawner))
+            if (instance.TryGetComponent(out MicroVirusSpawner microVirusSpawner))
             {
-                inCellVirusSpawner.Construct(_cellConfig, _playerTargetProvider, _waveScalingConfig, _microVirusFactories);
-                OnMicroVirusSpawnerCreated?.Invoke(inCellVirusSpawner);
+                microVirusSpawner.Construct(_cellConfig, _playerTargetProvider, _waveScalingConfig, _microVirusFactories);
+                OnMicroVirusSpawnerCreated?.Invoke(microVirusSpawner);
             }
         }
 

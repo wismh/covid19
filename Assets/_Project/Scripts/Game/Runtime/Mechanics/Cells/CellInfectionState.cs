@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace _Project.Mechanics.Cells
 {
-    /// <summary>Tracks a cell's in-cell-virus count and raises start/clear/changed events for it. Health reset on
+    /// <summary>Tracks a cell's micro-virus count and raises start/clear/changed events for it. Health reset on
     /// cure and any registry/stats bookkeeping are left to subscribers (see <see cref="CellHealth"/>), not handled
     /// here.</summary>
     public sealed class CellInfectionState : MonoBehaviour
@@ -32,7 +32,7 @@ namespace _Project.Mechanics.Cells
             OnVirusCountChanged?.Invoke(_virusCount);
         }
 
-        /// <summary>Called when an in-cell virus dies. Clamped at 0 as a defensive guard against unpaired calls.</summary>
+        /// <summary>Called when a micro virus dies. Clamped at 0 as a defensive guard against unpaired calls.</summary>
         public void RemoveVirus()
         {
             _virusCount = Mathf.Max(0, _virusCount - 1);

@@ -12,7 +12,7 @@ namespace _Project.Mechanics.Cells
         [SerializeField] private float _baseHealth = 100f;
         [SerializeField] private float _poisonTickIntervalSeconds = 1f;
 
-        // Damage per active in-cell virus per tick; kept as its own field rather than folded into the formula
+        // Damage per active micro virus per tick; kept as its own field rather than folded into the formula
         // so a balance pass can change it without touching CellHealth.PoisonTickLoopAsync.
         [SerializeField] private float _poisonDamagePerVirusPerTick = 1f;
 
@@ -27,7 +27,7 @@ namespace _Project.Mechanics.Cells
         [SerializeField] private Bounds _spawnBounds = new Bounds(Vector3.zero, new Vector3(20f, 50f, 0f));
         [SerializeField] private float _deathDestroyDelaySeconds = 2f;
 
-        // Local-space area in-cell viruses are randomly positioned within on spawn/reposition.
+        // Local-space area micro viruses are randomly positioned within on spawn/reposition.
         [SerializeField] private Bounds _microVirusSpawnBounds = new Bounds(Vector3.zero, new Vector3(4f, 4f, 0f));
 
         public float BaseHealth => _baseHealth;

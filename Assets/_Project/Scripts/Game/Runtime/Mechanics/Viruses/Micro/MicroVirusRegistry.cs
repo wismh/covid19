@@ -5,7 +5,7 @@ namespace _Project.Mechanics.Viruses.Micro
 {
     /// <summary>Thin pass-through wrapper around <see cref="EntityRegistry{T}"/>. Owned per-cell, not a shared
     /// singleton: <see cref="MicroVirusSpawner"/> `new`s its own private instance, since nothing outside a given
-    /// cell ever reaches into another cell's in-cell-virus pool.</summary>
+    /// cell ever reaches into another cell's micro-virus pool.</summary>
     public sealed class MicroVirusRegistry
     {
         private readonly EntityRegistry<MicroVirusController> _viruses = new();
