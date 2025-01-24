@@ -314,7 +314,7 @@ MonoBehaviour:
   _animator: {fileID: 6094716261856361595}
   _boxCollider: {fileID: 6797316141820831628}
   _openSound: {fileID: 11400000, guid: 0e424ccef6a333345b7bc804040fa586, type: 2}
-  _spriteRenderer: {fileID: 0}
+  _spriteRenderer: {fileID: 2456466258447865062}
   _vitamins:
   - {fileID: 7130991984259805481}
   - {fileID: 1920569107906314776}

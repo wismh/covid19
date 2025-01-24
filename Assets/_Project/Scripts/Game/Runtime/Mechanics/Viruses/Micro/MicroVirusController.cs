@@ -24,17 +24,17 @@ namespace _Project.Mechanics.Viruses.Micro
         [SerializeField] private Transform _bulletSpawnPoint;
         [SerializeField] private SoundData _attackSound;
 
-        [SerializeField] private _Project.Mechanics.Combat.VirusBulletSpawner _bulletSpawner;
+        [SerializeField] private VirusBulletSpawner _bulletSpawner;
 
         [SerializeField] private SoundData _hitSound;
         [SerializeField] private SoundData _deathSound;
+
+        [SerializeField] private Animator _animator;
 
         private IPlayerTargetProvider _playerTargetProvider;
         private IAudioSystem _audioSystem;
         private IMicroVirusBehavior _behavior;
         private Transform _playerTransform;
-
-        private Animator _animator;
 
         private int _health;
 
@@ -46,7 +46,6 @@ namespace _Project.Mechanics.Viruses.Micro
 
         private CancellationTokenSource _lifetimeCts;
         private IMemoryPool _pool;
-        private bool _componentsResolved;
 
         // Cached once per spawn, not re-captured inside PlayDamageFlashAsync - two overlapping flashes would
         // otherwise race on which material to revert to and can get stuck fully white.
@@ -65,17 +64,10 @@ namespace _Project.Mechanics.Viruses.Micro
             _audioSystem = audioSystem;
         }
 
-        /// <summary>Runs on every (re)spawn from the pool, not just the first - folds together what would
-        /// otherwise be split across Awake()/OnEnable()/Start(), none of which re-run on pool reactivation.</summary>
+        /// <summary>Runs on every (re)spawn from the pool. </summary>
         public void OnSpawned(IMemoryPool pool)
         {
             _pool = pool;
-
-            if (!_componentsResolved)
-            {
-                _animator = GetComponent<Animator>();
-                _componentsResolved = true;
-            }
 
             _lifetimeCts = new CancellationTokenSource();
             _isAlive = true;
@@ -132,11 +124,11 @@ namespace _Project.Mechanics.Viruses.Micro
             switch (_config.Variant)
             {
                 case MicroVirusVariant.Orange:
-                    return new OrangeVirusBehavior(_config, target);
+                    return new OrangeVirusBehavior(_config, target, _rigidbody2D);
                 case MicroVirusVariant.Cucumber:
-                    return new CucumberVirusBehavior(_config, target, _bulletSpawnPoint, _audioSystem, _attackSound, _bulletSpawner);
+                    return new CucumberVirusBehavior(_config, target, _bulletSpawnPoint, _audioSystem, _attackSound, _bulletSpawner, _rigidbody2D, _animator);
                 case MicroVirusVariant.Spiner:
-                    return new SpinerVirusBehavior(_config, target);
+                    return new SpinerVirusBehavior(_config, target, _rigidbody2D, _animator);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(_config.Variant), _config.Variant, null);
             }
@@ -191,7 +183,7 @@ namespace _Project.Mechanics.Viruses.Micro
                 return;
             }
 
-            _animator?.Play("Base Layer.Died");
+            _animator.Play("Base Layer.Died");
             _audioSystem.PlaySfx(_deathSound);
 
             // Waits before raising OnKilled (which despawns this back into the pool) so the death animation/audio

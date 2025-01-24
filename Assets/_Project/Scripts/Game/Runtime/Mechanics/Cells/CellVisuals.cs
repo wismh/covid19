@@ -24,7 +24,8 @@ namespace _Project.Mechanics.Cells
 
         [SerializeField] private SoundData _deathSound;
 
-        private Animator _animator;
+        [SerializeField] private Animator _animator;
+
         private CellConfig _config;
         private IAudioSystem _audioSystem;
 
@@ -35,11 +36,6 @@ namespace _Project.Mechanics.Cells
             _audioSystem = audioSystem;
         }
 
-        private void Awake()
-        {
-            _animator = GetComponent<Animator>();
-        }
-
         private void Start()
         {
             _spriteRenderer.material.SetFloat("_Blend", 1f);
@@ -47,8 +43,7 @@ namespace _Project.Mechanics.Cells
 
             // Kept off except during the death animation - otherwise the "Idle (Empty)" state keeps
             // animating and fights SetMacroSprite/SetMicroSprite for control of the same SpriteRenderer.
-            if (_animator != null)
-                _animator.enabled = false;
+            _animator.enabled = false;
 
             _health.OnHealthChanged += HandleHealthChanged;
             _health.OnDied += HandleDied;
@@ -62,11 +57,8 @@ namespace _Project.Mechanics.Cells
 
         private void HandleDied(int virusCountAtDeath)
         {
-            if (_animator != null)
-            {
-                _animator.enabled = true;
-                _animator.Play("Base Layer.Dead");
-            }
+            _animator.enabled = true;
+            _animator.Play("Base Layer.Dead");
 
             _audioSystem.PlaySfx(_deathSound);
         }

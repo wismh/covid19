@@ -54,7 +54,6 @@ namespace _Project.Mechanics.Pickups
 
             if (!_componentsResolved)
             {
-                ResolveComponents();
                 CacheVitaminLocalPositions();
                 _componentsResolved = true;
             }
@@ -75,8 +74,7 @@ namespace _Project.Mechanics.Pickups
             // Resets a respawned pill back to its resting look after Break()'s "Explosion" state.
             _animator.Play("Base Layer.Appearance");
 
-            if (_spriteRenderer != null)
-                _spriteRenderer.enabled = true;
+            _spriteRenderer.enabled = true;
 
             ResetVitamins();
             PropagateDependenciesToVitamins();
@@ -91,17 +89,6 @@ namespace _Project.Mechanics.Pickups
         public void Despawn()
         {
             _pool?.Despawn(this);
-        }
-
-        private void ResolveComponents()
-        {
-            if (_spriteRenderer == null)
-                _spriteRenderer = GetComponent<SpriteRenderer>();
-
-            if (_vitamins.Count == 0)
-            {
-                _vitamins = new List<VitaminPickup>(GetComponentsInChildren<VitaminPickup>(true));
-            }
         }
 
         /// <summary>Captured once, at real construction - a pooled vitamin's transform.localPosition drifts away
@@ -220,8 +207,7 @@ namespace _Project.Mechanics.Pickups
             _playerStatsService.AddExperience();
 
             // Hide sprite renderer while audio finishes playing
-            if (_spriteRenderer != null)
-                _spriteRenderer.enabled = false;
+            _spriteRenderer.enabled = false;
 
             Invoke(nameof(Despawn), _config.DestroyDelayWithAudioSeconds);
         }

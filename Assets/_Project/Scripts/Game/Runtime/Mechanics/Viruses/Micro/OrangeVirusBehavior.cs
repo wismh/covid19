@@ -8,20 +8,20 @@ namespace _Project.Mechanics.Viruses.Micro
     {
         private readonly MicroVirusConfig _config;
         private readonly Transform _target;
+        private readonly Rigidbody2D _rigidbody2D;
 
         private Transform _transform;
-        private Rigidbody2D _rigidbody2D;
 
-        public OrangeVirusBehavior(MicroVirusConfig config, Transform target)
+        public OrangeVirusBehavior(MicroVirusConfig config, Transform target, Rigidbody2D rigidbody2D)
         {
             _config = config;
             _target = target;
+            _rigidbody2D = rigidbody2D;
         }
 
         public void Init(Transform transform)
         {
             _transform = transform;
-            _rigidbody2D = transform.GetComponent<Rigidbody2D>();
         }
 
         public void OnEnable() { }

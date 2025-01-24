@@ -14,10 +14,10 @@ namespace _Project.Mechanics.Viruses.Micro
         private readonly IAudioSystem _audioSystem;
         private readonly SoundData _attackSound;
         private readonly IVirusBulletSpawner _bulletSpawner;
+        private readonly Rigidbody2D _rigidbody2D;
+        private readonly Animator _animator;
 
         private Transform _transform;
-        private Rigidbody2D _rigidbody2D;
-        private Animator _animator;
 
         private float _attackTime;
         private bool _animationPlaying;
@@ -28,7 +28,9 @@ namespace _Project.Mechanics.Viruses.Micro
             Transform bulletSpawnPoint,
             IAudioSystem audioSystem,
             SoundData attackSound,
-            IVirusBulletSpawner bulletSpawner)
+            IVirusBulletSpawner bulletSpawner,
+            Rigidbody2D rigidbody2D,
+            Animator animator)
         {
             _config = config;
             _target = target;
@@ -36,13 +38,13 @@ namespace _Project.Mechanics.Viruses.Micro
             _audioSystem = audioSystem;
             _attackSound = attackSound;
             _bulletSpawner = bulletSpawner;
+            _rigidbody2D = rigidbody2D;
+            _animator = animator;
         }
 
         public void Init(Transform transform)
         {
             _transform = transform;
-            _rigidbody2D = transform.GetComponent<Rigidbody2D>();
-            _animator = transform.GetComponent<Animator>();
         }
 
         public void OnEnable()
@@ -63,7 +65,7 @@ namespace _Project.Mechanics.Viruses.Micro
             if (Time.time > _attackTime + _config.BulletFireCooldownSeconds * _config.BulletWindupLeadFraction && !_animationPlaying)
             {
                 _animationPlaying = true;
-                _animator?.Play("Base Layer.Attack");
+                _animator.Play("Base Layer.Attack");
             }
 
             if (Time.time > _attackTime + _config.BulletFireCooldownSeconds)

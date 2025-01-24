@@ -212,3 +212,4 @@ MonoBehaviour:
   _bulletSpawner: {fileID: 0}
   _hitSound: {fileID: 11400000, guid: 0e424ccef6a333345b7bc804040fa586, type: 2}
   _deathSound: {fileID: 11400000, guid: c69c7f727965a464faa0eb467e3515e1, type: 2}
+  _animator: {fileID: 1256405568605906454}

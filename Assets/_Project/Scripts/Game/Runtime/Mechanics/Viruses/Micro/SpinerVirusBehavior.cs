@@ -8,25 +8,25 @@ namespace _Project.Mechanics.Viruses.Micro
     {
         private readonly MicroVirusConfig _config;
         private readonly Transform _target;
+        private readonly Rigidbody2D _rigidbody2D;
+        private readonly Animator _animator;
 
         private Transform _transform;
-        private Rigidbody2D _rigidbody2D;
-        private Animator _animator;
 
         private float _attackTime;
         private bool _animationPlaying;
 
-        public SpinerVirusBehavior(MicroVirusConfig config, Transform target)
+        public SpinerVirusBehavior(MicroVirusConfig config, Transform target, Rigidbody2D rigidbody2D, Animator animator)
         {
             _config = config;
             _target = target;
+            _rigidbody2D = rigidbody2D;
+            _animator = animator;
         }
 
         public void Init(Transform transform)
         {
             _transform = transform;
-            _rigidbody2D = transform.GetComponent<Rigidbody2D>();
-            _animator = transform.GetComponent<Animator>();
         }
 
         public void OnEnable()
@@ -45,7 +45,7 @@ namespace _Project.Mechanics.Viruses.Micro
             if (Time.time > _attackTime + _config.RushCooldownSeconds - _config.RushWindupLeadSeconds && !_animationPlaying)
             {
                 _animationPlaying = true;
-                _animator?.Play("Base Layer.Attack");
+                _animator.Play("Base Layer.Attack");
             }
 
             if (Time.time > _attackTime + _config.RushCooldownSeconds)
