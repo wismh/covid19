@@ -18,9 +18,8 @@ namespace _Project.Mechanics.Viruses.Micro
         [SerializeField] private float _collisionDamageCooldownSeconds = 2f;
         [SerializeField] private float _knockbackForceOnHit = 0.8f;
 
-        [Header("Damage/death presentation timing")]
-        [SerializeField] private float _damageFlashDurationSeconds = 0.1f;
-        [SerializeField] private float _deathAnimationDelaySeconds = 0.2f;
+        [Header("Death presentation timing")]
+        // Damage flash / death-animation timing lives on the shared DamageDeathPresentationConfig instead.
         [SerializeField] private float _deathToKillDelaySeconds = 0.8f;
 
         [Header("Orange - continuous homing force")]
@@ -54,8 +53,6 @@ namespace _Project.Mechanics.Viruses.Micro
         public float CollisionDamageCooldownSeconds => _collisionDamageCooldownSeconds;
         public float KnockbackForceOnHit => _knockbackForceOnHit;
 
-        public float DamageFlashDurationSeconds => _damageFlashDurationSeconds;
-        public float DeathAnimationDelaySeconds => _deathAnimationDelaySeconds;
         public float DeathToKillDelaySeconds => _deathToKillDelaySeconds;
 
         public float HomingForce => _homingForce;

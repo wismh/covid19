@@ -2393,6 +2393,7 @@ MonoBehaviour:
   _macroVirusPrefab: {fileID: 8412739502618374, guid: b866b8fd8c81b3e4083ff6f07b0a6617, type: 3}
   _macroGlistPrefab: {fileID: 9273841650918273, guid: f16281b56c1f2c14485b5d991aeb30d2, type: 3}
   _waveScalingConfig: {fileID: 11400000, guid: c526b4c270a5ed59980fd1bd36c061eb, type: 2}
+  _damageDeathPresentation: {fileID: 11400000, guid: 876866ce4a143a744972320f26c517ad, type: 2}
 --- !u!4 &810175732
 Transform:
   m_ObjectHideFlags: 0

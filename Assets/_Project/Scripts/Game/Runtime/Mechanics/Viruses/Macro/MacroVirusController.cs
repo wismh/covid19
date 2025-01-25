@@ -37,6 +37,9 @@ namespace _Project.Mechanics.Viruses.Macro
         private IMacroVirusBehavior _behavior;
         private int _health;
 
+        private DamageFlashEffect _damageFlash;
+        private PooledEntityDeathSequence _deathSequence;
+
         // Deliberately NOT initialized to true: a never-yet-spawned pool reservist must read as not-alive.
         // OnSpawned sets this true on every real spawn instead.
         private bool _isAlive;
@@ -49,10 +52,6 @@ namespace _Project.Mechanics.Viruses.Macro
         // restored every respawn so a virus that previously penetrated a cell doesn't spawn back in shrunk.
         private Vector3 _originalScale;
 
-        // Cached once per spawn, not re-captured inside PlayDamageFlashAsync - two overlapping flashes (e.g. two
-        // bullets same frame) would otherwise race on which material to revert to and can get stuck fully white.
-        private Material _originalMaterial;
-
         public bool IsAlive => _isAlive;
 
         /// <summary>Raised on death by damage. XP-granting/GameObject lifecycle are left to whatever listens to
@@ -63,11 +62,14 @@ namespace _Project.Mechanics.Viruses.Macro
         public event Action OnPenetratedIntoCell;
 
         [Inject]
-        public void Construct(MacroVirusConfig config, ICellTargetProvider cellTargetProvider, IAudioSystem audioSystem)
+        public void Construct(MacroVirusConfig config, ICellTargetProvider cellTargetProvider, IAudioSystem audioSystem, DamageDeathPresentationConfig presentation)
         {
             _config = config;
             _cellTargetProvider = cellTargetProvider;
             _audioSystem = audioSystem;
+
+            _damageFlash = new DamageFlashEffect(_spriteRenderer, _damageMaterial, presentation.DamageFlashDurationSeconds);
+            _deathSequence = new PooledEntityDeathSequence(_collider, _animator, _audioSystem, _deathSound, presentation.DeathAnimationDelaySeconds, _config.DeathToKillDelaySeconds);
         }
 
         /// <summary>Runs on every (re)spawn from the pool, not just the first - folds together what would
@@ -93,8 +95,7 @@ namespace _Project.Mechanics.Viruses.Macro
 
             _collider.enabled = true;
 
-            _spriteRenderer.material = _spriteRenderer.sharedMaterial;
-            _originalMaterial = _spriteRenderer.material;
+            _damageFlash.ResetForSpawn();
 
             SwitchBehavior(new MoveToCellBehavior(_cellTargetProvider, this, _config));
         }
@@ -181,59 +182,14 @@ namespace _Project.Mechanics.Viruses.Macro
             _health -= damage;
 
             Impulse(attackDirection);
-            PlayDamageFlashAsync().Forget();
+            _damageFlash.PlayAsync(_lifetimeCts.Token).Forget();
             _audioSystem.PlaySfx(_hitSound);
 
             if (_health <= 0)
-                HandleDeathAsync().Forget();
-        }
-
-        private async UniTaskVoid HandleDeathAsync()
-        {
-            _isAlive = false;
-
-            _collider.enabled = false;
-
-            try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(_config.DeathAnimationDelaySeconds), cancellationToken: _lifetimeCts.Token);
+                _isAlive = false;
+                _deathSequence.RunAsync(_lifetimeCts.Token, () => OnKilled?.Invoke()).Forget();
             }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-
-            _animator.Play("Base Layer.Died");
-            _audioSystem.PlaySfx(_deathSound);
-
-            // Waits before raising OnKilled (which triggers GameObject destruction/despawn) so the death
-            // animation/audio actually has time to be seen/heard first.
-            try
-            {
-                await UniTask.Delay(TimeSpan.FromSeconds(_config.DeathToKillDelaySeconds), cancellationToken: _lifetimeCts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-
-            OnKilled?.Invoke();
-        }
-
-        private async UniTaskVoid PlayDamageFlashAsync()
-        {
-            _spriteRenderer.material = _damageMaterial;
-
-            try
-            {
-                await UniTask.Delay(TimeSpan.FromSeconds(_config.DamageFlashDurationSeconds), cancellationToken: _lifetimeCts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-
-            _spriteRenderer.material = _originalMaterial;
         }
 
         public void Move(float direction)

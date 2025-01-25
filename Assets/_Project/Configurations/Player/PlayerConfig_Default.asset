@@ -27,8 +27,6 @@ MonoBehaviour:
   _armorIgnoreRollMin: 0.1
   _armorIgnoreRollMax: 1
   _knockbackImpulseStrength: 0.3
-  _damageFlashDurationSeconds: 0.1
-  _deathAnimationDelaySeconds: 0.2
   _deathToGameOverDelaySeconds: 1.8
   _baseDamage: 1
   _baseReloadTime: 1.75

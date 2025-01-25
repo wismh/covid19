@@ -34,9 +34,8 @@ namespace _Project.Mechanics.Player
 
         [SerializeField] private float _knockbackImpulseStrength = 0.3f;
 
-        [Header("Damage/death presentation timing")]
-        [SerializeField] private float _damageFlashDurationSeconds = 0.1f;
-        [SerializeField] private float _deathAnimationDelaySeconds = 0.2f;
+        [Header("Death presentation timing")]
+        // Damage flash / death-animation timing lives on the shared DamageDeathPresentationConfig instead.
         [SerializeField] private float _deathToGameOverDelaySeconds = 1.8f;
 
         [Header("Combat")]
@@ -73,8 +72,6 @@ namespace _Project.Mechanics.Player
         public float ArmorIgnoreRollMax => _armorIgnoreRollMax;
         public float KnockbackImpulseStrength => _knockbackImpulseStrength;
 
-        public float DamageFlashDurationSeconds => _damageFlashDurationSeconds;
-        public float DeathAnimationDelaySeconds => _deathAnimationDelaySeconds;
         public float DeathToGameOverDelaySeconds => _deathToGameOverDelaySeconds;
 
         public int BaseDamage => _baseDamage;

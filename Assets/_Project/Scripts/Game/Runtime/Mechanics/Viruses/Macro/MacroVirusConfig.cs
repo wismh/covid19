@@ -26,9 +26,8 @@ namespace _Project.Mechanics.Viruses.Macro
         [SerializeField] private float _penetrationDurationSeconds = 0.5f;
         [SerializeField] private float _penetrationScaleFactor = 0.5f;
 
-        [Header("Damage/death presentation timing")]
-        [SerializeField] private float _damageFlashDurationSeconds = 0.1f;
-        [SerializeField] private float _deathAnimationDelaySeconds = 0.2f;
+        [Header("Death presentation timing")]
+        // Damage flash / death-animation timing lives on the shared DamageDeathPresentationConfig instead.
         [SerializeField] private float _deathToKillDelaySeconds = 0.8f;
 
         public float BaseMoveSpeed => _baseMoveSpeed;
@@ -44,8 +43,6 @@ namespace _Project.Mechanics.Viruses.Macro
         public float PenetrationDurationSeconds => _penetrationDurationSeconds;
         public float PenetrationScaleFactor => _penetrationScaleFactor;
 
-        public float DamageFlashDurationSeconds => _damageFlashDurationSeconds;
-        public float DeathAnimationDelaySeconds => _deathAnimationDelaySeconds;
         public float DeathToKillDelaySeconds => _deathToKillDelaySeconds;
     }
 }

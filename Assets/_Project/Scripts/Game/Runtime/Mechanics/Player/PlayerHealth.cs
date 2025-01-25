@@ -25,14 +25,12 @@ namespace _Project.Mechanics.Player
         [SerializeField] private SoundData _diedSound;
 
         private PlayerConfig _config;
+        private DamageDeathPresentationConfig _presentation;
         private PlayerStatsService _stats;
         private IAudioSystem _audioSystem;
+        private DamageFlashEffect _damageFlash;
 
         private CancellationTokenSource _lifetimeCts;
-
-        // Cached once in Awake(), not re-captured per flash - avoids two overlapping flashes racing on which
-        // material to revert to.
-        private Material _originalMaterial;
 
         private int _health;
         private int _armor;
@@ -57,9 +55,10 @@ namespace _Project.Mechanics.Player
         /// the C# default (0) for _health.
         /// </summary>
         [Inject]
-        public void Construct(PlayerConfig config, PlayerStatsService stats, IAudioSystem audioSystem)
+        public void Construct(PlayerConfig config, DamageDeathPresentationConfig presentation, PlayerStatsService stats, IAudioSystem audioSystem)
         {
             _config = config;
+            _presentation = presentation;
             _stats = stats;
             _audioSystem = audioSystem;
 
@@ -70,13 +69,16 @@ namespace _Project.Mechanics.Player
 
             _stats.OnUpgraded += HandleUpgraded;
             _stats.OnBonusHealthGranted += HandleBonusHealthGranted;
+
+            // Built here rather than Awake() - needs the injected DamageDeathPresentationConfig, and Zenject
+            // doesn't guarantee Construct() runs before Awake() for scene-placed objects, only before Start().
+            _damageFlash = new DamageFlashEffect(_spriteRenderer, _damageMaterial, _presentation.DamageFlashDurationSeconds);
+            _damageFlash.ResetForSpawn();
         }
 
         private void Awake()
         {
             _lifetimeCts = new CancellationTokenSource();
-
-            _originalMaterial = _spriteRenderer.material;
         }
 
         private void OnDestroy()
@@ -118,26 +120,10 @@ namespace _Project.Mechanics.Player
             _movement.ApplyImpulse(attackDirection * _config.KnockbackImpulseStrength);
 
             _audioSystem.PlaySfx(_hitSound);
-            PlayDamageFlashAsync().Forget();
+            _damageFlash.PlayAsync(_lifetimeCts.Token).Forget();
 
             if (_health <= 0)
                 HandleDeathAsync().Forget();
-        }
-
-        private async UniTaskVoid PlayDamageFlashAsync()
-        {
-            _spriteRenderer.material = _damageMaterial;
-
-            try
-            {
-                await UniTask.Delay(TimeSpan.FromSeconds(_config.DamageFlashDurationSeconds), cancellationToken: _lifetimeCts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-
-            _spriteRenderer.material = _originalMaterial;
         }
 
         private async UniTaskVoid HandleDeathAsync()
@@ -153,7 +139,7 @@ namespace _Project.Mechanics.Player
 
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(_config.DeathAnimationDelaySeconds), cancellationToken: _lifetimeCts.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(_presentation.DeathAnimationDelaySeconds), cancellationToken: _lifetimeCts.Token);
             }
             catch (OperationCanceledException)
             {

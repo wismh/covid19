@@ -22,6 +22,4 @@ MonoBehaviour:
   _attackOrbitThrottle: 0.05
   _penetrationDurationSeconds: 0.5
   _penetrationScaleFactor: 0.5
-  _damageFlashDurationSeconds: 0.1
-  _deathAnimationDelaySeconds: 0.2
   _deathToKillDelaySeconds: 0.8

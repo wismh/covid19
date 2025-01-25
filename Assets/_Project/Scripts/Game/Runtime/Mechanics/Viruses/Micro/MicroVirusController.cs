@@ -36,6 +36,9 @@ namespace _Project.Mechanics.Viruses.Micro
         private IMicroVirusBehavior _behavior;
         private Transform _playerTransform;
 
+        private DamageFlashEffect _damageFlash;
+        private PooledEntityDeathSequence _deathSequence;
+
         private int _health;
 
         // Deliberately NOT initialized to true: a never-yet-spawned pool reservist must read as not-alive, or
@@ -47,10 +50,6 @@ namespace _Project.Mechanics.Viruses.Micro
         private CancellationTokenSource _lifetimeCts;
         private IMemoryPool _pool;
 
-        // Cached once per spawn, not re-captured inside PlayDamageFlashAsync - two overlapping flashes would
-        // otherwise race on which material to revert to and can get stuck fully white.
-        private Material _originalMaterial;
-
         public bool IsAlive => _isAlive;
 
         /// <summary>Raised on death by damage. XP-granting/GameObject lifecycle are left to whatever listens to
@@ -58,10 +57,13 @@ namespace _Project.Mechanics.Viruses.Micro
         public event Action OnKilled;
 
         [Inject]
-        public void Construct(IPlayerTargetProvider playerTargetProvider, IAudioSystem audioSystem)
+        public void Construct(IPlayerTargetProvider playerTargetProvider, IAudioSystem audioSystem, DamageDeathPresentationConfig presentation)
         {
             _playerTargetProvider = playerTargetProvider;
             _audioSystem = audioSystem;
+
+            _damageFlash = new DamageFlashEffect(_spriteRenderer, _damageMaterial, presentation.DamageFlashDurationSeconds);
+            _deathSequence = new PooledEntityDeathSequence(_collider, _animator, _audioSystem, _deathSound, presentation.DeathAnimationDelaySeconds, _config.DeathToKillDelaySeconds);
         }
 
         /// <summary>Runs on every (re)spawn from the pool. </summary>
@@ -76,8 +78,7 @@ namespace _Project.Mechanics.Viruses.Micro
 
             _collider.enabled = true;
 
-            _spriteRenderer.material = _spriteRenderer.sharedMaterial;
-            _originalMaterial = _spriteRenderer.material;
+            _damageFlash.ResetForSpawn();
 
             _playerTransform = _playerTargetProvider.PlayerTransform;
             _behavior = BuildBehavior(_playerTransform);
@@ -161,59 +162,14 @@ namespace _Project.Mechanics.Viruses.Micro
 
             _rigidbody2D.AddForce(attackDirection * _config.KnockbackForceOnHit, ForceMode2D.Impulse);
 
-            PlayDamageFlashAsync().Forget();
+            _damageFlash.PlayAsync(_lifetimeCts.Token).Forget();
             _audioSystem.PlaySfx(_hitSound);
 
             if (_health <= 0)
-                HandleDeathAsync().Forget();
-        }
-
-        private async UniTaskVoid HandleDeathAsync()
-        {
-            _isAlive = false;
-
-            _collider.enabled = false;
-
-            try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(_config.DeathAnimationDelaySeconds), cancellationToken: _lifetimeCts.Token);
+                _isAlive = false;
+                _deathSequence.RunAsync(_lifetimeCts.Token, () => OnKilled?.Invoke()).Forget();
             }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-
-            _animator.Play("Base Layer.Died");
-            _audioSystem.PlaySfx(_deathSound);
-
-            // Waits before raising OnKilled (which despawns this back into the pool) so the death animation/audio
-            // actually has time to be seen/heard first.
-            try
-            {
-                await UniTask.Delay(TimeSpan.FromSeconds(_config.DeathToKillDelaySeconds), cancellationToken: _lifetimeCts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-
-            OnKilled?.Invoke();
-        }
-
-        private async UniTaskVoid PlayDamageFlashAsync()
-        {
-            _spriteRenderer.material = _damageMaterial;
-
-            try
-            {
-                await UniTask.Delay(TimeSpan.FromSeconds(_config.DamageFlashDurationSeconds), cancellationToken: _lifetimeCts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-
-            _spriteRenderer.material = _originalMaterial;
         }
 
         public class Factory : PlaceholderFactory<MicroVirusController>
