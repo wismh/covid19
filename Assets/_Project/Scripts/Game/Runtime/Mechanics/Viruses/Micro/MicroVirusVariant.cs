@@ -1,7 +1,8 @@
 namespace _Project.Mechanics.Viruses.Micro
 {
-    /// <summary>Selects which <see cref="IMicroVirusBehavior"/> MicroVirusController builds and identifies which
-    /// MicroVirusConfig_&lt;Variant&gt; asset a given config instance represents.</summary>
+    /// <summary>Keys the per-variant pool/factory in MicroVirusesInstaller and gates wave-unlock timing in
+    /// MicroVirusSpawner. Which behavior/config a virus uses is decided by its concrete MicroVirusController
+    /// subclass, not this enum.</summary>
     public enum MicroVirusVariant
     {
         Orange,

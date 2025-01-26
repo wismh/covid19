@@ -232,9 +232,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3760876135740357169}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 626b4313a22e2d4a57ac2b323df8ce5a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Script: {fileID: 11500000, guid: e07d498dc80e81a488b08a4f66ea82eb, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
   _config: {fileID: 11400000, guid: 66667f03c44cd2da7b59e126b97ed6a1, type: 2}
   _collider: {fileID: 8186064876739965874}
   _rigidbody2D: {fileID: 5885864881155109425}

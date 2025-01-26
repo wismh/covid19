@@ -199,17 +199,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 3760876135740357169}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 626b4313a22e2d4a57ac2b323df8ce5a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Script: {fileID: 11500000, guid: 3a3784479662a8c48bf6418b67c10b0d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
   _config: {fileID: 11400000, guid: 5dc12429ff1f8611c378db529b92aef8, type: 2}
   _collider: {fileID: 8186064876739965874}
   _rigidbody2D: {fileID: 5885864881155109425}
   _spriteRenderer: {fileID: 3887510497326138053}
   _damageMaterial: {fileID: 2100000, guid: ff1c34b5819982642a8c9b8f51409db0, type: 2}
-  _bulletSpawnPoint: {fileID: 0}
-  _attackSound: {fileID: 0}
-  _bulletSpawner: {fileID: 0}
   _hitSound: {fileID: 11400000, guid: 0e424ccef6a333345b7bc804040fa586, type: 2}
   _deathSound: {fileID: 11400000, guid: 61bebc5ea64a3754fbf988f7556c1adc, type: 2}
   _animator: {fileID: 1256405568605906454}

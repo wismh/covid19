@@ -10,7 +10,7 @@ namespace _Project.Mechanics.Viruses.Micro
         /// correct (shrunk) scale inside a cell's micro-virus hierarchy - it must not be spawned unparented.
         /// </param>
         /// <returns>The spawned bullet instance (null if the spawner has no prefab assigned), so the caller can
-        /// configure its speed/lifetime/damage from its own MicroVirusConfig.</returns>
+        /// configure its speed/lifetime/damage from its own CucumberVirusConfig.</returns>
         VirusBullet SpawnBullet(Vector3 position, Vector3 direction, Transform scaleReference);
     }
 }

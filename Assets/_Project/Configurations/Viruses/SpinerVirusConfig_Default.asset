@@ -9,23 +9,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 331329a01b63d04e2bb6d701f39f5c76, type: 3}
-  m_Name: MicroVirusConfig_Cucumber
-  m_EditorClassIdentifier: Assembly-CSharp::_Project.Mechanics.Viruses.Micro.MicroVirusConfig
-  _variant: 1
-  _maxHealth: 3
-  _meleeDamage: 1
+  m_Script: {fileID: 11500000, guid: 5f7c9ae106d5a4b498a8b72570fc8eed, type: 3}
+  m_Name: SpinerVirusConfig_Default
+  m_EditorClassIdentifier: Assembly-CSharp::_Project.Mechanics.Viruses.Micro.SpinerVirusConfig
+  _maxHealth: 4
+  _meleeDamage: 2
   _collisionDamageCooldownSeconds: 2
   _knockbackForceOnHit: 0.8
   _deathToKillDelaySeconds: 0.8
-  _homingForce: 0.1
-  _kitingForce: 0.1
-  _bulletFireCooldownSeconds: 2
-  _virusBulletSpeed: 4
-  _virusBulletLifetimeSeconds: 5
-  _virusBulletDamage: 1
   _rushImpulse: 5
   _rushCooldownSeconds: 4
   _initialCooldownJitterMultiplier: 1.5
-  _bulletWindupLeadFraction: 0.5
   _rushWindupLeadSeconds: 1

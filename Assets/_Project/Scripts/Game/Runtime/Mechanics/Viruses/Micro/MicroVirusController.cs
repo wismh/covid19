@@ -8,23 +8,19 @@ using _Project.Mechanics.Combat;
 
 namespace _Project.Mechanics.Viruses.Micro
 {
-    /// <summary>Per-instance host for the three <see cref="IMicroVirusBehavior"/> strategies, plus health/damage
-    /// and melee contact damage against the player. Pooled via a Zenject <see cref="IMemoryPool"/> keyed by
+    /// <summary>Per-instance host for an <see cref="IMicroVirusBehavior"/> strategy, plus health/damage and melee
+    /// contact damage against the player. Pooled via a Zenject <see cref="IMemoryPool"/> keyed by
     /// <see cref="MicroVirusVariant"/>, so per-life reset happens in <see cref="OnSpawned"/> (Start() only runs
-    /// once per GameObject, not once per respawn).</summary>
-    public sealed class MicroVirusController : MonoBehaviour, IDamageable, IPoolable<IMemoryPool>
+    /// once per GameObject, not once per respawn). Each variant is its own sealed subclass
+    /// (<see cref="OrangeVirusController"/>/<see cref="CucumberVirusController"/>/<see cref="SpinerVirusController"/>)
+    /// instead of one shared class switching on <see cref="MicroVirusVariant"/> - keeps each variant's own fields
+    /// (e.g. Cucumber's bullet spawn point) off the other variants entirely.</summary>
+    public abstract class MicroVirusController : MonoBehaviour, IDamageable, IPoolable<IMemoryPool>
     {
-        [SerializeField] private MicroVirusConfig _config;
         [SerializeField] private Collider2D _collider;
         [SerializeField] private Rigidbody2D _rigidbody2D;
         [SerializeField] private SpriteRenderer _spriteRenderer;
         [SerializeField] private Material _damageMaterial;
-
-        // Cucumber-only; left null for Orange/Spiner variants.
-        [SerializeField] private Transform _bulletSpawnPoint;
-        [SerializeField] private SoundData _attackSound;
-
-        [SerializeField] private VirusBulletSpawner _bulletSpawner;
 
         [SerializeField] private SoundData _hitSound;
         [SerializeField] private SoundData _deathSound;
@@ -50,6 +46,15 @@ namespace _Project.Mechanics.Viruses.Micro
         private CancellationTokenSource _lifetimeCts;
         private IMemoryPool _pool;
 
+        protected Rigidbody2D Rigidbody2D => _rigidbody2D;
+        protected Animator Animator => _animator;
+        protected IAudioSystem AudioSystem => _audioSystem;
+
+        /// <summary>Backed by each subclass's own strongly-typed <c>[SerializeField]</c> config asset - keeps the
+        /// Inspector slot type-checked (e.g. an OrangeVirusController can't accept a SpinerVirusConfig) without a
+        /// generic base class.</summary>
+        protected abstract MicroVirusConfig Config { get; }
+
         public bool IsAlive => _isAlive;
 
         /// <summary>Raised on death by damage. XP-granting/GameObject lifecycle are left to whatever listens to
@@ -63,7 +68,7 @@ namespace _Project.Mechanics.Viruses.Micro
             _audioSystem = audioSystem;
 
             _damageFlash = new DamageFlashEffect(_spriteRenderer, _damageMaterial, presentation.DamageFlashDurationSeconds);
-            _deathSequence = new PooledEntityDeathSequence(_collider, _animator, _audioSystem, _deathSound, presentation.DeathAnimationDelaySeconds, _config.DeathToKillDelaySeconds);
+            _deathSequence = new PooledEntityDeathSequence(_collider, _animator, _audioSystem, _deathSound, presentation.DeathAnimationDelaySeconds, Config.DeathToKillDelaySeconds);
         }
 
         /// <summary>Runs on every (re)spawn from the pool. </summary>
@@ -74,7 +79,7 @@ namespace _Project.Mechanics.Viruses.Micro
             _lifetimeCts = new CancellationTokenSource();
             _isAlive = true;
             _lastCollisionDamageTime = float.NegativeInfinity;
-            _health = _config.MaxHealth;
+            _health = Config.MaxHealth;
 
             _collider.enabled = true;
 
@@ -120,20 +125,7 @@ namespace _Project.Mechanics.Viruses.Micro
             _behavior?.FixedUpdate();
         }
 
-        private IMicroVirusBehavior BuildBehavior(Transform target)
-        {
-            switch (_config.Variant)
-            {
-                case MicroVirusVariant.Orange:
-                    return new OrangeVirusBehavior(_config, target, _rigidbody2D);
-                case MicroVirusVariant.Cucumber:
-                    return new CucumberVirusBehavior(_config, target, _bulletSpawnPoint, _audioSystem, _attackSound, _bulletSpawner, _rigidbody2D, _animator);
-                case MicroVirusVariant.Spiner:
-                    return new SpinerVirusBehavior(_config, target, _rigidbody2D, _animator);
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(_config.Variant), _config.Variant, null);
-            }
-        }
+        protected abstract IMicroVirusBehavior BuildBehavior(Transform target);
 
         /// <summary>Restricted to the known player Transform rather than a generic
         /// TryGetComponent&lt;IDamageable&gt;() - so it can't accidentally fire against other IDamageable
@@ -143,13 +135,13 @@ namespace _Project.Mechanics.Viruses.Micro
             if (_playerTransform == null || other.transform != _playerTransform)
                 return;
 
-            if (Time.time < _lastCollisionDamageTime + _config.CollisionDamageCooldownSeconds)
+            if (Time.time < _lastCollisionDamageTime + Config.CollisionDamageCooldownSeconds)
                 return;
 
             if (other.gameObject.TryGetComponent(out IDamageable damageable))
             {
                 _lastCollisionDamageTime = Time.time;
-                damageable.Damage(_config.MeleeDamage, (other.transform.position - transform.position).normalized);
+                damageable.Damage(Config.MeleeDamage, (other.transform.position - transform.position).normalized);
             }
         }
 
@@ -160,7 +152,7 @@ namespace _Project.Mechanics.Viruses.Micro
 
             _health -= damage;
 
-            _rigidbody2D.AddForce(attackDirection * _config.KnockbackForceOnHit, ForceMode2D.Impulse);
+            _rigidbody2D.AddForce(attackDirection * Config.KnockbackForceOnHit, ForceMode2D.Impulse);
 
             _damageFlash.PlayAsync(_lifetimeCts.Token).Forget();
             _audioSystem.PlaySfx(_hitSound);

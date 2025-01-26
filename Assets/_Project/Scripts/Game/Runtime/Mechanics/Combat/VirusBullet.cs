@@ -15,7 +15,7 @@ namespace _Project.Mechanics.Combat
         private float _timeRemaining;
         private bool _isReturned;
 
-        /// <summary>Overrides the prefab-default speed/lifetime/damage with MicroVirusConfig's values. Left
+        /// <summary>Overrides the prefab-default speed/lifetime/damage with CucumberVirusConfig's values. Left
         /// uncalled, the bullet still works off its own [SerializeField] defaults.</summary>
         public void Construct(float speed, float bulletLifetime, int damage)
         {

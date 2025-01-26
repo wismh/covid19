@@ -6,7 +6,7 @@ namespace _Project.Mechanics.Viruses.Micro
     /// wind-up shortly before it fires.</summary>
     public sealed class SpinerVirusBehavior : IMicroVirusBehavior
     {
-        private readonly MicroVirusConfig _config;
+        private readonly SpinerVirusConfig _config;
         private readonly Transform _target;
         private readonly Rigidbody2D _rigidbody2D;
         private readonly Animator _animator;
@@ -16,7 +16,7 @@ namespace _Project.Mechanics.Viruses.Micro
         private float _attackTime;
         private bool _animationPlaying;
 
-        public SpinerVirusBehavior(MicroVirusConfig config, Transform target, Rigidbody2D rigidbody2D, Animator animator)
+        public SpinerVirusBehavior(SpinerVirusConfig config, Transform target, Rigidbody2D rigidbody2D, Animator animator)
         {
             _config = config;
             _target = target;

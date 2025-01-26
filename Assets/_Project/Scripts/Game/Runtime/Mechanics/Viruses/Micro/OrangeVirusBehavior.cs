@@ -6,13 +6,13 @@ namespace _Project.Mechanics.Viruses.Micro
     /// MicroVirusController.OnCollisionStay2D, shared by all three variants).</summary>
     public sealed class OrangeVirusBehavior : IMicroVirusBehavior
     {
-        private readonly MicroVirusConfig _config;
+        private readonly OrangeVirusConfig _config;
         private readonly Transform _target;
         private readonly Rigidbody2D _rigidbody2D;
 
         private Transform _transform;
 
-        public OrangeVirusBehavior(MicroVirusConfig config, Transform target, Rigidbody2D rigidbody2D)
+        public OrangeVirusBehavior(OrangeVirusConfig config, Transform target, Rigidbody2D rigidbody2D)
         {
             _config = config;
             _target = target;

@@ -8,7 +8,7 @@ namespace _Project.Mechanics.Viruses.Micro
     /// while shooting rather than closing to melee; not a sign error.</summary>
     public sealed class CucumberVirusBehavior : IMicroVirusBehavior
     {
-        private readonly MicroVirusConfig _config;
+        private readonly CucumberVirusConfig _config;
         private readonly Transform _target;
         private readonly Transform _bulletSpawnPoint;
         private readonly IAudioSystem _audioSystem;
@@ -23,7 +23,7 @@ namespace _Project.Mechanics.Viruses.Micro
         private bool _animationPlaying;
 
         public CucumberVirusBehavior(
-            MicroVirusConfig config,
+            CucumberVirusConfig config,
             Transform target,
             Transform bulletSpawnPoint,
             IAudioSystem audioSystem,
