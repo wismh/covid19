@@ -4,7 +4,6 @@ using DG.Tweening;
 using Lumenwake.UIModule;
 using Project.Core.AudioSystem;
 using UnityEngine;
-using UnityEngine.Playables;
 using UnityEngine.UI;
 using Zenject;
 using _Project.Mechanics.AppFlow;
@@ -13,9 +12,13 @@ namespace _Project.UI.MainMenu
 {
     public class MainMenuScreen : BaseScreen
     {
-        [SerializeField] private PlayableDirector _cutscene;
         [SerializeField] private Image _fadeInPanel;
         [SerializeField] private SoundData _startSound;
+        [SerializeField] private Image _humanImage;
+        [SerializeField] private Sprite _skeletonWhiteSprite;
+        [SerializeField] private Sprite _skeletonBlackSprite;
+
+        private const float SkeletonFlashDuration = 0.2f;
 
         private GlobalGameStateMachine _stateMachine;
         private IAudioSystem _audioSystem;
@@ -66,10 +69,13 @@ namespace _Project.UI.MainMenu
         {
             _isPlaying = true;
 
-            _cutscene.Play();
             _audioSystem.PlaySfx(_startSound);
 
-            await UniTask.Delay(TimeSpan.FromSeconds(1.5f), cancellationToken: destroyCancellationToken);
+            _humanImage.sprite = _skeletonWhiteSprite;
+            await UniTask.Delay(TimeSpan.FromSeconds(SkeletonFlashDuration), cancellationToken: destroyCancellationToken);
+
+            _humanImage.sprite = _skeletonBlackSprite;
+            await UniTask.Delay(TimeSpan.FromSeconds(SkeletonFlashDuration), cancellationToken: destroyCancellationToken);
 
             DOTween.To(
                 () => _fadeInPanel.color.a,
