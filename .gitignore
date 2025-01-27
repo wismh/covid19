@@ -3,6 +3,8 @@
 .DS_Store
 Thumbs.db
 
+.idea/
+
 *.app
 *.exe
 *.war
