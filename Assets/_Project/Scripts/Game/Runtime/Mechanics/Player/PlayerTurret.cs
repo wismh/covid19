@@ -27,6 +27,8 @@ namespace _Project.Mechanics.Player
 
         private Actions _inputActions;
 
+        private const float AimDirectionDeadzone = 0.2f;
+
         private bool _isFiring;
         private float _lastFireTime = float.NegativeInfinity;
         private float _currentReloadTime;
@@ -78,10 +80,28 @@ namespace _Project.Mechanics.Player
 
         private void Update()
         {
-            AimAtPointer();
+            Vector2 aimDirection = _inputActions.PlayerTurret.AimDirection.ReadValue<Vector2>();
+            bool isStickAiming = aimDirection.magnitude >= AimDirectionDeadzone;
 
-            if (_isFiring && Time.time >= _lastFireTime + _currentReloadTime)
+            bool wantsToFire;
+            if (isStickAiming)
+            {
+                AimAtDirection(aimDirection);
+                wantsToFire = true;
+            }
+            else
+            {
+                AimAtPointer();
+                wantsToFire = _isFiring;
+            }
+
+            if (wantsToFire && Time.time >= _lastFireTime + _currentReloadTime)
                 Fire();
+        }
+
+        private void AimAtDirection(Vector2 direction)
+        {
+            _turretTransform.right = direction.normalized;
         }
 
         private void AimAtPointer()
