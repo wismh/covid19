@@ -159,6 +159,17 @@ namespace _Project.Input
                     ""action"": ""Move"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""bc5b28a7-bbb0-4e80-ac40-621e315922b3"",
+                    ""path"": ""<Gamepad>/leftStick"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -183,6 +194,15 @@ namespace _Project.Input
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""AimDirection"",
+                    ""type"": ""Value"",
+                    ""id"": ""984f74cc-0661-4b7c-b3a4-f879b029025d"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -207,6 +227,17 @@ namespace _Project.Input
                     ""action"": ""Fire"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""3e6286db-dcf7-4fd8-80c8-bca445645200"",
+                    ""path"": ""<Gamepad>/rightStick"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""AimDirection"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -229,6 +260,17 @@ namespace _Project.Input
                     ""name"": """",
                     ""id"": ""cdbda100-c381-4746-a2f0-1b87bb3d10a1"",
                     ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Penetration"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""65e9e7f1-f396-45b0-af34-743c2a6aef15"",
+                    ""path"": ""<Gamepad>/buttonSouth"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -263,6 +305,17 @@ namespace _Project.Input
                     ""action"": ""AnyKey"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ffae2bd9-44d7-455b-8b9d-2056d4e8e697"",
+                    ""path"": ""<Touchscreen>/press"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""AnyKey"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -276,6 +329,7 @@ namespace _Project.Input
             m_PlayerTurret = asset.FindActionMap("PlayerTurret", throwIfNotFound: true);
             m_PlayerTurret_Pointer = m_PlayerTurret.FindAction("Pointer", throwIfNotFound: true);
             m_PlayerTurret_Fire = m_PlayerTurret.FindAction("Fire", throwIfNotFound: true);
+            m_PlayerTurret_AimDirection = m_PlayerTurret.FindAction("AimDirection", throwIfNotFound: true);
             // PlayerPenetration
             m_PlayerPenetration = asset.FindActionMap("PlayerPenetration", throwIfNotFound: true);
             m_PlayerPenetration_Penetration = m_PlayerPenetration.FindAction("Penetration", throwIfNotFound: true);
@@ -463,6 +517,7 @@ namespace _Project.Input
         private List<IPlayerTurretActions> m_PlayerTurretActionsCallbackInterfaces = new List<IPlayerTurretActions>();
         private readonly InputAction m_PlayerTurret_Pointer;
         private readonly InputAction m_PlayerTurret_Fire;
+        private readonly InputAction m_PlayerTurret_AimDirection;
         /// <summary>
         /// Provides access to input actions defined in input action map "PlayerTurret".
         /// </summary>
@@ -482,6 +537,10 @@ namespace _Project.Input
             /// Provides access to the underlying input action "PlayerTurret/Fire".
             /// </summary>
             public InputAction @Fire => m_Wrapper.m_PlayerTurret_Fire;
+            /// <summary>
+            /// Provides access to the underlying input action "PlayerTurret/AimDirection".
+            /// </summary>
+            public InputAction @AimDirection => m_Wrapper.m_PlayerTurret_AimDirection;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -514,6 +573,9 @@ namespace _Project.Input
                 @Fire.started += instance.OnFire;
                 @Fire.performed += instance.OnFire;
                 @Fire.canceled += instance.OnFire;
+                @AimDirection.started += instance.OnAimDirection;
+                @AimDirection.performed += instance.OnAimDirection;
+                @AimDirection.canceled += instance.OnAimDirection;
             }
 
             /// <summary>
@@ -531,6 +593,9 @@ namespace _Project.Input
                 @Fire.started -= instance.OnFire;
                 @Fire.performed -= instance.OnFire;
                 @Fire.canceled -= instance.OnFire;
+                @AimDirection.started -= instance.OnAimDirection;
+                @AimDirection.performed -= instance.OnAimDirection;
+                @AimDirection.canceled -= instance.OnAimDirection;
             }
 
             /// <summary>
@@ -792,6 +857,13 @@ namespace _Project.Input
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnFire(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "AimDirection" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnAimDirection(InputAction.CallbackContext context);
         }
         /// <summary>
         /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "PlayerPenetration" which allows adding and removing callbacks.
