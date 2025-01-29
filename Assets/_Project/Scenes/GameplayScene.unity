@@ -411,11 +411,11 @@ RectTransform:
   - {fileID: 1918897585}
   - {fileID: 1795476833}
   - {fileID: 1616133035}
-  m_Father: {fileID: 797727570}
+  m_Father: {fileID: 1890739284}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 367, y: -155.94524}
+  m_AnchoredPosition: {x: -63, y: 64.12068}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &123938977
@@ -2569,44 +2569,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 756933134}
   m_CullTransparentMesh: 1
---- !u!1 &797727569
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 797727570}
-  m_Layer: 5
-  m_Name: Bars
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &797727570
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 797727569}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 119763336}
-  - {fileID: 1926457033}
-  - {fileID: 1253216174}
-  m_Father: {fileID: 1890739284}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &806075021
 GameObject:
   m_ObjectHideFlags: 0
@@ -2730,6 +2692,9 @@ MonoBehaviour:
   _armorBarFilled: {fileID: 955697284}
   _experienceBarFilled: {fileID: 1754054743}
   _levelText: {fileID: 1661960495}
+  _healthBarRect: {fileID: 119763336}
+  _armorBarRect: {fileID: 1926457033}
+  _experienceBarRect: {fileID: 1253216174}
   _healthBarVisualCapacity: 8
   _timerText: {fileID: 123938979}
   _statisticsText: {fileID: 383426139}
@@ -4517,11 +4482,11 @@ RectTransform:
   - {fileID: 2111660942}
   - {fileID: 1754054742}
   - {fileID: 1661960492}
-  m_Father: {fileID: 797727570}
+  m_Father: {fileID: 1890739284}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: -371, y: -159}
+  m_AnchoredPosition: {x: 59, y: 61.065918}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1254110538
@@ -5502,10 +5467,12 @@ RectTransform:
   - {fileID: 453745073}
   - {fileID: 123938978}
   - {fileID: 383426138}
-  - {fileID: 797727570}
   - {fileID: 899466297}
   - {fileID: 1554535045}
   - {fileID: 1494376656}
+  - {fileID: 119763336}
+  - {fileID: 1926457033}
+  - {fileID: 1253216174}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -5547,7 +5514,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 960, y: 540}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 0.5
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -5682,11 +5649,11 @@ RectTransform:
   - {fileID: 623450307}
   - {fileID: 955697283}
   - {fileID: 931402257}
-  m_Father: {fileID: 797727570}
+  m_Father: {fileID: 1890739284}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 251, y: -169}
+  m_AnchoredPosition: {x: -179, y: 51.065918}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1981940441

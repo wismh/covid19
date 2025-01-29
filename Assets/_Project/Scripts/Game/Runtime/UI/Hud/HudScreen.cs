@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
 using _Project.Mechanics.Player;
+using _Project.Platform;
 using _Project.UI.GameOver;
 using _Project.UI.Upgrades;
 
@@ -29,6 +30,12 @@ namespace _Project.UI.Hud
         [SerializeField] private Image _armorBarFilled;
         [SerializeField] private Image _experienceBarFilled;
         [SerializeField] private TMP_Text _levelText;
+
+        // Root RectTransforms of the three bars, moved to a top-of-screen layout on touch
+        // platforms (see ApplyPlatformLayout) so they don't collide with the on-screen sticks.
+        [SerializeField] private RectTransform _healthBarRect;
+        [SerializeField] private RectTransform _armorBarRect;
+        [SerializeField] private RectTransform _experienceBarRect;
 
         // The health bar art's fixed visual segment count - independent of PlayerConfig.BaseMaxHealth (the
         // gameplay cap), so health fills as a fraction of this instead of MaxHealth directly.
@@ -77,6 +84,8 @@ namespace _Project.UI.Hud
             RefreshHealthAndArmorBars();
             RefreshExperienceBar();
             _levelText.text = _playerStats.Level.ToString();
+
+            ApplyPlatformLayout();
 
             _statisticsPattern = _statisticsText.text;
 
@@ -153,6 +162,30 @@ namespace _Project.UI.Hud
             int minutes = _elapsedSeconds / 60;
             int seconds = _elapsedSeconds % 60;
             _timerText.text = $"{minutes:D2}:{seconds:D2}";
+        }
+
+        // Desktop keeps the positions authored on the bars' RectTransforms in the scene, so only
+        // the touch-platform override is applied here. Mobile moves HealthBar/ArmorBar to the
+        // top-right and ExperienceBar to the top-left, clear of the Timer (top-center) and of the
+        // TouchControls sticks (bottom half).
+        private void ApplyPlatformLayout()
+        {
+            bool isTouch = TouchPlatform.IsTouchPlatform;
+            _statisticsText.gameObject.SetActive(!isTouch);
+
+            if (!isTouch)
+                return;
+
+            SetTopAnchoredRect(_healthBarRect, anchorX: 1f, anchoredPosition: new Vector2(-60f, -65.065918f));
+            SetTopAnchoredRect(_armorBarRect, anchorX: 1f, anchoredPosition: new Vector2(-60f, -160.065918f));
+            SetTopAnchoredRect(_experienceBarRect, anchorX: 0f, anchoredPosition: new Vector2(60f, -65.065918f));
+        }
+
+        private static void SetTopAnchoredRect(RectTransform rect, float anchorX, Vector2 anchoredPosition)
+        {
+            rect.anchorMin = new Vector2(anchorX, 1f);
+            rect.anchorMax = new Vector2(anchorX, 1f);
+            rect.anchoredPosition = anchoredPosition;
         }
 
         private void RefreshHealthAndArmorBars()
