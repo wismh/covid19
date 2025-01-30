@@ -1,7 +1,6 @@
 using UnityEngine;
 using Zenject;
 using _Project.Input;
-using _Project.Platform;
 
 namespace _Project.Mechanics.Player
 {
@@ -64,23 +63,13 @@ namespace _Project.Mechanics.Player
         private void FixedUpdate()
         {
             Vector2 input = _inputActions.PlayerBody.Move.ReadValue<Vector2>();
+            float verticalInput = -input.y;
 
-            if (TouchPlatform.IsTouchPlatform)
-            {
-                // On-screen stick: the stick's screen-space direction is the movement direction
-                // directly, not relative to current facing - the tank-style thrust+turn scheme below
-                // only makes sense when the player can see their heading change key-by-key (WASD);
-                // a virtual stick has no such feedback, so "up" must always move the player up.
-                MoveDirectional(input);
-            }
-            else
-            {
-                // Backward movement is throttled to a small fraction of full thrust.
-                float backwardThrottle = input.y < 0f ? _config.BackwardMovementMultiplier : 1f;
+            // Backward movement is throttled to a small fraction of full thrust.
+            float backwardThrottle = verticalInput < 0f ? _config.BackwardMovementMultiplier : 1f;
 
-                Move(input.y * backwardThrottle * _speedScale);
-                Rotate(input.x);
-            }
+            Move(verticalInput * backwardThrottle * _speedScale);
+            Rotate(input.x);
 
             if (_rigidbody2D != null)
             {
@@ -102,25 +91,6 @@ namespace _Project.Mechanics.Player
             _velocity += direction * _config.Acceleration * transform.right;
             _velocity += _config.Friction * -_velocity;
             _velocity = Vector3.ClampMagnitude(_velocity, maxSpeed);
-        }
-
-        /// <summary>Touch-only counterpart to Move()+Rotate(): translates directly along the given
-        /// screen-space direction (not relative to current facing), while easing the ship's facing
-        /// toward that direction using the same turn-rate tuning as Rotate().</summary>
-        private void MoveDirectional(Vector2 direction)
-        {
-            float maxSpeed = _stats.EffectiveMoveSpeed;
-
-            _velocity += (Vector3)direction * _config.Acceleration * _speedScale;
-            _velocity += _config.Friction * -_velocity;
-            _velocity = Vector3.ClampMagnitude(_velocity, maxSpeed);
-
-            if (direction.sqrMagnitude > 0.01f)
-            {
-                float targetAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-                float angleDelta = Mathf.DeltaAngle(transform.eulerAngles.z, targetAngle);
-                Rotate(Mathf.Sign(angleDelta));
-            }
         }
 
         public void Rotate(float direction)
