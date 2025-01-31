@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: SoundData_GameplayMusic
   m_EditorClassIdentifier: Assembly-CSharp::Project.Core.AudioSystem.SoundData
   _clip: {fileID: 8300000, guid: 4b479ed03c24e23b9a9e1528ead160fa, type: 3}
-  _volume: 0.4
+  _volume: 0.1
   _pitchRange: {x: 1, y: 1}

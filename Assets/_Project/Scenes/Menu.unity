@@ -772,7 +772,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -781,7 +781,7 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: 89cde2c1003fff54f91416d09a18d848, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -830,7 +830,7 @@ MonoBehaviour:
   _startSound: {fileID: 11400000, guid: 6fe0979a68519e448bca034034f121bb, type: 2}
   _humanImage: {fileID: 1277621234}
   _skeletonWhiteSprite: {fileID: 21300000, guid: 214f49d961910884bbd308cc68713110, type: 3}
-  _skeletonBlackSprite: {fileID: 21300000, guid: aedbdfe1cfec90d4d89b8320b24fca07, type: 3}
+  _skeletonBlackSprite: {fileID: 21300000, guid: 89cde2c1003fff54f91416d09a18d848, type: 3}
 --- !u!4 &1800793703
 Transform:
   m_ObjectHideFlags: 0

@@ -18,6 +18,23 @@ MonoBehaviour:
   shortcuts:
   - _foldout: 0
     enabled: 1
+    label: ToolbarShortcutsConfig
+    tooltip: 
+    placement: 1
+    dock: 0
+    order: 5
+    icon: {fileID: 0}
+    actionType: 1
+    asset: {fileID: 11400000}
+    primaryScene: {fileID: 0}
+    additiveScenes: []
+    windowOpenKind: 0
+    windowTarget: 0
+    menuPath: 
+    staticTypeName: 
+    staticMethodName: 
+  - _foldout: 0
+    enabled: 1
     label: Bootstrap
     tooltip: Open Bootstrap Scene
     placement: 0
@@ -95,6 +112,23 @@ MonoBehaviour:
     actionType: 1
     asset: {fileID: 4626583103710619316, guid: 3d3ccb67c50d3fc4fa8f4f8bb7988f83, type: 3}
     primaryScene: {fileID: 0}
+    additiveScenes: []
+    windowOpenKind: 0
+    windowTarget: 0
+    menuPath: 
+    staticTypeName: 
+    staticMethodName: 
+  - _foldout: 0
+    enabled: 1
+    label: Menu
+    tooltip: 
+    placement: 0
+    dock: 0
+    order: 4
+    icon: {fileID: 0}
+    actionType: 2
+    asset: {fileID: 102900000, guid: 3e86a5e44b1c6aa9986d93ef9401e04e, type: 3}
+    primaryScene: {fileID: 102900000, guid: 3e86a5e44b1c6aa9986d93ef9401e04e, type: 3}
     additiveScenes: []
     windowOpenKind: 0
     windowTarget: 0

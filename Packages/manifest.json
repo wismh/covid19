@@ -2,6 +2,7 @@
   "dependencies": {
     "com.coffee.softmask-for-ugui": "https://github.com/mob-sakai/SoftMaskForUGUI.git?path=Packages/src#9a7535a3fad66ebec5458a8b22f6ad023c960fd3",
     "com.coffee.ui-effect": "https://github.com/mob-sakai/UIEffect.git?path=Packages/src#70937d2ce39b61c29c4feb4d13642c65bb553d6c",
+    "com.rlabrecque.steamworks.net": "https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#2024.8.0",
     "com.unity.addressables": "2.9.1",
     "com.unity.addressables.android": "1.0.10",
     "com.unity.collab-proxy": "2.11.3",
@@ -9,9 +10,10 @@
     "com.unity.ide.rider": "3.0.39",
     "com.unity.ide.visualstudio": "2.0.22",
     "com.unity.inputsystem": "1.18.0",
-    "com.rlabrecque.steamworks.net": "https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#2024.8.0",
     "com.unity.mobile.android-logcat": "1.4.7",
     "com.unity.nuget.newtonsoft-json": "3.2.2",
+    "com.unity.pipeline": "0.6.0-exp.1",
+    "com.unity.recorder": "5.1.7",
     "com.unity.render-pipelines.universal": "17.3.0",
     "com.unity.test-framework": "1.6.0",
     "com.unity.timeline": "1.8.10",
@@ -50,7 +52,6 @@
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
-    "com.unity.modules.xr": "1.0.0",
-    "com.unity.pipeline": "0.6.0-exp.1"
+    "com.unity.modules.xr": "1.0.0"
   }
 }

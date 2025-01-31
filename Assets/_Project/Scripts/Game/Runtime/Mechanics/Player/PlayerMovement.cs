@@ -63,7 +63,7 @@ namespace _Project.Mechanics.Player
         private void FixedUpdate()
         {
             Vector2 input = _inputActions.PlayerBody.Move.ReadValue<Vector2>();
-            float verticalInput = -input.y;
+            float verticalInput = input.y;
 
             // Backward movement is throttled to a small fraction of full thrust.
             float backwardThrottle = verticalInput < 0f ? _config.BackwardMovementMultiplier : 1f;

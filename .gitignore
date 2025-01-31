@@ -36,3 +36,4 @@ Keystore/
 Docs/*.pdf
 
 Assets/GooglePlayGames/com.google.play.games/Editor/
+.utmp/
