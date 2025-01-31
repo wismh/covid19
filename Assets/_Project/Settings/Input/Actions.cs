@@ -165,7 +165,7 @@ namespace _Project.Input
                     ""id"": ""bc5b28a7-bbb0-4e80-ac40-621e315922b3"",
                     ""path"": ""<Gamepad>/leftStick"",
                     ""interactions"": """",
-                    ""processors"": """",
+                    ""processors"": ""invertVector2(invertX=true,invertY=false)"",
                     ""groups"": """",
                     ""action"": ""Move"",
                     ""isComposite"": false,
