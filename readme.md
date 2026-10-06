@@ -14,7 +14,7 @@ Built on **Unity 6 LTS** utilizing **Zenject / Extenject** for modular dependenc
 
 ---
 
-## 🎮 Game Design Document (GDD Overview)
+## Game Design Document (GDD Overview)
 
 ![Gameplay Preview](Docs/movie_01.gif)
 
@@ -72,7 +72,7 @@ Leveling up presents randomized card selections that directly modify player perf
 
 ---
 
-## 🏗️ Architecture & Technical Stack
+## Architecture & Technical Stack
 
 ### High-Level Architecture Diagram
 
@@ -154,7 +154,7 @@ The project strictly enforces decoupled architecture through hierarchical Zenjec
 
 ---
 
-## 📁 Project Directory Layout
+## Project Directory Layout
 
 ```text
 Assets/
@@ -201,7 +201,7 @@ Assets/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -226,7 +226,7 @@ Assets/
 
 ---
 
-## 🎮 Controls & Cross-Platform Support
+## Controls & Cross-Platform Support
 
 | Action | Desktop (Keyboard & Mouse) | Gamepad (Xbox / PlayStation) | Android (Touch Controls) |
 |---|---|---|---|
@@ -238,7 +238,7 @@ Assets/
 
 ---
 
-## 📦 Building for Target Platforms
+## Building for Target Platforms
 
 ### 1. Standalone Desktop (Windows / macOS / Linux)
 1. In Unity, open **File > Build Profiles** (or **Build Settings**).
